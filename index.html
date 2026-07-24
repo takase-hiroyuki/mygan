@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+	<!DOCTYPE html>
 <!-- index.html -->
 <html lang="ja">
 <head>
@@ -96,7 +96,7 @@
         <div id="financials-container">
             <fieldset>
                 <legend>財務計算入力（筆算フェーズ: <span id="calc-phase-name">確認中</span>）</legend>
-                <p>現在の状態: <b id="calc-lock-status">データを読み込み中...</b></p>
+                <p>現在の状態: <b id="calc-lock-status">データを読み込み中...</p>
                 
                 <table border="1" cellspacing="0" cellpadding="5">
                     <tbody>
@@ -113,7 +113,7 @@
                             <td>$<span id="display-total-income">0</span></td>
                         </tr>
                         <tr>
-                            <td><b>【手入力】総収入 (Total Income)</b></td>
+                            <td>【手入力】総収入 (Total Income)</td>
                             <td><input type="number" id="input-total-income" placeholder="計算結果を入力"></td>
                         </tr>
                         <tr>
@@ -125,7 +125,7 @@
                             <td>$<span id="display-monthly-cashflow">0</span></td>
                         </tr>
                         <tr>
-                            <td><b>【手入力】毎月のキャッシュフロー</b></td>
+                            <td>【手入力】毎月のキャッシュフロー</td>
                             <td><input type="number" id="input-net-cashflow" placeholder="計算結果を入力"></td>
                         </tr>
                     </tbody>
@@ -162,8 +162,8 @@
                     <li>住宅ローン: $<span id="display-liability-mortgage">0</span></li>
                     <li>自動車ローン: $<span id="display-liability-carloan">0</span></li>
                     <li>小売つけのツケ: $<span id="display-liability-retail">0</span></li>
-                    <li><b>銀行ローン残高 (Bank Loan): $<span id="display-liability-bankloan">0</span></b></li>
-                    <li><b>（うち毎月のローン利息支出）: $<span id="display-expense-loaninterest">0</span></b></li>
+                    <li>銀行ローン残高 (Bank Loan): $<span id="display-liability-bankloan">0</span></li>
+                    <li>（うち毎月のローン利息支出）: $<span id="display-expense-loaninterest">0</span></li>
                 </ul>
             </fieldset>
         </div>
@@ -193,67 +193,51 @@
                     </td><td align="center" valign="middle" data-position="8">
                         08好機<div id="rat-cell-8" class="player-occupants"></div>
                     </td><td align="center" valign="middle" data-position="9">
-                        <b>09子供</b>
-                        <div id="rat-cell-9" class="player-occupants"></div>
+                        09子供<div id="rat-cell-9" class="player-occupants"></div>
                     </td>
                     <td align="center" valign="middle" data-position="10">
-                        <b>10好機</b>
-                        <div id="rat-cell-10" class="player-occupants"></div>
+                        10好機<div id="rat-cell-10" class="player-occupants"></div>
                     </td>
                     <td align="center" valign="middle" data-position="11">
-                        <b>11ＣＦ</b>
-                        <div id="rat-cell-11" class="player-occupants"></div>
+                        11ＣＦ<div id="rat-cell-11" class="player-occupants"></div>
                     </td>
                 </tr>
-                <!-- 下段：12番マス（市場）〜 23番マス（好機） -->
                 <tr>
                     <td align="center" valign="middle" data-position="12">
-                        <b>12市場</b>
-                        <div id="rat-cell-12" class="player-occupants"></div>
+                        12市場<div id="rat-cell-12" class="player-occupants"></div>
                     </td>
                     <td align="center" valign="middle" data-position="13">
-                        <b>13好機</b>
-                        <div id="rat-cell-13" class="player-occupants"></div>
+                        13好機<div id="rat-cell-13" class="player-occupants"></div>
                     </td>
                     <td align="center" valign="middle" data-position="14">
-                        <b>14娯楽</b>
-                        <div id="rat-cell-14" class="player-occupants"></div>
+                        14娯楽<div id="rat-cell-14" class="player-occupants"></div>
                     </td>
                     <td align="center" valign="middle" data-position="15">
-                        <b>15好機</b>
-                        <div id="rat-cell-15" class="player-occupants"></div>
+                        15好機<div id="rat-cell-15" class="player-occupants"></div>
                     </td>
                     <td align="center" valign="middle" data-position="16">
-                        <b>16寄付</b>
-                        <div id="rat-cell-16" class="player-occupants"></div>
+                        16寄付<div id="rat-cell-16" class="player-occupants"></div>
                     </td>
                     <td align="center" valign="middle" data-position="17">
-                        <b>17好機</b>
-                        <div id="rat-cell-17" class="player-occupants"></div>
+                        17好機<div id="rat-cell-17" class="player-occupants"></div>
                     </td>
                     <td align="center" valign="middle" data-position="18">
-                        <b>18ＣＦ</b>
-                        <div id="rat-cell-18" class="player-occupants"></div>
+                        18ＣＦ<div id="rat-cell-18" class="player-occupants"></div>
                     </td>
                     <td align="center" valign="middle" data-position="19">
-                        <b>19好機</b>
-                        <div id="rat-cell-19" class="player-occupants"></div>
+                        19好機<div id="rat-cell-19" class="player-occupants"></div>
                     </td>
                     <td align="center" valign="middle" data-position="20">
-                        <b>20解雇</b>
-                        <div id="rat-cell-20" class="player-occupants"></div>
+                        20解雇<div id="rat-cell-20" class="player-occupants"></div>
                     </td>
                     <td align="center" valign="middle" data-position="21">
-                        <b>21好機</b>
-                        <div id="rat-cell-21" class="player-occupants"></div>
+                        21好機<div id="rat-cell-21" class="player-occupants"></div>
                     </td>
                     <td align="center" valign="middle" data-position="22">
-                        <b>22市場</b>
-                        <div id="rat-cell-22" class="player-occupants"></div>
+                        22市場<div id="rat-cell-22" class="player-occupants"></div>
                     </td>
                     <td align="center" valign="middle" data-position="23">
-                        <b>23好機</b>
-                        <div id="rat-cell-23" class="player-occupants"></div>
+                        23好機<div id="rat-cell-23" class="player-occupants"></div>
                     </td>
                 </tr>
             </tbody>
