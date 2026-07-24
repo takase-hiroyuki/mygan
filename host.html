@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<!-- host.html -->
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>mygan host</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+    <h1>mygan host</h1>
+
+    <div id="section-host">
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>入室順</th>
+                    <th>プレイヤー名 (ID)</th>
+                    <th>職業</th>
+                    <th>現在の位置（マス）</th>
+                    <th>手持ちキャッシュ</th>
+                </tr>
+            </thead>
+            <tbody id="host-participant-list">
+            </tbody>
+        </table>
+        
+        <fieldset>
+            <legend>部屋ステータス管理・ライフサイクル制御</legend>
+            <p>
+                現在の部屋ステータス: <b id="host-room-status">waiting (準備中)</b>
+            </p>
+            <p>
+                <button id="btn-initial-shuffle-start">初期シャッフル＆ゲーム開始</button>
+                <button id="btn-force-game-end">全員強制退室＆ゲーム終了</button>
+            </p>
+            <p>
+                <label for="input-kick-order">退室者の番号: </label>
+                <input type="number" id="input-kick-order" min="1" placeholder="例: 4" size="4">
+                <button id="btn-kick-participant">退室させる</button>
+            </p>
+        </fieldset>
+
+        <br>
+
+        <!-- 🌟4種類の山札および使用済みカードの残り枚数監視モニター -->
+        <fieldset>
+            <legend>4大カードデッキ山札残量モニター ＆ リシャッフル制御</legend>
+            <table border="1" cellpadding="5">
+                <thead>
+                    <tr>
+                        <th>Small Deal (好機:小)</th>
+                        <th>Big Deal (好機:大)</th>
+                        <th>Market (市場)</th>
+                        <th>Doodad (無駄遣い)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td align="center"><span id="deck-count-small-deal">0</span> 枚</td>
+                        <td align="center"><span id="deck-count-big-deal">0</span> 枚</td>
+                        <td align="center"><span id="deck-count-market">0</span> 枚</td>
+                        <td align="center"><span id="deck-count-doodad">0</span> 枚</td>
+                    </tr>
+                    <!-- 🌟【新設】デッキ個別の手動リシャッフルボタン -->
+                    <tr>
+                        <td align="center"><button id="btn-reshuffle-small-deal">シャッフル</button></td>
+                        <td align="center"><button id="btn-reshuffle-big-deal">シャッフル</button></td>
+                        <td align="center"><button id="btn-reshuffle-market">シャッフル</button></td>
+                        <td align="center"><button id="btn-reshuffle-doodad">シャッフル</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </fieldset>
+
+        <br>
+
+        <!-- 最初から配置するサイコロ監視エリア -->
+        <fieldset>
+            <legend>最新のサイコロ出目（ホスト監視用）</legend>
+            <div id="host-dice-monitor">
+                まだサイコロは振られていません
+            </div>
+        </fieldset>
+
+        <br>
+
+        <!-- 手番設定用の入力欄（入室順）とボタン -->
+        <fieldset>
+            <legend>手番プレイヤー手動制御</legend>
+            <input type="number" id="input-next-turn-order" placeholder="入室順を入力" min="1">
+            <button id="btn-set-turn">を手番にする</button>
+        </fieldset>
+
+        <br>
+
+        <!-- 24マスのグリッド型盤面（インラインCSS完全排除・標準属性のみ） -->
+        <h2>すごろく盤面（リアルタイム）</h2>
+        <table border="2" cellspacing="5" cellpadding="10">
+            <thead>
+                <tr>
+                    <th colspan="12">ラットレース盤面モニター（上段：00〜11 / 下段：12〜23）</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- 上段：00番マス（給料）〜 11番マス（給料） -->
+                <tr>
+                    <td align="center" valign="middle" data-position="0">
+                        <b>00ＣＦ</b>
+                        <div id="cell-0" class="player-occupants"></div>
+                    </td>
+                    <td align="center" valign="middle" data-position="1">
+                        <b>01娯楽</b>
+                        <div id="cell-1" class="player-occupants"></div>
+                    </td>
+                    <td align="center" valign="middle" data-position="2">
+                        <b>02好機</b>
+                        <div id="cell-2" class="player-occupants"></div>
+                    </td>
+                    <td align="center" valign="middle" data-position="3">
+                        <b>03寄付</b>
+                        <div id="cell-3" class="player-occupants"></div>
+                    </td>
+                    <td align="center" valign="middle" data-position="4">
+                        <b>04好機</b>
+                        <div id="cell-4" class="player-occupants"></div>
+                    </td>
+                    <td align="center" valign="middle" data-position="5">
+                        <b>05ＣＦ</b>
+                        <div id="cell-5" class="player-occupants"></div>
+                    </td>
+                    <td align="center" valign="middle" data-position="6">
+                        <b>06好機</b>
+                        <div id="cell-6" class="player-occupants"></div>
+                    </td>
+                    <td align="center" valign="middle" data-position="7">
+                        <b>07娯楽</b>
+                        <div id="cell-7" class="player-occupants"></div>
+                    </td>
+                    <td align="center" valign="middle" data-position="8">
+                        <b>08好機</b>
+                        <div id="cell-8" class="player-occupants"></div>
+                    </td>
+                    <td align="center" valign="middle" data-position="9">
+                        <b>09子供</b>
+                        <div id="cell-9" class="player-occupants"></div>
+                    </td>
+                    <td align="center" valign="middle" data-position="10">
+                        <b>10好機</b>
+                        <div id="cell-10" class="player-occupants"></div>
+                    </td>
+                    <td align="center" valign="middle" data-position="11">
+                        <b>11ＣＦ</b>
+                        <div id="cell-11" class="player-occupants"></div>
+                    </td>
+                </tr>
+                <!-- 下段：12番マス（市場）〜 23番マス（好機） -->
+                <tr>
+                    <td align="center" valign="middle" data-position="12">
+                        <b>12市場</b>
+                        <div id="cell-12" class="player-occupants"></div>
+                    </td>
+                    <td align="center" valign="middle" data-position="13">
+                        <b>13好機</b>
+                        <div id="cell-13" class="player-occupants"></div>
+                    </td>
+                    <td align="center" valign="middle" data-position="14">
+                        <b>14娯楽</b>
+                        <div id="cell-14" class="player-occupants"></div>
+                    </td>
+                    <td align="center" valign="middle" data-position="15">
+                        <b>15好機</b>
+                        <div id="cell-15" class="player-occupants"></div>
+                    </td>
+                    <td align="center" valign="middle" data-position="16">
+                        <b>16寄付</b>
+                        <div id="cell-16" class="player-occupants"></div>
+                    </td>
+                    <td align="center" valign="middle" data-position="17">
+                        <b>17好機</b>
+                        <div id="cell-17" class="player-occupants"></div>
+                    </td>
+                    <td align="center" valign="middle" data-position="18">
+                        <b>18ＣＦ</b>
+                        <div id="cell-18" class="player-occupants"></div>
+                    </td>
+                    <td align="center" valign="middle" data-position="19">
+                        <b>19好機</b>
+                        <div id="cell-19" class="player-occupants"></div>
+                    </td>
+                    <td align="center" valign="middle" data-position="20">
+                        <b>20解雇</b>
+                        <div id="cell-20" class="player-occupants"></div>
+                    </td>
+                    <td align="center" valign="middle" data-position="21">
+                        <b>21好機</b>
+                        <div id="cell-21" class="player-occupants"></div>
+                    </td>
+                    <td align="center" valign="middle" data-position="22">
+                        <b>22市場</b>
+                        <div id="cell-22" class="player-occupants"></div>
+                    </td>
+                    <td align="center" valign="middle" data-position="23">
+                        <b>23好機</b>
+                        <div id="cell-23" class="player-occupants"></div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+    </div>
+
+    <script type="module" src="host_app.js"></script>
+</body>
+</html>
