@@ -46,6 +46,66 @@
 
         <br>
 
+        <table border="1" cellspacing="2">
+            <tbody>
+                <tr>
+                    <td align="center" valign="middle" data-position="0">
+                        00ＣＦ<div id="rat-cell-0" class="player-occupants"></div>
+                    </td><td align="center" valign="middle" data-position="1">
+                        01娯楽<div id="rat-cell-1" class="player-occupants"></div>
+                    </td><td align="center" valign="middle" data-position="2">
+                        02好機<div id="rat-cell-2" class="player-occupants"></div>
+                    </td><td align="center" valign="middle" data-position="3">
+                        03寄付<div id="rat-cell-3" class="player-occupants"></div>
+                    </td><td align="center" valign="middle" data-position="4">
+                        04好機<div id="rat-cell-4" class="player-occupants"></div>
+                    </td><td align="center" valign="middle" data-position="5">
+                        05ＣＦ<div id="rat-cell-5" class="player-occupants"></div>
+                    </td><td align="center" valign="middle" data-position="6">
+                        06好機<div id="rat-cell-6" class="player-occupants"></div>
+                    </td><td align="center" valign="middle" data-position="7">
+                        07娯楽<div id="rat-cell-7" class="player-occupants"></div>
+                    </td><td align="center" valign="middle" data-position="8">
+                        08好機<div id="rat-cell-8" class="player-occupants"></div>
+                    </td><td align="center" valign="middle" data-position="9">
+                        09子供<div id="rat-cell-9" class="player-occupants"></div>
+                    </td><td align="center" valign="middle" data-position="10">
+                        10好機<div id="rat-cell-10" class="player-occupants"></div>
+                    </td><td align="center" valign="middle" data-position="11">
+                        11ＣＦ<div id="rat-cell-11" class="player-occupants"></div>
+                    </td>
+				</tr><tr>
+                    <td align="center" valign="middle" data-position="12">
+                        12市場<div id="rat-cell-12" class="player-occupants"></div>
+                    </td><td align="center" valign="middle" data-position="13">
+                        13好機<div id="rat-cell-13" class="player-occupants"></div>
+                    </td><td align="center" valign="middle" data-position="14">
+                        14娯楽<div id="rat-cell-14" class="player-occupants"></div>
+                    </td><td align="center" valign="middle" data-position="15">
+                        15好機<div id="rat-cell-15" class="player-occupants"></div>
+                    </td><td align="center" valign="middle" data-position="16">
+                        16寄付<div id="rat-cell-16" class="player-occupants"></div>
+                    </td><td align="center" valign="middle" data-position="17">
+                        17好機<div id="rat-cell-17" class="player-occupants"></div>
+                    </td><td align="center" valign="middle" data-position="18">
+                        18ＣＦ<div id="rat-cell-18" class="player-occupants"></div>
+                    </td><td align="center" valign="middle" data-position="19">
+                        19好機<div id="rat-cell-19" class="player-occupants"></div>
+                    </td><td align="center" valign="middle" data-position="20">
+                        20解雇<div id="rat-cell-20" class="player-occupants"></div>
+                    </td><td align="center" valign="middle" data-position="21">
+                        21好機<div id="rat-cell-21" class="player-occupants"></div>
+                    </td><td align="center" valign="middle" data-position="22">
+                        22市場<div id="rat-cell-22" class="player-occupants"></div>
+                    </td><td align="center" valign="middle" data-position="23">
+                        23好機<div id="rat-cell-23" class="player-occupants"></div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <br>
+
             <table border="1" cellpadding="2">
                 <thead>
                     <tr>
@@ -73,7 +133,6 @@
 
         <br>
 
-        <!-- 最初から配置するサイコロ監視エリア -->
         <fieldset>
             <legend>最新のサイコロ出目（ホスト監視用）</legend>
             <div id="host-dice-monitor">
@@ -83,7 +142,6 @@
 
         <br>
 
-        <!-- 手番設定用の入力欄（入室順）とボタン -->
         <fieldset>
             <legend>手番プレイヤー手動制御</legend>
             <input type="number" id="input-next-turn-order" placeholder="入室順を入力" min="1">
@@ -91,120 +149,6 @@
         </fieldset>
 
         <br>
-
-        <!-- 24マスのグリッド型盤面（インラインCSS完全排除・標準属性のみ） -->
-        <h2>すごろく盤面（リアルタイム）</h2>
-        <table border="2" cellspacing="5" cellpadding="10">
-            <thead>
-                <tr>
-                    <th colspan="12">ラットレース盤面モニター（上段：00〜11 / 下段：12〜23）</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- 上段：00番マス（給料）〜 11番マス（給料） -->
-                <tr>
-                    <td align="center" valign="middle" data-position="0">
-                        <b>00ＣＦ</b>
-                        <div id="cell-0" class="player-occupants"></div>
-                    </td>
-                    <td align="center" valign="middle" data-position="1">
-                        <b>01娯楽</b>
-                        <div id="cell-1" class="player-occupants"></div>
-                    </td>
-                    <td align="center" valign="middle" data-position="2">
-                        <b>02好機</b>
-                        <div id="cell-2" class="player-occupants"></div>
-                    </td>
-                    <td align="center" valign="middle" data-position="3">
-                        <b>03寄付</b>
-                        <div id="cell-3" class="player-occupants"></div>
-                    </td>
-                    <td align="center" valign="middle" data-position="4">
-                        <b>04好機</b>
-                        <div id="cell-4" class="player-occupants"></div>
-                    </td>
-                    <td align="center" valign="middle" data-position="5">
-                        <b>05ＣＦ</b>
-                        <div id="cell-5" class="player-occupants"></div>
-                    </td>
-                    <td align="center" valign="middle" data-position="6">
-                        <b>06好機</b>
-                        <div id="cell-6" class="player-occupants"></div>
-                    </td>
-                    <td align="center" valign="middle" data-position="7">
-                        <b>07娯楽</b>
-                        <div id="cell-7" class="player-occupants"></div>
-                    </td>
-                    <td align="center" valign="middle" data-position="8">
-                        <b>08好機</b>
-                        <div id="cell-8" class="player-occupants"></div>
-                    </td>
-                    <td align="center" valign="middle" data-position="9">
-                        <b>09子供</b>
-                        <div id="cell-9" class="player-occupants"></div>
-                    </td>
-                    <td align="center" valign="middle" data-position="10">
-                        <b>10好機</b>
-                        <div id="cell-10" class="player-occupants"></div>
-                    </td>
-                    <td align="center" valign="middle" data-position="11">
-                        <b>11ＣＦ</b>
-                        <div id="cell-11" class="player-occupants"></div>
-                    </td>
-                </tr>
-                <!-- 下段：12番マス（市場）〜 23番マス（好機） -->
-                <tr>
-                    <td align="center" valign="middle" data-position="12">
-                        <b>12市場</b>
-                        <div id="cell-12" class="player-occupants"></div>
-                    </td>
-                    <td align="center" valign="middle" data-position="13">
-                        <b>13好機</b>
-                        <div id="cell-13" class="player-occupants"></div>
-                    </td>
-                    <td align="center" valign="middle" data-position="14">
-                        <b>14娯楽</b>
-                        <div id="cell-14" class="player-occupants"></div>
-                    </td>
-                    <td align="center" valign="middle" data-position="15">
-                        <b>15好機</b>
-                        <div id="cell-15" class="player-occupants"></div>
-                    </td>
-                    <td align="center" valign="middle" data-position="16">
-                        <b>16寄付</b>
-                        <div id="cell-16" class="player-occupants"></div>
-                    </td>
-                    <td align="center" valign="middle" data-position="17">
-                        <b>17好機</b>
-                        <div id="cell-17" class="player-occupants"></div>
-                    </td>
-                    <td align="center" valign="middle" data-position="18">
-                        <b>18ＣＦ</b>
-                        <div id="cell-18" class="player-occupants"></div>
-                    </td>
-                    <td align="center" valign="middle" data-position="19">
-                        <b>19好機</b>
-                        <div id="cell-19" class="player-occupants"></div>
-                    </td>
-                    <td align="center" valign="middle" data-position="20">
-                        <b>20解雇</b>
-                        <div id="cell-20" class="player-occupants"></div>
-                    </td>
-                    <td align="center" valign="middle" data-position="21">
-                        <b>21好機</b>
-                        <div id="cell-21" class="player-occupants"></div>
-                    </td>
-                    <td align="center" valign="middle" data-position="22">
-                        <b>22市場</b>
-                        <div id="cell-22" class="player-occupants"></div>
-                    </td>
-                    <td align="center" valign="middle" data-position="23">
-                        <b>23好機</b>
-                        <div id="cell-23" class="player-occupants"></div>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
 
     </div>
 
