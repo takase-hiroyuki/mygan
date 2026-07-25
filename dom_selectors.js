@@ -37,6 +37,7 @@ export const DOM_SELECTORS = {
         CONTROLS: {
             STATUS_AREA: 'dice-status-area',
             DICE_RESULT: 'guest-dice-result',
+            MANUAL_ACTION_AREA: 'manual-action-area', // 追加: 手動アクションボタンのラッパー
             BTN_ROLL_DICE: 'btn-roll-dice',
             BTN_CLAIM_PAYCHECK: 'btn-claim-paycheck', 
             BTN_END_TURN: 'btn-end-turn',              
@@ -49,7 +50,7 @@ export const DOM_SELECTORS = {
             LEGEND: 'display-card-legend',                 
             STATUS_MESSAGE: 'card-status-message',         
             NUMERICAL_DETAILS_CONTAINER: 'card-numerical-details', 
-            DETAIL_COST: 'card-detail-cost',               
+            DETAIL_COST: 'card-detail-cost',                
             DETAIL_DOWNPAYMENT: 'card-detail-downpayment', 
             DETAIL_CASHFLOW: 'card-detail-cashflow',       
             DRAW_OPTIONS_CONTAINER: 'deck-draw-options',   
@@ -112,8 +113,7 @@ export const DOM_SELECTORS = {
         LIFECYCLE: {
             DISPLAY_ROOM_STATUS: 'host-room-status',              
             BTN_INITIAL_SHUFFLE: 'btn-initial-shuffle-start',     
-            BTN_FORCE_GAME_END: 'btn-force-game-end',             
-            BTN_INITIALIZE_ROOM: 'btn-initialize-room'            
+            BTN_FORCE_GAME_END: 'btn-force-game-end'             
         },
 
         // 🌟4種類の山札および使用済みカードの残り枚数監視モニター
@@ -134,15 +134,14 @@ export const DOM_SELECTORS = {
 
         // 手番プレイヤー手動制御エリア
         TURN_CONTROL: {
-            INPUT_NEXT_ORDER: 'input-next-order',
+            INPUT_NEXT_ORDER: 'input-next-turn-order', // 修正: HTMLに合わせて変更
             BTN_SET_TURN: 'btn-set-turn'
         },
 
         // 退室管理エリア
         KICK_CONTROL: {
             INPUT_KICK_ORDER: 'input-kick-order',
-            BTN_KICK_PARTICIPANT: 'btn-kick-participant',
-            BTN_CLEAR_ROOM: 'btn-clear-room'
+            BTN_KICK_PARTICIPANT: 'btn-kick-participant'
         },
 
         // 参加者名簿テーブル
@@ -156,7 +155,7 @@ export const DOM_SELECTORS = {
 
         // ホスト用盤面モニターID生成用のプレフィックス
         BOARD: {
-            CELL_PREFIX: 'cell-' 
+            CELL_PREFIX: 'rat-cell-' // 修正: HTML(host)の盤面idに合わせて変更
         }
     }
 };
