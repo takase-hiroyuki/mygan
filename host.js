@@ -57,10 +57,9 @@ async function syncAndFetchRoom() {
 
         if (displayRoomStatus) displayRoomStatus.textContent = isPlaying ? 'playing (ゲーム進行中)' : 'waiting (準備中)';
         
-        // 最小限検証のため、常にゲーム開始ボタンを活性化またはテキスト変更
         if (btnInitialShuffleStart) {
             btnInitialShuffleStart.disabled = false;
-            btnInitialShuffleStart.textContent = 'ゲーム開始 (ダイス検証モード)';
+            btnInitialShuffleStart.textContent = 'O ゲーム開始 (ダイス検証モード)';
         }
         
         /* [機能キャンセルアウト] 山札枚数監視の同期判定
@@ -82,6 +81,8 @@ function updateDeckView(gameState) {
 */
 
 function drawHostScreen() {
+    console.log("【デバッグ】drawHostScreen");
+
     if (hostDiceMonitor) {
         const activeId = activeRoomRecord ? activeRoomRecord.current_turn_user_id : null;
         if (!activeId) {
@@ -199,3 +200,5 @@ bindManualShuffle(btnReshuffleBig, 'big_deal');
 bindManualShuffle(btnReshuffleMarket, 'market');
 bindManualShuffle(btnReshuffleDoodad, 'doodad');
 */
+
+console.log("【デバッグ】host.js が読み込まれました。");
