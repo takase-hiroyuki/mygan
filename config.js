@@ -1,8 +1,8 @@
 // config.js
 
 // 1. Supabaseの接続設定
-export const SUPABASE_URL = "https://iasdvzfswkfstscsdlfd.supabase.co";
-export const SUPABASE_KEY = "sb_publishable_z_JmCe9P8RyKz_-0zZtEOQ_OKcTryro";
+export const SUPABASE_URL = "https://hpuvozteepfhttxiqnvl.supabase.co";
+export const SUPABASE_KEY = "sb_publishable_-iFQPr80PEYEWzIqk8Jruw_Cizal4K-";
 
 // 2. 小規模運用のための固定設定
 export const roomId = "room01"; // ゲーム（部屋）は1つに固定
