@@ -99,7 +99,9 @@ let clientPendingSalary = 0;
 
 btnLogin.addEventListener('click', async (event) => {
     const debugFunctionName = event.currentTarget.id;
-    console.log("【デバッグ】", debugFunctionName);
+    console.log("【デバッグ1】", debugFunctionName);
+
+    console.log("【デバッグ2】supabaseの状態:", supabase);
 
     if (!supabase) return;
     const username = inputUsername.value.trim();
@@ -110,13 +112,13 @@ btnLogin.addEventListener('click', async (event) => {
         alert('ゲームが既に開始されているか終了しているため、入室できません。');
         return;
     }
-    console.log("【デバッグ】2", debugFunctionName);
+    console.log("【デバッグ3】", debugFunctionName);
 
     currentUserId = localStorage.getItem('user_id') || 'user_' + Math.random().toString(36).substring(2, 11);
     localStorage.setItem('user_id', currentUserId);
     localStorage.setItem('player_name', username);
 
-    console.log("【デバッグ】3", debugFunctionName);
+    console.log("【デバッグ4】", debugFunctionName);
     
     const initialRegistrationState = {
         name: username,
@@ -138,7 +140,7 @@ btnLogin.addEventListener('click', async (event) => {
         }
     };
 
-    console.log("【デバッグ】4", debugFunctionName);
+    console.log("【デバッグ5】", debugFunctionName);
     
     btnLogin.disabled = true;
     const { error } = await supabase.from('participants').insert([{ room_id: roomId, user_id: currentUserId, state: initialRegistrationState }]);
