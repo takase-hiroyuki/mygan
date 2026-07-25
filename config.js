@@ -8,4 +8,4 @@ export const SUPABASE_KEY = "sb_publishable_-iFQPr80PEYEWzIqk8Jruw_Cizal4K-";
 export const roomId = "room01"; // ゲーム（部屋）は1つに固定
 
 // 【デバッグコード】
-console.log("【デバッグ】config.js が読み込まれました。部屋IDは固定です:", roomId);
+console.log("【デバッグ】config.js 部屋番号:", roomId);
