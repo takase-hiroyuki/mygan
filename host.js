@@ -27,7 +27,7 @@ let currentParticipants = [];
 let activeRoomRecord = null;
 
 (async function initHost() {
-    console.log("【ホストシステム】リアルタイム監視接続開始 部屋番号:", roomId);
+    console.log("【デバッグ】initHost リアルタイム監視開始 部屋番号:", roomId);
     await syncAndFetchRoom();
 
     supabase.channel('public:host_participants').on('postgres_changes', { event: '*', schema: 'public', table: 'participants' }, async () => {
