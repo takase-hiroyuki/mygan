@@ -1,5 +1,4 @@
 // host.js
-
 import { roomId, SUPABASE_URL, SUPABASE_KEY } from './config.js';
 import { DOM_SELECTORS } from './dom_selectors.js';
 
@@ -57,15 +56,21 @@ async function syncAndFetchRoom() {
         const isPlaying = state.status === 'playing';
 
         if (displayRoomStatus) displayRoomStatus.textContent = isPlaying ? 'playing (ゲーム進行中)' : 'waiting (準備中)';
+        
+        // 最小限検証のため、常にゲーム開始ボタンを活性化またはテキスト変更
         if (btnInitialShuffleStart) {
-            btnInitialShuffleStart.disabled = isPlaying;
-            btnInitialShuffleStart.textContent = isPlaying ? 'ゲーム開始済み' : '初期シャッフル＆ゲーム開始';
+            btnInitialShuffleStart.disabled = false;
+            btnInitialShuffleStart.textContent = 'ゲーム開始 (ダイス検証モード)';
         }
+        
+        /* [機能キャンセルアウト] 山札枚数監視の同期判定
         updateDeckView(state);
+        */
     }
     drawHostScreen();
 }
 
+/* [機能キャンセルアウト] 山札モニター表示処理
 function updateDeckView(gameState) {
     const selectors = DOM_SELECTORS.HOST.DECK_MONITOR;
     const decks = gameState.decks || {};
@@ -74,6 +79,7 @@ function updateDeckView(gameState) {
     document.getElementById(selectors.MARKET_COUNT).textContent = Array.isArray(decks.market) ? decks.market.length : 0;
     document.getElementById(selectors.DOODAD_COUNT).textContent = Array.isArray(decks.doodad) ? decks.doodad.length : 0;
 }
+*/
 
 function drawHostScreen() {
     if (hostDiceMonitor) {
@@ -126,14 +132,29 @@ function drawHostScreen() {
     });
 }
 
+// 初期シャッフル＆開始をモック状態(status: playing)へアトミックに変更する処理へ限定化
 btnInitialShuffleStart?.addEventListener('click', async () => {
-    if (!confirm("初期シャッフルを行ってゲームを開始しますか？")) return;
+    if (!confirm("サイコロ検証用ゲームを開始しますか？")) return;
     btnInitialShuffleStart.disabled = true;
-    const { data, error } = await supabase.rpc('start_game_with_shuffled_decks', { p_room_id: roomId, p_host_user_id: HOST_ADMIN_ID });
-    if (error) { alert(error.message); btnInitialShuffleStart.disabled = false; }
-    else if (data?.success) await syncAndFetchRoom();
+    
+    // データ整合性のための最小限ルームステータスplaying化パッチ
+    const { error } = await supabase.from('rooms').update({
+        game_state: { status: "playing", decks: { small_deal:[], big_deal:[], market:[], doodad:[] }, current_card: null }
+    }).eq('id', roomId);
+
+    if (error) {
+        alert(error.message);
+        btnInitialShuffleStart.disabled = false;
+    } else {
+        // 最初のプレイヤーに強制手番付与
+        if (currentParticipants.length > 0) {
+            await supabase.from('rooms').update({ current_turn_user_id: currentParticipants[0].user_id }).eq('id', roomId);
+        }
+        await syncAndFetchRoom();
+    }
 });
 
+/* [機能キャンセルアウト] 強制終了・手番制御・キック・手動リシャッフル
 btnForceGameEnd?.addEventListener('click', async () => {
     if (!confirm("全員を退室させゲームを強制終了しますか？")) return;
     const { error } = await supabase.from('participants').delete().eq('room_id', roomId);
@@ -150,7 +171,6 @@ btnSetTurn?.addEventListener('click', async () => {
         alert("入力順の指定が不正です。"); return;
     }
     const targetPlayer = currentParticipants[order - 1];
-    
     await supabase.rpc('merge_participant_state', { target_user_id: targetPlayer.user_id, state_patch: { last_dice: 0 } });
     await supabase.from('rooms').update({ current_turn_user_id: targetPlayer.user_id }).eq('id', roomId);
     inputNextTurnOrder.value = '';
@@ -178,3 +198,4 @@ bindManualShuffle(btnReshuffleSmall, 'small_deal');
 bindManualShuffle(btnReshuffleBig, 'big_deal');
 bindManualShuffle(btnReshuffleMarket, 'market');
 bindManualShuffle(btnReshuffleDoodad, 'doodad');
+*/
