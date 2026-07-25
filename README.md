@@ -1,8 +1,7 @@
 # mygan
 
-https://mygan-six.vercel.app/
-
-https://mygan-six.vercel.app/host.html
+- https://mygan-six.vercel.app/
+- https://mygan-six.vercel.app/host.html
 
 【supabase 現在のテーブル確認SQL】
 
