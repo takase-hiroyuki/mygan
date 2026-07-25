@@ -98,6 +98,9 @@ let clientPendingSalary = 0;
 })();
 
 btnLogin.addEventListener('click', async () => {
+    const debugFunctionName = event.currentTarget.id;
+    console.log("【デバッグ】", debugFunctionName);
+
     if (!supabase) return;
     const username = inputUsername.value.trim();
     if (!username) { alert('名前を入力してください！'); return; }
@@ -249,6 +252,9 @@ function syncInterface() {
 }
 
 btnRollDice.addEventListener('click', async () => {
+    const debugFunctionName = event.currentTarget.id;
+    console.log("【デバッグ】", debugFunctionName);
+
     if (!supabase) return;
     const diceRoll = Math.floor(Math.random() * 6) + 1;
     const record = cachedParticipants.find(p => p.user_id === currentUserId);
@@ -268,6 +274,9 @@ btnRollDice.addEventListener('click', async () => {
 });
 
 btnEndTurn.addEventListener('click', async () => {
+    const debugFunctionName = event.currentTarget.id;
+    console.log("【デバッグ】", debugFunctionName);
+
     if (!supabase) return;
     clientPendingSalary = 0;
     await supabase.rpc('pass_and_end_turn', { p_room_id: roomId, p_user_id: currentUserId });
