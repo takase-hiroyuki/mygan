@@ -97,7 +97,7 @@ let clientPendingSalary = 0;
     sectionGuest.hidden = true;
 })();
 
-btnLogin.addEventListener('click', async () => {
+btnLogin.addEventListener('click', async (event) => {
     const debugFunctionName = event.currentTarget.id;
     console.log("【デバッグ】", debugFunctionName);
 
