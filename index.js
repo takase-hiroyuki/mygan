@@ -110,11 +110,14 @@ btnLogin.addEventListener('click', async (event) => {
         alert('ゲームが既に開始されているか終了しているため、入室できません。');
         return;
     }
+    console.log("【デバッグ】2", debugFunctionName);
 
     currentUserId = localStorage.getItem('user_id') || 'user_' + Math.random().toString(36).substring(2, 11);
     localStorage.setItem('user_id', currentUserId);
     localStorage.setItem('player_name', username);
 
+    console.log("【デバッグ】3", debugFunctionName);
+    
     const initialRegistrationState = {
         name: username,
         role: "general",
@@ -135,6 +138,8 @@ btnLogin.addEventListener('click', async (event) => {
         }
     };
 
+    console.log("【デバッグ】4", debugFunctionName);
+    
     btnLogin.disabled = true;
     const { error } = await supabase.from('participants').insert([{ room_id: roomId, user_id: currentUserId, state: initialRegistrationState }]);
     if (error) {
@@ -145,6 +150,9 @@ btnLogin.addEventListener('click', async (event) => {
     sectionLogin.hidden = true;
     sectionGuest.hidden = false;
     startSubscriptions();
+
+    console.log("【デバッグ】5", debugFunctionName);
+
 });
 
 function startSubscriptions() {
