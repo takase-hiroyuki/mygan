@@ -1,0 +1,89 @@
+{
+  "document_title": "リアルタイムゲーム進行・財務同期システム 要件定義書",
+  "1_system_purpose_and_policy": {
+    "purpose": "Supabaseのリアルタイムデータ同期（Realtime API）を活用し、プレイヤーの盤面、手番、財務データ（PL/BS）を厳密に同期・永続化する。",
+    "basic_policy": "HTML標準タグでUIを構成する。データベースを Single Source of Truth（真実の単一情報源）とし、データの競合や消失を完全に防ぐ。"
+  },
+  "2_screen_and_functional_requirements": {
+    "2_1_guest_screen": {
+      "login_and_join": {
+        "action": "ユーザー名（#input-username）を入力して入室。",
+        "condition": "部屋ステータスが waiting の場合のみ入室可能。playing, ended の場合は新規入室を拒否。"
+      },
+      "status_management": {
+        "profession": "初期割り当て後、ゲーム終了まで不変。",
+        "role_transitions": [
+          "general",
+          "fast_track",
+          "bankrupt",
+          "winner"
+        ]
+      },
+      "turn_and_board_movement": {
+        "total_squares": 24,
+        "movement": "サイコロを振り、出目に応じて位置を更新。",
+        "payday": "通過または着地時、「Paycheck請求」ボタン（#btn-claim-paycheck）を手動押下してキャッシュを加算。",
+        "financial_change_squares": {
+          "types": ["Opportunity", "Doodad", "Market", "Baby"],
+          "action": "取引や支出により財務諸表が変動するため、計算ロック（is_calculating: true）を発動させる。"
+        },
+        "non_financial_change_squares": {
+          "types": ["Charity", "Downsized"],
+          "action": "現金減少や手番スキップは発生するが、PL/BSの計算ロックは不要。"
+        }
+      },
+      "financial_statements_and_calculation_phase": {
+        "action": "計算ロック発動中、プレイヤーは手入力で計算結果（#input-total-income, #input-net-cashflow）を入力する。",
+        "unlock_condition": "「計算チェック」ボタン押下で正解すればロック解除。"
+      },
+      "bank_loan_operation": {
+        "action": "手番中の財務変動処理前に限り、借入・返済（#bank-loan-control）を実行可能。"
+      }
+    },
+    "2_2_host_screen": {
+      "realtime_monitoring": [
+        "盤面状況（0〜23マス）",
+        "参加者名簿",
+        "各山札の残り枚数",
+        "サイコロの出目"
+      ],
+      "lifecycle_control": {
+        "initial_shuffle_and_start": "山札4種（small, big, market, doodad）を生成・シャッフルし、ステータスを playing に変更。最初のプレイヤーに手番を付与。",
+        "force_game_end": "ステータスを ended に変更し、全プレイヤーのレコードを削除。"
+      },
+      "manual_intervention": [
+        "任意のプレイヤーのキック（退室）",
+        "手番の強制移動",
+        "任意のタイミングでの山札手動再シャッフル機能"
+      ]
+    }
+  },
+  "3_database_design_supabase": {
+    "3_1_rooms_table": {
+      "status": ["waiting", "playing", "ended"],
+      "game_state": {
+        "decks": "4種類のカードID配列（引くたびに要素を削除。空になればマスターテーブルから再取得して再シャッフル）。",
+        "current_card": "現在場に出ているカード情報。"
+      }
+    },
+    "3_2_participants_table": {
+      "state_jsonb": {
+        "position": "0-23",
+        "game_phase": "文字列",
+        "is_calculating": "真偽値",
+        "financials": {
+          "cash": "手持ち現金",
+          "income": ["total_income", "passive_income"],
+          "expenses": ["total_expenses", "expenses.taxes", "expenses.loan_interest 等"],
+          "assets": ["assets.stocks", "assets.real_estate"],
+          "liabilities": ["liabilities.mortgage", "liabilities.bank_loan 等"]
+        }
+      }
+    }
+  },
+  "4_concurrency_and_data_integrity_requirements": {
+    "atomic_updates": "JSONBの完全上書き（クライアント側での上書き保存）を禁止する。差分更新のみを実行する。",
+    "server_side_processing": "カードを引く処理、資産売買、銀行ローンの処理、勝利判定などは、改ざん防止のためすべてSupabaseの RPC（ストアドプロシージャ） 内部で完結させる。",
+    "pessimistic_locking": "データ競合（同時にカードを引いてカードが消滅するバグ等）を防ぐため、状態を更新するRPC内では SELECT ... FOR UPDATE を用いてトランザクションを保護する。"
+  }
+}
