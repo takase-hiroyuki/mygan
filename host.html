@@ -35,12 +35,12 @@
             </p>
             <p>
                 <button id="btn-initial-shuffle-start">O 初期シャッフル＆ゲーム開始</button>
-                <button id="btn-force-game-end">全員強制退室＆ゲーム終了</button>
+                <button id="btn-force-game-end">O 全員強制退室＆ゲーム終了</button>
             </p>
             <p>
                 <label for="input-kick-order">退室者の番号: </label>
                 <input type="number" id="input-kick-order" min="1" placeholder="例: 4" size="4">
-                <button id="btn-kick-participant">退室させる</button>
+                <button id="btn-kick-participant">O 退室させる</button>
             </p>
         </fieldset>
 
@@ -74,7 +74,7 @@
                     </td><td align="center" valign="middle" data-position="11">
                         11ＣＦ<div id="rat-cell-11" class="player-occupants"></div>
                     </td>
-				</tr><tr>
+                </tr><tr>
                     <td align="center" valign="middle" data-position="12">
                         12市場<div id="rat-cell-12" class="player-occupants"></div>
                     </td><td align="center" valign="middle" data-position="13">
@@ -123,10 +123,10 @@
                         <td align="center"><span id="deck-count-doodad">0</span> 枚</td>
                     </tr>
                     <tr>
-                        <td align="center"><button id="btn-reshuffle-small-deal">シャッフル</button></td>
-                        <td align="center"><button id="btn-reshuffle-big-deal">シャッフル</button></td>
-                        <td align="center"><button id="btn-reshuffle-market">シャッフル</button></td>
-                        <td align="center"><button id="btn-reshuffle-doodad">シャッフル</button></td>
+                        <td align="center"><button id="btn-reshuffle-small-deal">O シャッフル</button></td>
+                        <td align="center"><button id="btn-reshuffle-big-deal">O シャッフル</button></td>
+                        <td align="center"><button id="btn-reshuffle-market">O シャッフル</button></td>
+                        <td align="center"><button id="btn-reshuffle-doodad">O シャッフル</button></td>
                     </tr>
                 </tbody>
             </table>
@@ -145,14 +145,14 @@
         <fieldset>
             <legend>手番プレイヤー手動制御</legend>
             <input type="number" id="input-next-turn-order" placeholder="入室順を入力" min="1">
-            <button id="btn-set-turn">を手番にする</button>
+            <button id="btn-set-turn">O を手番にする</button>
         </fieldset>
 
         <br>
 
     </div>
 
-	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- scriptタグの重複を排除(CDN側はheadに存在するため末尾はモジュールのみ) -->
     <script type="module" src="host.js"></script>
 </body>
 </html>
