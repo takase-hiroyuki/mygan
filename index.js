@@ -241,16 +241,16 @@ function syncInterface() {
             if (state.last_dice > 0) {
                 btnRollDice.disabled = true; btnRollDice.textContent = "X サイコロを振る";
                 btnEndTurn.disabled = false; btnEndTurn.textContent = "O 手番終了";
-                diceStatusArea.textContent = `出目: ${state.last_dice}。手番を終了できます。`;
+                diceStatusArea.textContent = `結果:【${state.last_dice}】`;
                 btnClaimPaycheck.disabled = true; btnClaimPaycheck.textContent = "X Paycheck請求";
             } else {
-                diceStatusArea.textContent = "あなたの手番です。サイコロを振ってください。";
+                diceStatusArea.textContent = "あなたの手番";
                 btnRollDice.disabled = false; btnRollDice.textContent = "O サイコロを振る";
                 btnClaimPaycheck.disabled = true; btnEndTurn.disabled = true;
             }
             btnEscapeRatRace.disabled = true; btnEscapeRatRace.textContent = "X ラットレース脱出";
         } else {
-            diceStatusArea.textContent = `現在、[${turnUserName}] がプレイ中です。`;
+            diceStatusArea.textContent = `[${turnUserName}] がプレイ中`;
             btnRollDice.disabled = true; btnRollDice.textContent = "X サイコロを振る";
             btnClaimPaycheck.disabled = true; btnClaimPaycheck.textContent = "X Paycheck請求";
             btnEndTurn.disabled = true; btnEndTurn.textContent = "X 手番終了";
