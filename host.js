@@ -1,6 +1,7 @@
 // host.js
-import { roomId, SUPABASE_URL, SUPABASE_KEY, BOARD_CELL_NAMES } from './config.js';
+import { roomId, SUPABASE_URL, SUPABASE_KEY } from './config.js';
 import { DOM_SELECTORS } from './dom_selectors.js';
+import { setButtonActive, BOARD_CELL_NAMES } from './utils.js';
 
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const HOST_ADMIN_ID = 'host-admin-01';
@@ -57,13 +58,8 @@ async function syncAndFetchRoom() {
         if (displayRoomStatus) displayRoomStatus.textContent = isPlaying ? 'playing (ゲーム進行中)' : 'waiting (準備中)';
         
         if (btnInitialShuffleStart) {
-            if (isPlaying) {
-                btnInitialShuffleStart.disabled = true;
-                btnInitialShuffleStart.textContent = 'X ゲーム開始 (ダイス検証モード)';
-            } else {
-                btnInitialShuffleStart.disabled = false;
-                btnInitialShuffleStart.textContent = 'O ゲーム開始 (ダイス検証モード)';
-            }
+            // utils.jsの関数を使用してボタンの状態とテキストを同期
+            setButtonActive(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE, !isPlaying);
         } 
         
         /* [機能キャンセルアウト] 山札枚数監視の同期判定
@@ -143,8 +139,7 @@ btnInitialShuffleStart?.addEventListener('click', async (event) => {
     console.log("【デバッグ1】", debugFunctionName);
 
     if (!confirm("サイコロ検証用ゲームを開始しますか？")) return;
-    btnInitialShuffleStart.disabled = true;
-    btnInitialShuffleStart.textContent = 'X ゲーム開始 (ダイス検証モード)';
+    setButtonActive(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE, false);
     
     // データ整合性のための最小限ルームステータスplaying化パッチ
     const { error } = await supabase.from('rooms').update({
@@ -155,19 +150,17 @@ btnInitialShuffleStart?.addEventListener('click', async (event) => {
 
     if (error) {
         alert(error.message);
-        btnInitialShuffleStart.disabled = false;
-        btnInitialShuffleStart.textContent = 'O ゲーム開始 (ダイス検証モード)';
+        setButtonActive(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE, true);
     } else {
         // 最初のプレイヤーに強制手番付与
         if (currentParticipants.length > 0) {
             await supabase.from('rooms').update({ current_turn_user_id: currentParticipants[0].user_id }).eq('id', roomId);
         }
         await syncAndFetchRoom();
-        btnInitialShuffleStart.textContent = 'X ゲーム開始 (ダイス検証モード)';
+        setButtonActive(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE, false);
     }
 
     console.log("【デバッグ3】", debugFunctionName);
-
 });
 
 /* [機能キャンセルアウト] 強制終了・手番制御・キック・手動リシャッフル
