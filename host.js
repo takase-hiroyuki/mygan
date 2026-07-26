@@ -58,9 +58,14 @@ async function syncAndFetchRoom() {
         if (displayRoomStatus) displayRoomStatus.textContent = isPlaying ? 'playing (ゲーム進行中)' : 'waiting (準備中)';
         
         if (btnInitialShuffleStart) {
-            btnInitialShuffleStart.disabled = false;
-            btnInitialShuffleStart.textContent = 'O ゲーム開始 (ダイス検証モード)';
-        }
+            if (isPlaying) {
+                btnInitialShuffleStart.disabled = true;
+                btnInitialShuffleStart.textContent = 'X ゲーム開始 (ダイス検証モード)';
+            } else {
+                btnInitialShuffleStart.disabled = false;
+                btnInitialShuffleStart.textContent = 'O ゲーム開始 (ダイス検証モード)';
+            }
+        } 
         
         /* [機能キャンセルアウト] 山札枚数監視の同期判定
         updateDeckView(state);
