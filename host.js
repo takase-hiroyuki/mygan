@@ -25,7 +25,7 @@ let currentParticipants = [];
 let activeRoomRecord = null;
 
 (async function initHost() {
-    console.log("【デバッグ】initHost リアルタイム監視開始 部屋番号:", roomId);
+    console.log("【デバッグ】initHost 監視開始 部屋番号:", roomId);
     await syncAndFetchRoom();
 
     supabase.channel('public:host_participants').on('postgres_changes', { event: '*', schema: 'public', table: 'participants' }, async () => {
@@ -84,6 +84,7 @@ function drawHostScreen() {
     console.log("【デバッグ】drawHostScreen");
 
     if (hostDiceMonitor) {
+        console.log("【デバッグ】hostDiceMOnitor");
         const activeId = activeRoomRecord ? activeRoomRecord.current_turn_user_id : null;
         if (!activeId) {
             hostDiceMonitor.textContent = "手番が設定されていません";
@@ -106,6 +107,7 @@ function drawHostScreen() {
         const state = p.state || {};
         const financials = state.financials || {};
         const position = state.position ?? 0;
+        console.log("【デバッグ】currentParticipants", position);
 
         const tr = document.createElement('tr');
         tr.classList.add(itemSEL.ROW_CLASS);
