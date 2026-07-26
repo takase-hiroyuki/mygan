@@ -144,7 +144,9 @@ btnLogin.addEventListener('click', async (event) => {
     console.log("【デバッグ5】", debugFunctionName);
     
     btnLogin.disabled = true;
-    const { error } = await supabase.from('participants').insert([{ room_id: roomId, user_id: currentUserId, state: initialRegistrationState }]);
+    const { error } = await supabase.from('participants').insert(
+        [{ room_id: roomId, user_id: currentUserId, state: initialRegistrationState }]
+    );
     if (error) {
         alert('送信に失敗しました。');
         btnLogin.disabled = false;
@@ -159,7 +161,8 @@ btnLogin.addEventListener('click', async (event) => {
 
 function startSubscriptions() {
     if (!supabase) return;
-    supabase.channel('public:participants').on('postgres_changes', { event: '*', schema: 'public', table: 'participants' }, async (payload) => {
+    supabase.channel('public:participants').on('postgres_changes', {
+        event: '*', schema: 'public', table: 'participants' }, async (payload) => {
         if (payload.eventType === 'DELETE') {
             const { data } = await supabase.from('participants').select('id').eq('room_id', roomId);
             if (!data || data.length === 0) {
@@ -171,7 +174,8 @@ function startSubscriptions() {
         fetchAndRender();
     }).subscribe();
 
-    supabase.channel('public:rooms').on('postgres_changes', { event: '*', schema: 'public', table: 'rooms', filter: `id=eq.${roomId}` }, () => {
+    supabase.channel('public:rooms').on('postgres_changes', { 
+        event: '*', schema: 'public', table: 'rooms', filter: `id=eq.${roomId}` }, () => {
         fetchAndRender();
     }).subscribe();
 
@@ -215,7 +219,7 @@ function syncInterface() {
             const cell = document.getElementById(`${SEL_G.BOARD.RAT_PREFIX}${parseInt(p.state.position, 10)}`);
             if (cell) {
                 const badge = document.createElement('span');
-                badge.style = "display:inline-block; background-color:#ffc107; color:#000; padding:2px 6px; margin:0 2px; border-radius:4px; font-size:0.85em; font-weight:bold;";
+                badge.style = "display:inline-block; background-color:#ffc107; color:#000;";
                 badge.textContent = p.state.name;
                 cell.appendChild(badge);
             }
