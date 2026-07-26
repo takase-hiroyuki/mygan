@@ -1,5 +1,5 @@
 // index.js
-import { roomId, SUPABASE_URL, SUPABASE_KEY } from './config.js';
+import { roomId, SUPABASE_URL, SUPABASE_KEY, BOARD_CELL_NAMES } from './config.js';
 import { DOM_SELECTORS } from './dom_selectors.js';
 
 let supabase = null;
