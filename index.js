@@ -222,13 +222,14 @@ function syncInterface() {
         }
     });
 
-    // 最小限のサイコロ・手番進行制御
+    // 最小限のサイコロ・手番進行制御・計算ボタン無効化
     if (!isPlaying) {
         diceStatusArea.textContent = "ホストがゲームを開始するまでお待ちください。";
         setButtonActive(SEL_G.CONTROLS.BTN_ROLL_DICE, false);
         setButtonActive(SEL_G.CONTROLS.BTN_CLAIM_PAYCHECK, false);
         setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, false);
         setButtonActive(SEL_G.CONTROLS.BTN_ESCAPE_RAT_RACE, false);
+        setButtonActive(SEL_G.FINANCIALS.BTN_CHECK_CALCULATIONS, false); // 実装前のため非アクティブ
     } else {
         const turnUser = cachedParticipants.find(p => p.user_id === turnUserId);
         const turnUserName = turnUser ? turnUser.state.name : "他のプレイヤー";
@@ -246,12 +247,14 @@ function syncInterface() {
                 setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, false);
             }
             setButtonActive(SEL_G.CONTROLS.BTN_ESCAPE_RAT_RACE, false);
+            setButtonActive(SEL_G.FINANCIALS.BTN_CHECK_CALCULATIONS, false); // 実装前のため非アクティブ
         } else {
             diceStatusArea.textContent = `[${turnUserName}] がプレイ中`;
             setButtonActive(SEL_G.CONTROLS.BTN_ROLL_DICE, false);
             setButtonActive(SEL_G.CONTROLS.BTN_CLAIM_PAYCHECK, false);
             setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, false);
             setButtonActive(SEL_G.CONTROLS.BTN_ESCAPE_RAT_RACE, false);
+            setButtonActive(SEL_G.FINANCIALS.BTN_CHECK_CALCULATIONS, false); // 実装前のため非アクティブ
         }
     }
 
@@ -311,12 +314,13 @@ btnEndTurn.addEventListener('click', async (event) => {
  * ゲスト画面のすべてのアクションボタンを一括で無効化する
  */
 function disableAllActionButtons() {
-    const { CONTROLS, CARD, PORTFOLIO } = DOM_SELECTORS.GUEST;
+    const { CONTROLS, CARD, PORTFOLIO, FINANCIALS } = DOM_SELECTORS.GUEST;
     const actionButtonIds = [
         CONTROLS.BTN_ROLL_DICE, CONTROLS.BTN_CLAIM_PAYCHECK, CONTROLS.BTN_END_TURN, CONTROLS.BTN_ESCAPE_RAT_RACE,
         CARD.BTN_DRAW_SMALL_DEAL, CARD.BTN_DRAW_BIG_DEAL, CARD.BTN_DRAW_MARKET, CARD.BTN_DRAW_DOODAD,
         CARD.BTN_BUY_REALESTATE, CARD.BTN_BUY_STOCK, CARD.BTN_SELL_STOCK, CARD.BTN_PAY_DOODAD, CARD.BTN_PASS,
-        PORTFOLIO.BTN_BORROW_LOAN, PORTFOLIO.BTN_PAYBACK_LOAN
+        PORTFOLIO.BTN_BORROW_LOAN, PORTFOLIO.BTN_PAYBACK_LOAN,
+        FINANCIALS.BTN_CHECK_CALCULATIONS // 未実装機能だが全て無効化の対象に含める
     ];
     setMultipleButtonsActive(actionButtonIds, false);
 }
