@@ -117,7 +117,7 @@ function drawHostScreen() {
             <td>${idx + 1}</td>
             <td>${state.name || '不明'} (${p.user_id})</td>
             <td class="${itemSEL.PROFESSION_CLASS}">${state.profession || '未定'}</td>
-            <td>${position === 0 ? "00給料" : `${position} 番マス`}</td>
+            <td>${String(position).padStart(2, '0')}${BOARD_CELL_NAMES[position] || ""}</td>
             <td>$${(financials.cash || 0).toLocaleString()}</td>
         `;
         listBody.appendChild(tr);
