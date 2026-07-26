@@ -20,12 +20,6 @@ function waitForSupabase() {
     });
 }
 
-const BOARD_CELL_NAMES = [
-    "ＣＦ", "娯楽", "好機", "寄付", "好機", "ＣＦ", "好機", "娯楽",
-    "好機", "子供", "好機", "ＣＦ", "市場", "好機", "娯楽", "好機",
-    "寄付", "好機", "ＣＦ", "好機", "解雇", "好機", "市場", "好機"
-];
-
 const SEL_G = DOM_SELECTORS.GUEST;
 const sectionLogin = document.getElementById(SEL_G.LOGIN.SECTION);
 const sectionGuest = document.getElementById(SEL_G.STATUS.SECTION);
