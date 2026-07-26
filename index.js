@@ -20,6 +20,12 @@ function waitForSupabase() {
     });
 }
 
+const BOARD_CELL_NAMES = [
+    "ＣＦ", "娯楽", "好機", "寄付", "好機", "ＣＦ", "好機", "娯楽",
+    "好機", "子供", "好機", "ＣＦ", "市場", "好機", "娯楽", "好機",
+    "寄付", "好機", "ＣＦ", "好機", "解雇", "好機", "市場", "好機"
+];
+
 const SEL_G = DOM_SELECTORS.GUEST;
 const sectionLogin = document.getElementById(SEL_G.LOGIN.SECTION);
 const sectionGuest = document.getElementById(SEL_G.STATUS.SECTION);
@@ -250,6 +256,14 @@ function syncInterface() {
             btnEndTurn.disabled = true; btnEndTurn.textContent = "X 手番終了";
             btnEscapeRatRace.disabled = true; btnEscapeRatRace.textContent = "X ラットレース脱出";
         }
+    }
+
+    // 現在位置の表示更新
+    if (guestDiceResult && state.position !== undefined) {
+        const posNum = state.position;
+        const posStr = String(posNum).padStart(2, '0'); // "08" のように2桁ゼロ埋め
+        const cellName = BOARD_CELL_NAMES[posNum] || "";
+        guestDiceResult.textContent = `現在地：${posStr}${cellName}`;
     }
 
     /* [機能キャンセルアウト] 以下のUI同期処理を全無効化
