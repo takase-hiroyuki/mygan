@@ -7,5 +7,11 @@ export const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdX
 // 2. 小規模運用のための固定設定
 export const roomId = "room01"; // ゲーム（部屋）は1つに固定
 
+const BOARD_CELL_NAMES = [
+    "ＣＦ", "娯楽", "好機", "寄付", "好機", "ＣＦ", "好機", "娯楽",
+    "好機", "子供", "好機", "ＣＦ", "市場", "好機", "娯楽", "好機",
+    "寄付", "好機", "ＣＦ", "好機", "解雇", "好機", "市場", "好機"
+];
+
 // 【デバッグコード】
 console.log("【デバッグ】config.js 部屋番号:", roomId);
