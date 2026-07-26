@@ -134,9 +134,13 @@ function drawHostScreen() {
 }
 
 // 初期シャッフル＆開始をモック状態(status: playing)へアトミックに変更する処理へ限定化
-btnInitialShuffleStart?.addEventListener('click', async () => {
+btnInitialShuffleStart?.addEventListener('click', async (event) => {
+    const debugFunctionName = event.currentTarget.id;
+    console.log("【デバッグ1】", debugFunctionName);
+
     if (!confirm("サイコロ検証用ゲームを開始しますか？")) return;
     btnInitialShuffleStart.disabled = true;
+    btnInitialShuffleStart.textContent = 'X ゲーム開始 (ダイス検証モード)';
     
     // データ整合性のための最小限ルームステータスplaying化パッチ
     const { error } = await supabase.from('rooms').update({
@@ -146,12 +150,14 @@ btnInitialShuffleStart?.addEventListener('click', async () => {
     if (error) {
         alert(error.message);
         btnInitialShuffleStart.disabled = false;
+        btnInitialShuffleStart.textContent = 'O ゲーム開始 (ダイス検証モード)';
     } else {
         // 最初のプレイヤーに強制手番付与
         if (currentParticipants.length > 0) {
             await supabase.from('rooms').update({ current_turn_user_id: currentParticipants[0].user_id }).eq('id', roomId);
         }
         await syncAndFetchRoom();
+        btnInitialShuffleStart.textContent = 'X ゲーム開始 (ダイス検証モード)';
     }
 });
 
