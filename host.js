@@ -147,6 +147,8 @@ btnInitialShuffleStart?.addEventListener('click', async (event) => {
         game_state: { status: "playing", decks: { small_deal:[], big_deal:[], market:[], doodad:[] }, current_card: null }
     }).eq('id', roomId);
 
+    console.log("【デバッグ2】", debugFunctionName);
+
     if (error) {
         alert(error.message);
         btnInitialShuffleStart.disabled = false;
@@ -159,6 +161,9 @@ btnInitialShuffleStart?.addEventListener('click', async (event) => {
         await syncAndFetchRoom();
         btnInitialShuffleStart.textContent = 'X ゲーム開始 (ダイス検証モード)';
     }
+
+    console.log("【デバッグ3】", debugFunctionName);
+
 });
 
 /* [機能キャンセルアウト] 強制終了・手番制御・キック・手動リシャッフル
