@@ -2,26 +2,23 @@
 import { roomId, SUPABASE_URL, SUPABASE_KEY } from './config.js';
 import { DOM_SELECTORS } from './dom_selectors.js';
 
-// HTML側でロード済みのグローバルな supabase インスタンスからクライアントを生成
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
 const HOST_ADMIN_ID = 'host-admin-01';
-
 const listBody = document.getElementById(DOM_SELECTORS.HOST.PARTICIPANT_LIST);
 const displayRoomStatus = document.getElementById(DOM_SELECTORS.HOST.LIFECYCLE.DISPLAY_ROOM_STATUS);
 const btnInitialShuffleStart = document.getElementById(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE);
 const btnForceGameEnd = document.getElementById(DOM_SELECTORS.HOST.LIFECYCLE.BTN_FORCE_GAME_END);
 const hostDiceMonitor = document.getElementById(DOM_SELECTORS.HOST.DICE_MONITOR);
-
 const inputNextTurnOrder = document.getElementById(DOM_SELECTORS.HOST.TURN_CONTROL.INPUT_NEXT_ORDER);
 const btnSetTurn = document.getElementById(DOM_SELECTORS.HOST.TURN_CONTROL.BTN_SET_TURN);
 const inputKickOrder = document.getElementById(DOM_SELECTORS.HOST.KICK_CONTROL.INPUT_KICK_ORDER);
 const btnKickParticipant = document.getElementById(DOM_SELECTORS.HOST.KICK_CONTROL.BTN_KICK_PARTICIPANT);
-
 const btnReshuffleSmall = document.getElementById(DOM_SELECTORS.HOST.DECK_MONITOR.BTN_RESHUFFLE_SMALL_DEAL);
 const btnReshuffleBig = document.getElementById(DOM_SELECTORS.HOST.DECK_MONITOR.BTN_RESHUFFLE_BIG_DEAL);
 const btnReshuffleMarket = document.getElementById(DOM_SELECTORS.HOST.DECK_MONITOR.BTN_RESHUFFLE_MARKET);
 const btnReshuffleDoodad = document.getElementById(DOM_SELECTORS.HOST.DECK_MONITOR.BTN_RESHUFFLE_DOODAD);
+
+console.log("【デバッグ】const 終了");
 
 let currentParticipants = [];
 let activeRoomRecord = null;
@@ -44,6 +41,8 @@ let activeRoomRecord = null;
 })();
 
 async function syncAndFetchRoom() {
+    console.log("【デバッグ】syncAndFetchRoom");
+
     const [resPart, resRoom] = await Promise.all([
         supabase.from('participants').select('*').eq('room_id', roomId).order('id', { ascending: true }),
         supabase.from('rooms').select('*').eq('id', roomId).maybeSingle()
