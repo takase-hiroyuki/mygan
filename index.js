@@ -1,6 +1,7 @@
 // index.js
-import { roomId, SUPABASE_URL, SUPABASE_KEY, BOARD_CELL_NAMES } from './config.js';
+import { roomId, SUPABASE_URL, SUPABASE_KEY } from './config.js';
 import { DOM_SELECTORS } from './dom_selectors.js';
+import { setButtonActive, setMultipleButtonsActive, BOARD_CELL_NAMES } from './utils.js';
 
 let supabase = null;
 
@@ -154,7 +155,6 @@ btnLogin.addEventListener('click', async (event) => {
     startSubscriptions();
 
     console.log("【デバッグ】5", debugFunctionName);
-
 });
 
 function startSubscriptions() {
@@ -225,30 +225,33 @@ function syncInterface() {
     // 最小限のサイコロ・手番進行制御
     if (!isPlaying) {
         diceStatusArea.textContent = "ホストがゲームを開始するまでお待ちください。";
-        btnRollDice.disabled = true; btnRollDice.textContent = "X サイコロを振る";
-        btnClaimPaycheck.disabled = true; btnEndTurn.disabled = true; btnEscapeRatRace.disabled = true;
+        setButtonActive(SEL_G.CONTROLS.BTN_ROLL_DICE, false);
+        setButtonActive(SEL_G.CONTROLS.BTN_CLAIM_PAYCHECK, false);
+        setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, false);
+        setButtonActive(SEL_G.CONTROLS.BTN_ESCAPE_RAT_RACE, false);
     } else {
         const turnUser = cachedParticipants.find(p => p.user_id === turnUserId);
         const turnUserName = turnUser ? turnUser.state.name : "他のプレイヤー";
 
         if (isMyTurn) {
             if (state.last_dice > 0) {
-                btnRollDice.disabled = true; btnRollDice.textContent = "X サイコロを振る";
-                btnEndTurn.disabled = false; btnEndTurn.textContent = "O 手番終了";
+                setButtonActive(SEL_G.CONTROLS.BTN_ROLL_DICE, false);
+                setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, true);
                 diceStatusArea.textContent = `結果:【${state.last_dice}】`;
-                btnClaimPaycheck.disabled = true; btnClaimPaycheck.textContent = "X Paycheck請求";
+                setButtonActive(SEL_G.CONTROLS.BTN_CLAIM_PAYCHECK, false);
             } else {
                 diceStatusArea.textContent = "あなたの手番";
-                btnRollDice.disabled = false; btnRollDice.textContent = "O サイコロを振る";
-                btnClaimPaycheck.disabled = true; btnEndTurn.disabled = true;
+                setButtonActive(SEL_G.CONTROLS.BTN_ROLL_DICE, true);
+                setButtonActive(SEL_G.CONTROLS.BTN_CLAIM_PAYCHECK, false);
+                setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, false);
             }
-            btnEscapeRatRace.disabled = true; btnEscapeRatRace.textContent = "X ラットレース脱出";
+            setButtonActive(SEL_G.CONTROLS.BTN_ESCAPE_RAT_RACE, false);
         } else {
             diceStatusArea.textContent = `[${turnUserName}] がプレイ中`;
-            btnRollDice.disabled = true; btnRollDice.textContent = "X サイコロを振る";
-            btnClaimPaycheck.disabled = true; btnClaimPaycheck.textContent = "X Paycheck請求";
-            btnEndTurn.disabled = true; btnEndTurn.textContent = "X 手番終了";
-            btnEscapeRatRace.disabled = true; btnEscapeRatRace.textContent = "X ラットレース脱出";
+            setButtonActive(SEL_G.CONTROLS.BTN_ROLL_DICE, false);
+            setButtonActive(SEL_G.CONTROLS.BTN_CLAIM_PAYCHECK, false);
+            setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, false);
+            setButtonActive(SEL_G.CONTROLS.BTN_ESCAPE_RAT_RACE, false);
         }
     }
 
@@ -269,7 +272,7 @@ function syncInterface() {
     */
 }
 
-btnRollDice.addEventListener('click', async () => {
+btnRollDice.addEventListener('click', async (event) => {
     const debugFunctionName = event.currentTarget.id;
     console.log("【デバッグ】", debugFunctionName);
 
@@ -291,14 +294,32 @@ btnRollDice.addEventListener('click', async () => {
     await supabase.rpc('merge_participant_state', { target_user_id: currentUserId, state_patch: patch });
 });
 
-btnEndTurn.addEventListener('click', async () => {
+btnEndTurn.addEventListener('click', async (event) => {
     const debugFunctionName = event.currentTarget.id;
     console.log("【デバッグ】", debugFunctionName);
 
     if (!supabase) return;
+
+    // 手番終了時に自身のアクションボタンを全て非アクティブ（X）にする
+    disableAllActionButtons();
+
     clientPendingSalary = 0;
     await supabase.rpc('pass_and_end_turn', { p_room_id: roomId, p_user_id: currentUserId });
 });
+
+/**
+ * ゲスト画面のすべてのアクションボタンを一括で無効化する
+ */
+function disableAllActionButtons() {
+    const { CONTROLS, CARD, PORTFOLIO } = DOM_SELECTORS.GUEST;
+    const actionButtonIds = [
+        CONTROLS.BTN_ROLL_DICE, CONTROLS.BTN_CLAIM_PAYCHECK, CONTROLS.BTN_END_TURN, CONTROLS.BTN_ESCAPE_RAT_RACE,
+        CARD.BTN_DRAW_SMALL_DEAL, CARD.BTN_DRAW_BIG_DEAL, CARD.BTN_DRAW_MARKET, CARD.BTN_DRAW_DOODAD,
+        CARD.BTN_BUY_REALESTATE, CARD.BTN_BUY_STOCK, CARD.BTN_SELL_STOCK, CARD.BTN_PAY_DOODAD, CARD.BTN_PASS,
+        PORTFOLIO.BTN_BORROW_LOAN, PORTFOLIO.BTN_PAYBACK_LOAN
+    ];
+    setMultipleButtonsActive(actionButtonIds, false);
+}
 
 /* [機能キャンセルアウト] その他のボタン処理
 btnClaimPaycheck.addEventListener('click', async () => { ... });
