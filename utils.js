@@ -23,3 +23,10 @@ export function setMultipleButtonsActive(ids, isActive) {
     ids.forEach(id => setButtonActive(id, isActive));
 }
 
+export const BOARD_CELL_NAMES = [
+    "ＣＦ", "娯楽", "好機", "寄付", "好機", "ＣＦ", "好機", "娯楽",
+    "好機", "子供", "好機", "ＣＦ", "市場", "好機", "娯楽", "好機",
+    "寄付", "好機", "ＣＦ", "好機", "解雇", "好機", "市場", "好機"
+];
+
+
