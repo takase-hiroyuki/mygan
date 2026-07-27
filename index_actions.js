@@ -1,5 +1,6 @@
 // index_actions.js
 import { roomId } from './common_config.js';
+import { DOM_SELECTORS } from './common_dom_selectors.js';
 import { disableAllActionButtons } from './index_ui.js';
 
 /**
@@ -18,6 +19,30 @@ export async function actionRollDice(supabase, currentUserId) {
     if (error) {
         console.error("サイコロ処理エラー:", error);
         alert(`処理エラー: ${error.message}`);
+    }
+}
+
+/**
+ * 給料手動請求アクション（Paycheck請求）
+ * データベース層で資金を加算し、フェーズをリセットしてボタンを非アクティブ化する
+ */
+export async function actionClaimPaycheck(supabase, currentUserId) {
+    if (!supabase || !currentUserId) return;
+    
+    // 連打防止のため即座にボタンを無効化
+    const claimButton = document.getElementById(DOM_SELECTORS.GUEST.CONTROLS.BTN_CLAIM_PAYCHECK);
+    if (claimButton) claimButton.disabled = true;
+
+    const { error } = await supabase.rpc('claim_paycheck', { 
+        p_room_id: roomId, 
+        p_user_id: currentUserId 
+    });
+    
+    if (error) {
+        console.error("Paycheck請求エラー:", error);
+        alert(`処理エラー: ${error.message}`);
+        // エラー時はボタンを復旧
+        if (claimButton) claimButton.disabled = false;
     }
 }
 
