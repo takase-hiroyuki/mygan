@@ -68,8 +68,15 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
             if (state.last_dice > 0) {
                 setButtonActive(SEL_G.CONTROLS.BTN_ROLL_DICE, false);
                 setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, true);
-                diceStatusArea.textContent = `結果:【${state.last_dice}】`;
-                setButtonActive(SEL_G.CONTROLS.BTN_CLAIM_PAYCHECK, false);
+                
+                // Paydayフェーズに応じたUIの切り替え
+                if (state.calculation_phase === 'payday') {
+                    diceStatusArea.textContent = `結果:【${state.last_dice}】 Paycheck請求可能`;
+                    setButtonActive(SEL_G.CONTROLS.BTN_CLAIM_PAYCHECK, true);
+                } else {
+                    diceStatusArea.textContent = `結果:【${state.last_dice}】`;
+                    setButtonActive(SEL_G.CONTROLS.BTN_CLAIM_PAYCHECK, false);
+                }
             } else {
                 diceStatusArea.textContent = "あなたの手番";
                 setButtonActive(SEL_G.CONTROLS.BTN_ROLL_DICE, true);
