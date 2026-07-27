@@ -1,7 +1,7 @@
 // index.js
 import { roomId, SUPABASE_URL, SUPABASE_KEY } from './common_config.js';
 import { DOM_SELECTORS } from './common_dom_selectors.js';
-import { setButtonActive, setMultipleButtonsActive, BOARD_CELL_NAMES, waitForSupabase } from './common_utils.js';
+import { setButtonActive, setMultipleButtonsActive, BOARD_CELL_NAMES, waitForSupabase, getInitialRegistrationState } from './common_utils.js';
 
 let supabase = null;
 
@@ -105,25 +105,8 @@ btnLogin.addEventListener('click', async (event) => {
 
     console.log("【デバッグ4】", debugFunctionName);
     
-    const initialRegistrationState = {
-        name: username,
-        role: "general",
-        profession: "未定",
-        game_phase: "rat_race",
-        position: 0,
-        last_dice: 0,
-        is_calculating: false,
-        calculation_phase: "none",
-        children_count: 0,
-        charity_turns_left: 0,
-        downsized_turns_left: 0,
-        financials: {
-            cash: 0, total_income: 0, total_expenses: 0, passive_income: 0, net_cash_flow: 0,
-            expenses: { taxes: 0, mortgage_payment: 0, car_loan_payment: 0, loan_interest: 0, child_expense: 0, other: 0 },
-            assets: { stocks: {}, real_estate: [] },
-            liabilities: { mortgage: 0, car_loan: 0, retail_debt: 0, bank_loan: 0 }
-        }
-    };
+    // common_utils.js から取得した関数で初期状態を生成
+    const initialRegistrationState = getInitialRegistrationState(username);
 
     console.log("【デバッグ5】", debugFunctionName);
     
