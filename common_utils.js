@@ -29,4 +29,20 @@ export const BOARD_CELL_NAMES = [
     "寄付", "好機", "ＣＦ", "好機", "解雇", "好機", "市場", "好機"
 ];
 
-
+/**
+ * window.supabase のロードを安全に待機する関数
+ */
+export function waitForSupabase() {
+    return new Promise((resolve) => {
+        if (window.supabase) {
+            resolve(window.supabase);
+            return;
+        }
+        const interval = setInterval(() => {
+            if (window.supabase) {
+                clearInterval(interval);
+                resolve(window.supabase);
+            }
+        }, 50);
+    });
+}
