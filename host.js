@@ -142,7 +142,9 @@ btnInitialShuffleStart?.addEventListener('click', async (event) => {
         setButtonActive(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE, true);
     } else {
         if (currentParticipants.length > 0) {
-            await supabase.from('rooms').update({ current_turn_user_id: currentParticipants[0].user_id }).eq('id', roomId);
+            const randomIndex = Math.floor(Math.random() * currentParticipants.length);
+            const firstPlayer = currentParticipants[randomIndex];
+            await supabase.from('rooms').update({ current_turn_user_id: firstPlayer.user_id }).eq('id', roomId);
         }
         await syncAndFetchRoom();
         setButtonActive(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE, false);
