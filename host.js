@@ -169,6 +169,7 @@ btnInitialShuffleStart?.addEventListener('click', async (event) => {
 // 全員強制退室＆ゲーム終了ボタン
 // ==========================================
 btnForceGameEnd?.addEventListener('click', async () => {
+    console.log("【デバッグ1】btnForceGameEnd");
     if (!confirm("全員を退室させゲームを強制終了しますか？")) return;
     
     // 1. 全参加者のデータを削除
@@ -178,8 +179,9 @@ btnForceGameEnd?.addEventListener('click', async () => {
         .eq('room_id', roomId);
         
     if (!deleteError) {
+        console.log("【デバッグ2】btnForceGameEnd");
         // 2. 部屋のステータスを待機中(waiting)にリセット
-        await supabase
+        const { error: updateError } = await supabase // ← ここでエラーを受け取る
             .from('rooms')
             .update({ 
                 current_turn_user_id: null, 
@@ -187,10 +189,16 @@ btnForceGameEnd?.addEventListener('click', async () => {
             })
             .eq('id', roomId);
             
-        alert("強制リセットが完了しました。");
-        window.location.reload();
+        // 3. エラー判定を追加
+        if (updateError) {
+            console.log("【デバッグ3】btnForceGameEnd");
+            alert("部屋の状態リセットに失敗しました: " + updateError.message);
+        } else {
+            alert("強制リセットが完了しました。");
+            window.location.reload();
+        }
     } else {
-        alert("リセットに失敗しました: " + deleteError.message);
+        alert("参加者の退室処理に失敗しました: " + deleteError.message);
     }
 });
 
