@@ -3,7 +3,7 @@ import { roomId, SUPABASE_URL, SUPABASE_KEY } from './common_config.js';
 import { DOM_SELECTORS } from './common_dom_selectors.js';
 import { setButtonActive, BOARD_CELL_NAMES, waitForSupabase } from './common_utils.js';
 
-let supabase = null; // 修正点①：非同期で初期化するためletに変更
+let supabase = null;
 const HOST_ADMIN_ID = 'host-admin-01';
 const listBody = document.getElementById(DOM_SELECTORS.HOST.PARTICIPANT_LIST);
 const displayRoomStatus = document.getElementById(DOM_SELECTORS.HOST.LIFECYCLE.DISPLAY_ROOM_STATUS);
@@ -27,7 +27,6 @@ let activeRoomRecord = null;
 (async function initHost() {
     console.log("【デバッグ】initHost 監視開始 部屋番号:", roomId);
     
-    // 修正点①：Supabaseの安全な初期化を待機
     const supabaseGlobal = await waitForSupabase();
     supabase = supabaseGlobal.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -47,7 +46,7 @@ let activeRoomRecord = null;
 })();
 
 async function syncAndFetchRoom() {
-    if (!supabase) return; // supabaseの初期化待ち
+    if (!supabase) return;
     console.log("【デバッグ】syncAndFetchRoom");
 
     const [resPart, resRoom] = await Promise.all([
@@ -124,28 +123,23 @@ function drawHostScreen() {
 }
 
 btnInitialShuffleStart?.addEventListener('click', async (event) => {
-    if (!supabase) return; // supabaseの初期化待ち
+    if (!supabase) return;
     const debugFunctionName = event.currentTarget.id;
     console.log("【デバッグ1】", debugFunctionName);
 
-    if (!confirm("サイコロ検証用ゲームを開始しますか？")) return;
+    if (!confirm("職業割り当てとキャッシュフローを含めてゲームを開始しますか？")) return;
     setButtonActive(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE, false);
     
-    const { error } = await supabase.from('rooms').update({
-        game_state: { status: "playing", decks: { small_deal:[], big_deal:[], market:[], doodad:[] }, current_card: null }
-    }).eq('id', roomId);
+    const { error } = await supabase.rpc('start_game_with_professions', {
+        p_room_id: roomId
+    });
 
     console.log("【デバッグ2】", debugFunctionName);
 
     if (error) {
-        alert(error.message);
+        alert("ゲーム開始処理に失敗しました: " + error.message);
         setButtonActive(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE, true);
     } else {
-        if (currentParticipants.length > 0) {
-            const randomIndex = Math.floor(Math.random() * currentParticipants.length);
-            const firstPlayer = currentParticipants[randomIndex];
-            await supabase.from('rooms').update({ current_turn_user_id: firstPlayer.user_id }).eq('id', roomId);
-        }
         await syncAndFetchRoom();
         setButtonActive(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE, false);
     }
@@ -157,17 +151,15 @@ btnInitialShuffleStart?.addEventListener('click', async (event) => {
 // 全員強制退室＆ゲーム終了ボタン
 // ==========================================
 btnForceGameEnd?.addEventListener('click', async () => {
-    if (!supabase) return; // supabaseの初期化待ち
+    if (!supabase) return;
     if (!confirm("全員を退室させゲームを強制終了しますか？")) return;
     
-    // 1. 全参加者のデータを削除
     const { error: deleteError } = await supabase
         .from('participants')
         .delete()
         .eq('room_id', roomId);
         
     if (!deleteError) {
-        // 修正点②：部屋のステータスを待機中(waiting)にリセットし、エラーを検知
         const { error: updateError } = await supabase
             .from('rooms')
             .update({ 
