@@ -72,6 +72,25 @@ async function syncAndFetchRoom() {
 function drawHostScreen() {
     console.log("【デバッグ】drawHostScreen");
 
+    const state = activeRoomRecord?.game_state || {};
+    const decks = state.decks || {};
+
+    // --- 追加：デッキ枚数の描画処理 ---
+    // ※ DOM_SELECTORS に定義がない場合を考慮し、フォールバックとして文字列IDを指定しています。
+    // ※ HTMLの実際のIDと異なる場合は、以下の 'count-small-deal' 等の部分をHTMLに合わせて修正してください。
+    const elSmallCount = document.getElementById(DOM_SELECTORS.HOST?.DECK_MONITOR?.COUNT_SMALL_DEAL || 'count-small-deal');
+    if (elSmallCount) elSmallCount.textContent = `${decks.small_deal ? decks.small_deal.length : 0} 枚`;
+
+    const elBigCount = document.getElementById(DOM_SELECTORS.HOST?.DECK_MONITOR?.COUNT_BIG_DEAL || 'count-big-deal');
+    if (elBigCount) elBigCount.textContent = `${decks.big_deal ? decks.big_deal.length : 0} 枚`;
+
+    const elMarketCount = document.getElementById(DOM_SELECTORS.HOST?.DECK_MONITOR?.COUNT_MARKET || 'count-market');
+    if (elMarketCount) elMarketCount.textContent = `${decks.market ? decks.market.length : 0} 枚`;
+
+    const elDoodadCount = document.getElementById(DOM_SELECTORS.HOST?.DECK_MONITOR?.COUNT_DOODAD || 'count-doodad');
+    if (elDoodadCount) elDoodadCount.textContent = `${decks.doodad ? decks.doodad.length : 0} 枚`;
+    // --- 追加ここまで ---
+
     if (hostDiceMonitor) {
         const activeId = activeRoomRecord ? activeRoomRecord.current_turn_user_id : null;
         if (!activeId) {
@@ -92,16 +111,16 @@ function drawHostScreen() {
     }
 
     currentParticipants.forEach((p, idx) => {
-        const state = p.state || {};
-        const financials = state.financials || {};
-        const position = state.position ?? 0;
+        const pState = p.state || {};
+        const financials = pState.financials || {};
+        const position = pState.position ?? 0;
 
         const tr = document.createElement('tr');
         tr.classList.add(itemSEL.ROW_CLASS);
         tr.innerHTML = `
             <td>${idx + 1}</td>
-            <td>${state.name || '不明'} (${p.user_id})</td>
-            <td class="${itemSEL.PROFESSION_CLASS}">${state.profession || '未定'}</td>
+            <td>${pState.name || '不明'} (${p.user_id})</td>
+            <td class="${itemSEL.PROFESSION_CLASS}">${pState.profession || '未定'}</td>
             <td>${String(position).padStart(2, '0')}${BOARD_CELL_NAMES[position] || ""}</td>
             <td>$${(financials.cash || 0).toLocaleString()}</td>
         `;
@@ -114,7 +133,7 @@ function drawHostScreen() {
             const trNode = document.createElement('tr'); const tdNode = document.createElement('td');
             tdNode.setAttribute('bgcolor', '#00bcd4'); tdNode.setAttribute('align', 'center');
             const fontNode = document.createElement('font'); fontNode.setAttribute('color', 'white'); fontNode.setAttribute('size', '2');
-            fontNode.textContent = state.name || '不明';
+            fontNode.textContent = pState.name || '不明';
             
             tdNode.appendChild(fontNode); trNode.appendChild(tdNode); table.appendChild(trNode);
             targetCell.appendChild(table);
@@ -130,26 +149,6 @@ btnInitialShuffleStart?.addEventListener('click', async (event) => {
     if (!confirm("職業割り当てとキャッシュフローを含めてゲームを開始しますか？")) return;
     setButtonActive(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE, false);
 
-    /*
-    start_game_with_professions RPC関数でサーバー側で行われている初期化の内容は以下の通り
-
-    部屋（ルーム）のロックとステータス更新
-    対象ルームを FOR UPDATE で行ロックし、ゲームの状態を playing（プレイ中）へ変更。
-    デッキ（small_deal、big_deal、market、doodad）および現在のカード情報を初期化。
-    参加者の中からランダムで1名を選出し、最初のターンプレイヤー（current_turn_user_id）として設定。
-    参加者への職業（プロフェッション）のランダム割り当て
-    ルーム内の全参加者と、マスターデータである12種類の職業リストをそれぞれランダムに並び替え、1対1で重複なく割り当て。
-    初期ステータスと財務情報の構築
-    各プレイヤーのボード上の位置を 0（スタート地点）にリセット。
-    サイコロの記録（last_dice）を 0 に、計算フェーズ（calculation_phase）を none に、計算フラグ（is_calculating）を false に初期設定。
-    割り当てられた職業のデータを元に、以下の財務諸表（financials）を一括生成・設定：
-    初期キャッシュ（cash）
-    給与（salary）
-    総支出（total_expenses：税金、その他の支出、ローンや住宅ローンの支払いを合算）
-    純キャッシュフロー（net_cash_flow：給与から総支出を引いた金額）
-    支出・負債の詳細（expenses および初期負債 liabilities）
-    資産と子どもの人数（資産を空のオブジェクト {}、子供の数を 0 で初期化）
-    */
     const { error } = await supabase.rpc('start_game_with_professions', {
         p_room_id: roomId
     });
