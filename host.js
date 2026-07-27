@@ -129,7 +129,27 @@ btnInitialShuffleStart?.addEventListener('click', async (event) => {
 
     if (!confirm("職業割り当てとキャッシュフローを含めてゲームを開始しますか？")) return;
     setButtonActive(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE, false);
-    
+
+    /*
+    start_game_with_professions RPC関数でサーバー側で行われている初期化の内容は以下の通り
+
+    部屋（ルーム）のロックとステータス更新
+    対象ルームを FOR UPDATE で行ロックし、ゲームの状態を playing（プレイ中）へ変更。
+    デッキ（small_deal、big_deal、market、doodad）および現在のカード情報を初期化。
+    参加者の中からランダムで1名を選出し、最初のターンプレイヤー（current_turn_user_id）として設定。
+    参加者への職業（プロフェッション）のランダム割り当て
+    ルーム内の全参加者と、マスターデータである12種類の職業リストをそれぞれランダムに並び替え、1対1で重複なく割り当て。
+    初期ステータスと財務情報の構築
+    各プレイヤーのボード上の位置を 0（スタート地点）にリセット。
+    サイコロの記録（last_dice）を 0 に、計算フェーズ（calculation_phase）を none に、計算フラグ（is_calculating）を false に初期設定。
+    割り当てられた職業のデータを元に、以下の財務諸表（financials）を一括生成・設定：
+    初期キャッシュ（cash）
+    給与（salary）
+    総支出（total_expenses：税金、その他の支出、ローンや住宅ローンの支払いを合算）
+    純キャッシュフロー（net_cash_flow：給与から総支出を引いた金額）
+    支出・負債の詳細（expenses および初期負債 liabilities）
+    資産と子どもの人数（資産を空のオブジェクト {}、子供の数を 0 で初期化）
+    */
     const { error } = await supabase.rpc('start_game_with_professions', {
         p_room_id: roomId
     });
