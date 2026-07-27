@@ -4,13 +4,14 @@ import { DOM_SELECTORS } from './common_dom_selectors.js';
 import { toggleScreen } from './index_ui.js';
 import { initSupabaseClient, checkExistingLogin, loginUser } from './index_auth.js';
 import { startSubscriptions } from './index_state.js';
-import { actionRollDice, actionEndTurn } from './index_actions.js';
+import { actionRollDice, actionEndTurn, actionClaimPaycheck } from './index_actions.js';
 
 let supabase = null;
 const SEL_G = DOM_SELECTORS.GUEST;
 const inputUsername = document.getElementById(SEL_G.LOGIN.INPUT_USERNAME);
 const btnLogin = document.getElementById(SEL_G.LOGIN.BTN_LOGIN);
 const btnRollDice = document.getElementById(SEL_G.CONTROLS.BTN_ROLL_DICE);
+const btnClaimPaycheck = document.getElementById(SEL_G.CONTROLS.BTN_CLAIM_PAYCHECK);
 const btnEndTurn = document.getElementById(SEL_G.CONTROLS.BTN_END_TURN);
 
 let currentUserId = null;
@@ -46,4 +47,5 @@ btnLogin.addEventListener('click', async () => {
 
 // イベントリスナーは actions へ処理を委譲するのみ
 btnRollDice.addEventListener('click', () => actionRollDice(supabase, currentUserId));
+btnClaimPaycheck.addEventListener('click', () => actionClaimPaycheck(supabase, currentUserId));
 btnEndTurn.addEventListener('click', () => actionEndTurn(supabase, currentUserId));
