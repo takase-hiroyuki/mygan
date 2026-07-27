@@ -1,25 +1,9 @@
 // index.js
 import { roomId, SUPABASE_URL, SUPABASE_KEY } from './common_config.js';
 import { DOM_SELECTORS } from './common_dom_selectors.js';
-import { setButtonActive, setMultipleButtonsActive, BOARD_CELL_NAMES } from './common_utils.js';
+import { setButtonActive, setMultipleButtonsActive, BOARD_CELL_NAMES, waitForSupabase } from './common_utils.js';
 
 let supabase = null;
-
-// window.supabase のロードを安全に待機する関数
-function waitForSupabase() {
-    return new Promise((resolve) => {
-        if (window.supabase) {
-            resolve(window.supabase);
-            return;
-        }
-        const interval = setInterval(() => {
-            if (window.supabase) {
-                clearInterval(interval);
-                resolve(window.supabase);
-            }
-        }, 50);
-    });
-}
 
 const SEL_G = DOM_SELECTORS.GUEST;
 const sectionLogin = document.getElementById(SEL_G.LOGIN.SECTION);
