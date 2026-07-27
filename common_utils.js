@@ -48,7 +48,7 @@ export function waitForSupabase() {
 }
 
 // 盤面の特定のマスを示す定数
-export const PAYDAY_CELLS = [0, 5, 11, 18];       // ＣＦ（給料日）
+export const PAYDAY_CELLS = [0, 5, 11, 18];       // 入金（給料マイナス経費）
 export const OPPORTUNITY_CELLS = [2, 4, 6, 8, 10, 13, 15, 17, 19, 21, 23]; // 好機
 export const DOODAD_CELLS = [1, 7, 14];           // 娯楽
 export const MARKET_CELLS = [12, 22];             // 市場
