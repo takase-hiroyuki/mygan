@@ -1,7 +1,7 @@
 // index.js
-import { roomId, SUPABASE_URL, SUPABASE_KEY } from './config.js';
-import { DOM_SELECTORS } from './dom_selectors.js';
-import { setButtonActive, setMultipleButtonsActive, BOARD_CELL_NAMES } from './utils.js';
+import { roomId, SUPABASE_URL, SUPABASE_KEY } from './common_config.js';
+import { DOM_SELECTORS } from './common_dom_selectors.js';
+import { setButtonActive, setMultipleButtonsActive, BOARD_CELL_NAMES } from './common_utils.js';
 
 let supabase = null;
 
