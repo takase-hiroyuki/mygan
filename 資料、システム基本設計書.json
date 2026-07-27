@@ -1,0 +1,48 @@
+{
+  "system_design": {
+    "title": "システム基本設計書",
+    "version": "2.1.0",
+    "last_updated": "2026-07-27",
+    "description": "Supabaseをバックエンドとしたリアルタイム同期型ボードゲーム進行管理システム。",
+    "architecture": {
+      "frontend": {
+        "stack": "HTML / Vanilla JS",
+        "module_strategy": "責務の分離によるモジュール化構成（SPA）",
+        "modules": {
+          "index_auth.js": "Supabase初期化待機、ログイン処理",
+          "index_state.js": "Realtime通信による状態同期、ローカルデータ保持、描画ハブ",
+          "index_ui.js": "DOM操作、画面描画、ボタン制御（純粋なView関数群）",
+          "index_actions.js": "ユーザー操作イベントのハンドリング、およびSupabase RPC呼び出し（クライアント側での演算禁止）",
+          "common_*.js": "定数（盤面定義）、共通ユーティリティ関数、設定値"
+        }
+      },
+      "backend": {
+        "stack": "Supabase (PostgreSQL, Realtime API, RPC)",
+        "role": "真のゲーム状態の保持、トランザクション管理、リアルタイム配信、ゲームロジック（移動、給料計算等）の中央処理"
+      }
+    },
+    "database_core": {
+      "rooms": "部屋ごとのライフサイクル状態、4種の山札（decks）、使用済み履歴、現在の手番を管理",
+      "participants": "各プレイヤーの動的状態（財務諸表、現在位置、職業など）をJSONBで管理",
+      "cards": "全カードのマスターデータおよびルール（action_rule）"
+    },
+    "data_access_rules": [
+      {
+        "rule": "JSONB全体上書きの禁止",
+        "detail": "ロストアップデートを防ぐため、stateやgame_stateオブジェクト全体のフロントエンドからの上書き更新を禁止する。"
+      },
+      {
+        "rule": "アトミック部分更新の徹底",
+        "detail": "ステートの変更は、PostgreSQLのjsonb_setやマージ関数を用い、差分のみを更新する。"
+      },
+      {
+        "rule": "ロジックのRPCカプセル化",
+        "detail": "ダイスロールに基づく移動、Payday通過判定と給料計算、ターン移行、カード山札の再構築、財務計算（資産売買）は、全てRPC内で1トランザクションとして完結させる。"
+      },
+      {
+        "rule": "排他制御（行ロック）の必須化",
+        "detail": "資金変動を伴う処理は、RPC内で対象行に対して『FOR UPDATE』を発行し、連打や遅延による不整合を防止する。"
+      }
+    ]
+  }
+}
