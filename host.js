@@ -165,17 +165,36 @@ btnInitialShuffleStart?.addEventListener('click', async (event) => {
     console.log("【デバッグ3】", debugFunctionName);
 });
 
-/* [機能キャンセルアウト] 強制終了・手番制御・キック・手動リシャッフル
+// ==========================================
+// 全員強制退室＆ゲーム終了ボタン
+// ==========================================
 btnForceGameEnd?.addEventListener('click', async () => {
     if (!confirm("全員を退室させゲームを強制終了しますか？")) return;
-    const { error } = await supabase.from('participants').delete().eq('room_id', roomId);
-    if (!error) {
-        await supabase.from('rooms').update({ current_turn_user_id: null, game_state: null }).eq('id', roomId);
+    
+    // 1. 全参加者のデータを削除
+    const { error: deleteError } = await supabase
+        .from('participants')
+        .delete()
+        .eq('room_id', roomId);
+        
+    if (!deleteError) {
+        // 2. 部屋のステータスを待機中(waiting)にリセット
+        await supabase
+            .from('rooms')
+            .update({ 
+                current_turn_user_id: null, 
+                game_state: { status: "waiting" } 
+            })
+            .eq('id', roomId);
+            
         alert("強制リセットが完了しました。");
         window.location.reload();
+    } else {
+        alert("リセットに失敗しました: " + deleteError.message);
     }
 });
 
+/* [機能キャンセルアウト] 手番制御・キック・手動リシャッフル
 btnSetTurn?.addEventListener('click', async () => {
     const order = parseInt(inputNextTurnOrder.value, 10);
     if (isNaN(order) || order < 1 || order > currentParticipants.length) {
