@@ -46,6 +46,14 @@ btnLogin.addEventListener('click', async () => {
 });
 
 // イベントリスナーは actions へ処理を委譲するのみ
-btnRollDice.addEventListener('click', () => actionRollDice(supabase, currentUserId));
-btnClaimPaycheck.addEventListener('click', () => actionClaimPaycheck(supabase, currentUserId));
-btnEndTurn.addEventListener('click', () => actionEndTurn(supabase, currentUserId));
+btnRollDice.addEventListener(
+    'click', () => actionRollDice(supabase, currentUserId)
+);
+btnClaimPaycheck.addEventListener(
+    'click', () => actionClaimPaycheck(supabase, currentUserId)
+);
+btnEndTurn.addEventListener(
+    'click', () => actionEndTurn(supabase, currentUserId)
+);
+
+console.log("【デバッグ】index.js が読み込まれました。");
