@@ -159,3 +159,5 @@ export const DOM_SELECTORS = {
         }
     }
 };
+
+console.log("【デバッグ】common_dom_selectors.js が読み込まれました。");
