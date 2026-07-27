@@ -1,9 +1,9 @@
 // host.js
 import { roomId, SUPABASE_URL, SUPABASE_KEY } from './common_config.js';
 import { DOM_SELECTORS } from './common_dom_selectors.js';
-import { setButtonActive, BOARD_CELL_NAMES } from './common_utils.js';
+import { setButtonActive, BOARD_CELL_NAMES, waitForSupabase } from './common_utils.js';
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let supabase = null; // 修正点①：非同期で初期化するためletに変更
 const HOST_ADMIN_ID = 'host-admin-01';
 const listBody = document.getElementById(DOM_SELECTORS.HOST.PARTICIPANT_LIST);
 const displayRoomStatus = document.getElementById(DOM_SELECTORS.HOST.LIFECYCLE.DISPLAY_ROOM_STATUS);
@@ -26,6 +26,11 @@ let activeRoomRecord = null;
 
 (async function initHost() {
     console.log("【デバッグ】initHost 監視開始 部屋番号:", roomId);
+    
+    // 修正点①：Supabaseの安全な初期化を待機
+    const supabaseGlobal = await waitForSupabase();
+    supabase = supabaseGlobal.createClient(SUPABASE_URL, SUPABASE_KEY);
+
     await syncAndFetchRoom();
 
     supabase.channel('public:host_participants').on('postgres_changes', { event: '*', schema: 'public', table: 'participants' }, async () => {
@@ -42,6 +47,7 @@ let activeRoomRecord = null;
 })();
 
 async function syncAndFetchRoom() {
+    if (!supabase) return; // supabaseの初期化待ち
     console.log("【デバッグ】syncAndFetchRoom");
 
     const [resPart, resRoom] = await Promise.all([
@@ -58,33 +64,16 @@ async function syncAndFetchRoom() {
         if (displayRoomStatus) displayRoomStatus.textContent = isPlaying ? 'playing (ゲーム進行中)' : 'waiting (準備中)';
         
         if (btnInitialShuffleStart) {
-            // utils.jsの関数を使用してボタンの状態とテキストを同期
             setButtonActive(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE, !isPlaying);
         } 
-        
-        /* [機能キャンセルアウト] 山札枚数監視の同期判定
-        updateDeckView(state);
-        */
     }
     drawHostScreen();
 }
-
-/* [機能キャンセルアウト] 山札モニター表示処理
-function updateDeckView(gameState) {
-    const selectors = DOM_SELECTORS.HOST.DECK_MONITOR;
-    const decks = gameState.decks || {};
-    document.getElementById(selectors.SMALL_DEAL_COUNT).textContent = Array.isArray(decks.small_deal) ? decks.small_deal.length : 0;
-    document.getElementById(selectors.BIG_DEAL_COUNT).textContent = Array.isArray(decks.big_deal) ? decks.big_deal.length : 0;
-    document.getElementById(selectors.MARKET_COUNT).textContent = Array.isArray(decks.market) ? decks.market.length : 0;
-    document.getElementById(selectors.DOODAD_COUNT).textContent = Array.isArray(decks.doodad) ? decks.doodad.length : 0;
-}
-*/
 
 function drawHostScreen() {
     console.log("【デバッグ】drawHostScreen");
 
     if (hostDiceMonitor) {
-        console.log("【デバッグ】hostDiceMOnitor");
         const activeId = activeRoomRecord ? activeRoomRecord.current_turn_user_id : null;
         if (!activeId) {
             hostDiceMonitor.textContent = "手番が設定されていません";
@@ -107,7 +96,6 @@ function drawHostScreen() {
         const state = p.state || {};
         const financials = state.financials || {};
         const position = state.position ?? 0;
-        console.log("【デバッグ】currentParticipants", position);
 
         const tr = document.createElement('tr');
         tr.classList.add(itemSEL.ROW_CLASS);
@@ -135,15 +123,14 @@ function drawHostScreen() {
     });
 }
 
-// 初期シャッフル＆開始をモック状態(status: playing)へアトミックに変更する処理へ限定化
 btnInitialShuffleStart?.addEventListener('click', async (event) => {
+    if (!supabase) return; // supabaseの初期化待ち
     const debugFunctionName = event.currentTarget.id;
     console.log("【デバッグ1】", debugFunctionName);
 
     if (!confirm("サイコロ検証用ゲームを開始しますか？")) return;
     setButtonActive(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE, false);
     
-    // データ整合性のための最小限ルームステータスplaying化パッチ
     const { error } = await supabase.from('rooms').update({
         game_state: { status: "playing", decks: { small_deal:[], big_deal:[], market:[], doodad:[] }, current_card: null }
     }).eq('id', roomId);
@@ -154,7 +141,6 @@ btnInitialShuffleStart?.addEventListener('click', async (event) => {
         alert(error.message);
         setButtonActive(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE, true);
     } else {
-        // 最初のプレイヤーに強制手番付与
         if (currentParticipants.length > 0) {
             await supabase.from('rooms').update({ current_turn_user_id: currentParticipants[0].user_id }).eq('id', roomId);
         }
@@ -169,7 +155,7 @@ btnInitialShuffleStart?.addEventListener('click', async (event) => {
 // 全員強制退室＆ゲーム終了ボタン
 // ==========================================
 btnForceGameEnd?.addEventListener('click', async () => {
-    console.log("【デバッグ1】btnForceGameEnd");
+    if (!supabase) return; // supabaseの初期化待ち
     if (!confirm("全員を退室させゲームを強制終了しますか？")) return;
     
     // 1. 全参加者のデータを削除
@@ -179,9 +165,8 @@ btnForceGameEnd?.addEventListener('click', async () => {
         .eq('room_id', roomId);
         
     if (!deleteError) {
-        console.log("【デバッグ2】btnForceGameEnd");
-        // 2. 部屋のステータスを待機中(waiting)にリセット
-        const { error: updateError } = await supabase // ← ここでエラーを受け取る
+        // 修正点②：部屋のステータスを待機中(waiting)にリセットし、エラーを検知
+        const { error: updateError } = await supabase
             .from('rooms')
             .update({ 
                 current_turn_user_id: null, 
@@ -189,9 +174,7 @@ btnForceGameEnd?.addEventListener('click', async () => {
             })
             .eq('id', roomId);
             
-        // 3. エラー判定を追加
         if (updateError) {
-            console.log("【デバッグ3】btnForceGameEnd");
             alert("部屋の状態リセットに失敗しました: " + updateError.message);
         } else {
             alert("強制リセットが完了しました。");
@@ -201,41 +184,5 @@ btnForceGameEnd?.addEventListener('click', async () => {
         alert("参加者の退室処理に失敗しました: " + deleteError.message);
     }
 });
-
-/* [機能キャンセルアウト] 手番制御・キック・手動リシャッフル
-btnSetTurn?.addEventListener('click', async () => {
-    const order = parseInt(inputNextTurnOrder.value, 10);
-    if (isNaN(order) || order < 1 || order > currentParticipants.length) {
-        alert("入力順の指定が不正です。"); return;
-    }
-    const targetPlayer = currentParticipants[order - 1];
-    await supabase.rpc('merge_participant_state', { target_user_id: targetPlayer.user_id, state_patch: { last_dice: 0 } });
-    await supabase.from('rooms').update({ current_turn_user_id: targetPlayer.user_id }).eq('id', roomId);
-    inputNextTurnOrder.value = '';
-});
-
-btnKickParticipant?.addEventListener('click', async () => {
-    const order = parseInt(inputKickOrder.value.trim(), 10);
-    if (isNaN(order) || order < 1 || order > currentParticipants.length) {
-        alert("指定されたプレイヤー番号が不正です。"); return;
-    }
-    const targetPlayer = currentParticipants[order - 1];
-    if (confirm(`プレイヤー「${targetPlayer.state?.name}」を退室させますか？`)) {
-        await supabase.from('participants').delete().eq('room_id', roomId).eq('user_id', targetPlayer.user_id);
-        inputKickOrder.value = '';
-    }
-});
-
-const bindManualShuffle = (btn, type) => {
-    btn?.addEventListener('click', async () => {
-        const { data } = await supabase.rpc('manual_reshuffle_deck', { p_room_id: roomId, p_host_user_id: HOST_ADMIN_ID, p_deck_type: type });
-        if (data?.success) alert("山札の再シャッフルが完了しました。");
-    });
-};
-bindManualShuffle(btnReshuffleSmall, 'small_deal');
-bindManualShuffle(btnReshuffleBig, 'big_deal');
-bindManualShuffle(btnReshuffleMarket, 'market');
-bindManualShuffle(btnReshuffleDoodad, 'doodad');
-*/
 
 console.log("【デバッグ】host.js が読み込まれました。");
