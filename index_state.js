@@ -49,3 +49,5 @@ export async function fetchAndRender(supabase, roomId, currentUserId) {
     // 描画関数を呼び出し、最新のキャッシュを渡す
     renderGuestUI(currentUserId, cachedParticipants, cachedRoom);
 }
+
+console.log("【デバッグ】index_state.js が読み込まれました。");
