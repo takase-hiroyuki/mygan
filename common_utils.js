@@ -80,3 +80,5 @@ export function getInitialRegistrationState(username) {
         }
     };
 }
+
+console.log("【デバッグ】common_utils.js が読み込まれました。");
