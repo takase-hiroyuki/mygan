@@ -72,6 +72,9 @@ async function syncAndFetchRoom() {
 function drawHostScreen() {
     console.log("【デバッグ】drawHostScreen");
 
+    const state = activeRoomRecord?.game_state || {};
+    const decks = state.decks || {};
+
     // --- ここからデバッグ用ログを追加 ---
     console.log("【デバッグ検証1: データの中身】decks =", decks);
     console.log("【デバッグ検証2: DOM要素の取得状況】", {
@@ -81,9 +84,6 @@ function drawHostScreen() {
         doodadElem: document.getElementById(DOM_SELECTORS.HOST.DECK_MONITOR.DOODAD_COUNT)
     });
     // --- 追加ここまで ---
-
-    const state = activeRoomRecord?.game_state || {};
-    const decks = state.decks || {};
 
     // --- 修正：定義ファイル(DOM_SELECTORS)を用いたデッキ枚数の描画処理 ---
     const elSmallCount = document.getElementById(DOM_SELECTORS.HOST.DECK_MONITOR.SMALL_DEAL_COUNT);
