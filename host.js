@@ -1,7 +1,7 @@
 // host.js
-import { roomId, SUPABASE_URL, SUPABASE_KEY } from './config.js';
-import { DOM_SELECTORS } from './dom_selectors.js';
-import { setButtonActive, BOARD_CELL_NAMES } from './utils.js';
+import { roomId, SUPABASE_URL, SUPABASE_KEY } from './common_config.js';
+import { DOM_SELECTORS } from './common_dom_selectors.js';
+import { setButtonActive, BOARD_CELL_NAMES } from './common_utils.js';
 
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const HOST_ADMIN_ID = 'host-admin-01';
