@@ -1,9 +1,10 @@
 // index.js
 import { roomId } from './common_config.js';
 import { DOM_SELECTORS } from './common_dom_selectors.js';
-import { toggleScreen, disableAllActionButtons } from './index_ui.js';
+import { toggleScreen } from './index_ui.js';
 import { initSupabaseClient, checkExistingLogin, loginUser } from './index_auth.js';
 import { startSubscriptions } from './index_state.js';
+import { actionRollDice, actionEndTurn } from './index_actions.js';
 
 let supabase = null;
 const SEL_G = DOM_SELECTORS.GUEST;
@@ -43,26 +44,6 @@ btnLogin.addEventListener('click', async () => {
     }
 });
 
-btnRollDice.addEventListener('click', async () => {
-    if (!supabase) return;
-    
-    // 【警告】現状のクライアント側計算はデータ整合性の観点から不適切である。
-    // 次ステップ（index_actions.jsへの分離）にて、この処理を削除し、
-    // サーバーサイドRPC（roll_dice_and_move等）の呼び出しへ完全に置き換える。
-    const diceRoll = Math.floor(Math.random() * 6) + 1;
-    
-    // 一時的な現在位置の取得（次ステップで廃止）
-    const { data: record } = await supabase.from('participants').select('state').eq('user_id', currentUserId).single();
-    const oldPos = record?.state?.position ?? 0;
-    const newPos = (oldPos + diceRoll) % 24;
-
-    const patch = { position: newPos, last_dice: diceRoll };
-    await supabase.rpc('merge_participant_state', { target_user_id: currentUserId, state_patch: patch });
-});
-
-btnEndTurn.addEventListener('click', async () => {
-    if (!supabase) return;
-
-    disableAllActionButtons();
-    await supabase.rpc('pass_and_end_turn', { p_room_id: roomId, p_user_id: currentUserId });
-});
+// イベントリスナーは actions へ処理を委譲するのみ
+btnRollDice.addEventListener('click', () => actionRollDice(supabase, currentUserId));
+btnEndTurn.addEventListener('click', () => actionEndTurn(supabase, currentUserId));
