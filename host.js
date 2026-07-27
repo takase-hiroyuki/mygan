@@ -75,19 +75,17 @@ function drawHostScreen() {
     const state = activeRoomRecord?.game_state || {};
     const decks = state.decks || {};
 
-    // --- 追加：デッキ枚数の描画処理 ---
-    // ※ DOM_SELECTORS に定義がない場合を考慮し、フォールバックとして文字列IDを指定しています。
-    // ※ HTMLの実際のIDと異なる場合は、以下の 'count-small-deal' 等の部分をHTMLに合わせて修正してください。
-    const elSmallCount = document.getElementById(DOM_SELECTORS.HOST?.DECK_MONITOR?.COUNT_SMALL_DEAL || 'count-small-deal');
+    // --- 修正：定義ファイル(DOM_SELECTORS)を用いたデッキ枚数の描画処理 ---
+    const elSmallCount = document.getElementById(DOM_SELECTORS.HOST.DECK_MONITOR.SMALL_DEAL_COUNT);
     if (elSmallCount) elSmallCount.textContent = `${decks.small_deal ? decks.small_deal.length : 0} 枚`;
 
-    const elBigCount = document.getElementById(DOM_SELECTORS.HOST?.DECK_MONITOR?.COUNT_BIG_DEAL || 'count-big-deal');
+    const elBigCount = document.getElementById(DOM_SELECTORS.HOST.DECK_MONITOR.BIG_DEAL_COUNT);
     if (elBigCount) elBigCount.textContent = `${decks.big_deal ? decks.big_deal.length : 0} 枚`;
 
-    const elMarketCount = document.getElementById(DOM_SELECTORS.HOST?.DECK_MONITOR?.COUNT_MARKET || 'count-market');
+    const elMarketCount = document.getElementById(DOM_SELECTORS.HOST.DECK_MONITOR.MARKET_COUNT);
     if (elMarketCount) elMarketCount.textContent = `${decks.market ? decks.market.length : 0} 枚`;
 
-    const elDoodadCount = document.getElementById(DOM_SELECTORS.HOST?.DECK_MONITOR?.COUNT_DOODAD || 'count-doodad');
+    const elDoodadCount = document.getElementById(DOM_SELECTORS.HOST.DECK_MONITOR.DOODAD_COUNT);
     if (elDoodadCount) elDoodadCount.textContent = `${decks.doodad ? decks.doodad.length : 0} 枚`;
     // --- 追加ここまで ---
 
