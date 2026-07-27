@@ -46,3 +46,37 @@ export function waitForSupabase() {
         }, 50);
     });
 }
+
+// 盤面の特定のマスを示す定数
+export const PAYDAY_CELLS = [0, 5, 11, 18];       // ＣＦ（給料日）
+export const OPPORTUNITY_CELLS = [2, 4, 6, 8, 10, 13, 15, 17, 19, 21, 23]; // 好機
+export const DOODAD_CELLS = [1, 7, 14];           // 娯楽
+export const MARKET_CELLS = [12, 22];             // 市場
+export const BABY_CELLS = [9];                    // 子供
+export const CHARITY_CELLS = [3, 16];             // 寄付
+export const DOWNSIZED_CELLS = [20];              // 解雇
+
+/**
+ * プレイヤーの初期登録データを生成する関数
+ */
+export function getInitialRegistrationState(username) {
+    return {
+        name: username,
+        role: "general",
+        profession: "未定",
+        game_phase: "rat_race",
+        position: 0,
+        last_dice: 0,
+        is_calculating: false,
+        calculation_phase: "none",
+        children_count: 0,
+        charity_turns_left: 0,
+        downsized_turns_left: 0,
+        financials: {
+            cash: 0, total_income: 0, total_expenses: 0, passive_income: 0, net_cash_flow: 0,
+            expenses: { taxes: 0, mortgage_payment: 0, car_loan_payment: 0, loan_interest: 0, child_expense: 0, other: 0 },
+            assets: { stocks: {}, real_estate: [] },
+            liabilities: { mortgage: 0, car_loan: 0, retail_debt: 0, bank_loan: 0 }
+        }
+    };
+}
