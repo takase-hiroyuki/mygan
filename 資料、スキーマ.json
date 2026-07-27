@@ -1,9 +1,6 @@
-いま、回答してもらつたスキーマはこれである。
-
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "CashflowGameProfessionMaster",
-  "description": "キャッシュフローゲームの12種類の職業マスターデータ構造定義",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Cashflow Game Integrated Schema",
   "type": "object",
   "properties": {
     "professions": {
@@ -11,22 +8,10 @@
       "items": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string",
-            "description": "職業ID（例: accountant, nurse, engineer等）"
-          },
-          "title": {
-            "type": "string",
-            "description": "職業名（日本語表示用）"
-          },
-          "initial_cash": {
-            "type": "integer",
-            "description": "初期手持ち現金（Savings）"
-          },
-          "salary": {
-            "type": "integer",
-            "description": "給料（Salary）"
-          },
+          "id": { "type": "string" },
+          "title": { "type": "string" },
+          "initial_cash": { "type": "integer" },
+          "salary": { "type": "integer" },
           "expenses": {
             "type": "object",
             "properties": {
@@ -39,17 +24,7 @@
               "bank_loan_payment": { "type": "integer" },
               "other_expenses": { "type": "integer" },
               "child_expense": { "type": "integer" }
-            },
-            "required": [
-              "taxes",
-              "home_mortgage_payment",
-              "school_loan_payment",
-              "car_loan_payment",
-              "credit_card_payment",
-              "retail_payment",
-              "other_expenses",
-              "child_expense"
-            ]
+            }
           },
           "liabilities": {
             "type": "object",
@@ -59,66 +34,25 @@
               "car_loans": { "type": "integer" },
               "credit_card_debt": { "type": "integer" },
               "retail_debt": { "type": "integer" }
-            },
-            "required": [
-              "home_mortgage",
-              "school_loans",
-              "car_loans",
-              "credit_card_debt",
-              "retail_debt"
-            ]
+            }
           }
-        },
-        "required": [
-          "id",
-          "title",
-          "initial_cash",
-          "salary",
-          "expenses",
-          "liabilities"
-        ]
+        }
       }
-    }
-  },
-  "required": ["professions"]
-}
-
-以下は、過去に作成したスキーマである。
-しかし、非常に冗長である。
-上のスキーマと合わせて、必要最小限にせよ。
-また、index.html, host.html, dom_selector, 要件定義書.json と合致するようにせよ。
-
-{
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Cashflow Game Database Schema (Updated v5)",
-  "description": "Supabase上のrooms, participants, cardsテーブルの厳密なデータ構造とロジック定義。動的勝利条件（通常/2倍）モード、銀行ローン借入・返済、およびRPCによるアトミックな財務検証制御の完全対応版。",
-  "type": "object",
-  "properties": {
+    },
     "board_settings": {
       "type": "object",
-      "description": "ゲームの盤面設定およびルール定義",
       "properties": {
         "rat_race": {
           "type": "object",
           "properties": {
-            "payday_cells": { 
-              "type": "array", 
-              "items": { "type": "number" }, 
-              "default": [0, 5, 11, 18],
-              "description": "給料日マスの位置（0-23）"
-            },
-            "payday_rule": { 
-              "type": "string", 
-              "enum": ["passing_or_landing"],
-              "description": "通過または着地で発動するルール定義"
-            }
+            "payday_cells": { "type": "array", "items": { "type": "number" } },
+            "payday_rule": { "type": "string", "enum": ["passing_or_landing"] }
           }
         }
       }
     },
     "cards": {
       "type": "array",
-      "description": "カードのマスターデータ（JSONファイルおよびSupabaseのcardsテーブルに該当）",
       "items": {
         "type": "object",
         "properties": {
@@ -126,117 +60,76 @@
           "deck_type": { "type": "string", "enum": ["small_deal", "big_deal", "market", "doodad"] },
           "title": { "type": "string" },
           "description": { "type": "string" },
-          "symbol": { "type": ["string", "null"], "description": "例: House, Apart(24), MYT4U" },
-          "asset_type": { "type": ["string", "null"], "enum": ["real_estate", "stock", "business", "coin", "none", null], "description": "財務諸表の反映カテゴリ" },
+          "symbol": { "type": ["string", "null"] },
+          "asset_type": { "type": ["string", "null"], "enum": ["real_estate", "stock", "business", "coin", "none", null] },
           "cost": { "type": ["number", "null"] },
           "down_payment": { "type": ["number", "null"] },
           "mortgage": { "type": ["number", "null"] },
           "passive_income": { "type": ["number", "null"] },
-          "is_resellable": { "type": "boolean", "description": "他プレイヤーへの転売が可能かどうか" },
+          "is_resellable": { "type": "boolean" },
           "action_rule": {
-             "type": ["object", "null"],
-             "description": "資産売買以外の特殊な計算・処理ルール（Doodad, Market, Stock等のバリエーションを包含）",
-             "properties": {
-                 "type": { "type": "string", "enum": ["multiply_by_child", "stock_split", "stock_reverse_split", "market_sell"] },
-                 "target_symbol": { "type": "string" },
-                 "multiplier": { "type": "number" },
-                 "amount": { "type": "number", "description": "Doodad等での支払額/負債額" },
-                 "is_loan": { "type": "boolean", "description": "支払いがローン（負債）として計上されるか" },
-                 "monthly_payment": { "type": "number", "description": "ローン発生時の月々の支出増加額" },
-                 "price": { "type": ["number", "string"], "description": "Marketでの売却価格（固定値、または 'Cost*2' のような計算式）" }
-             }
+            "type": ["object", "null"],
+            "properties": {
+              "type": { "type": "string", "enum": ["multiply_by_child", "stock_split", "stock_reverse_split", "market_sell"] },
+              "target_symbol": { "type": "string" },
+              "multiplier": { "type": "number" },
+              "amount": { "type": "number" },
+              "is_loan": { "type": "boolean" },
+              "monthly_payment": { "type": "number" },
+              "price": { "type": ["number", "string"] }
+            }
           }
-        },
-        "required": ["id", "deck_type", "title", "description"]
+        }
       }
     },
     "rooms": {
       "type": "array",
-      "description": "Supabase上のroomsテーブルのレコード配列",
       "items": {
         "type": "object",
         "properties": {
           "id": { "type": "string" },
           "current_turn_user_id": { "type": ["string", "null"] },
-          "win_condition_mode": { 
-            "type": "string", 
-            "enum": ["standard", "double"], 
-            "default": "standard", 
-            "description": "勝利判定のモード設定。standard=不労所得>総支出, double=不労所得>総支出*2" 
-          },
+          "win_condition_mode": { "type": "string", "enum": ["standard", "double"] },
           "game_state": {
             "type": "object",
             "properties": {
-              "status": {
-                "type": "string",
-                "enum": ["waiting", "playing", "ended"],
-                "default": "waiting",
-                "description": "部屋のライフサイクル状態。waiting=準備中, playing=進行中, ended=終了"
-              },
+              "status": { "type": "string", "enum": ["waiting", "playing", "ended"] },
               "decks": {
                 "type": "object",
-                "description": "初期化時にシャッフルし、永続化した4つの山札（カードIDの配列）",
                 "properties": {
                   "small_deal": { "type": "array", "items": { "type": "number" } },
                   "big_deal": { "type": "array", "items": { "type": "number" } },
                   "market": { "type": "array", "items": { "type": "number" } },
                   "doodad": { "type": "array", "items": { "type": "number" } }
-                },
-                "required": ["small_deal", "big_deal", "market", "doodad"]
+                }
               },
               "graveyard": {
                 "type": "object",
-                "description": "使用済みカードIDの記録用配列",
                 "properties": {
                   "small_deal": { "type": "array", "items": { "type": "number" } },
                   "big_deal": { "type": "array", "items": { "type": "number" } },
                   "market": { "type": "array", "items": { "type": "number" } },
                   "doodad": { "type": "array", "items": { "type": "number" } }
-                },
-                "required": ["small_deal", "big_deal", "market", "doodad"]
+                }
               },
               "current_card": {
                 "type": ["object", "null"],
-                "description": "現在場にドローされているアクティブなカード情報",
                 "properties": {
                   "status": { "type": "string", "enum": ["active", "completed"] },
                   "owner_user_id": { "type": "string" },
                   "card_id": { "type": "number" },
                   "deck_type": { "type": "string", "enum": ["small_deal", "big_deal", "market", "doodad"] },
                   "title": { "type": "string" },
-                  "description": { "type": "string" },
-                  "symbol": { "type": ["string", "null"] },
-                  "asset_type": { "type": ["string", "null"] },
-                  "cost": { "type": ["number", "null"] },
-                  "down_payment": { "type": ["number", "null"] },
-                  "mortgage": { "type": ["number", "null"] },
-                  "passive_income": { "type": ["number", "null"] },
-                  "is_resellable": { "type": "boolean" },
-                  "action_rule": {
-                    "type": ["object", "null"],
-                    "properties": {
-                      "type": { "type": "string" },
-                      "target_symbol": { "type": "string" },
-                      "multiplier": { "type": "number" },
-                      "amount": { "type": "number" },
-                      "is_loan": { "type": "boolean" },
-                      "monthly_payment": { "type": "number" },
-                      "price": { "type": ["number", "string"] }
-                    }
-                  }
-                },
-                "required": ["status", "card_id", "deck_type", "title"]
+                  "description": { "type": "string" }
+                }
               }
-            },
-            "required": ["status", "decks", "graveyard", "current_card"]
+            }
           }
-        },
-        "required": ["id", "game_state", "win_condition_mode"]
+        }
       }
     },
     "participants": {
       "type": "array",
-      "description": "Supabase上のparticipantsテーブルのレコード配列",
       "items": {
         "type": "object",
         "properties": {
@@ -249,69 +142,56 @@
               "name": { "type": "string" },
               "role": { "type": "string", "enum": ["general", "host"] },
               "profession": { "type": "string" },
-              "game_phase": { "type": "string", "enum": ["rat_race", "fast_track"], "description": "現在のステージ位置。脱出判定クリアによってfast_trackへ昇格する" },
-              "position": { "type": "number", "minimum": 0, "maximum": 23 },
-              "last_dice": { "type": "number", "minimum": 0, "maximum": 6 },
-              "is_calculating": { "type": "boolean", "description": "財務計算のための入力ロック状態フラグ" },
+              "game_phase": { "type": "string", "enum": ["rat_race", "fast_track"] },
+              "position": { "type": "number" },
+              "last_dice": { "type": "number" },
+              "is_calculating": { "type": "boolean" },
               "calculation_phase": { "type": "string", "enum": ["income_tax", "payday", "deal", "none"] },
-              "children_count": { "type": "number", "minimum": 0, "maximum": 3 },
-              "charity_turns_left": { "type": "number", "minimum": 0 },
-              "downsized_turns_left": { "type": "number", "minimum": 0 },
+              "children_count": { "type": "number" },
+              "charity_turns_left": { "type": "number" },
+              "downsized_turns_left": { "type": "number" },
               "financials": {
                 "type": "object",
                 "properties": {
-                  "cash": { "type": "number", "description": "手持ちキャッシュの真実値。RPC操作の対象" },
-                  "total_income": { "type": "number", "description": "総収入（給与 + 不労所得の合計値）" },
-                  "total_expenses": { "type": "number", "description": "総支出（各支出項目の合算値）" },
-                  "passive_income": { "type": "number", "description": "不労所得の合計値。勝利条件判定の主要パラメータ" },
-                  "net_cash_flow": { "type": "number", "description": "毎月のキャッシュフロー純額（total_income - total_expenses）" },
-                  "expenses": { 
-                    "type": "object", 
-                    "properties": { 
-                      "taxes": { "type": "number" }, 
-                      "mortgage_payment": { "type": "number" }, 
-                      "car_loan_payment": { "type": "number" }, 
-                      "loan_interest": { "type": "number", "description": "プレイヤーが自発的に借り入れた銀行ローンの利息（残高の10%）" },
-                      "child_expense": { "type": "number", "description": "子供の数 * 職業別子供コスト" },
+                  "cash": { "type": "number" },
+                  "total_income": { "type": "number" },
+                  "total_expenses": { "type": "number" },
+                  "passive_income": { "type": "number" },
+                  "net_cash_flow": { "type": "number" },
+                  "expenses": {
+                    "type": "object",
+                    "properties": {
+                      "taxes": { "type": "number" },
+                      "mortgage_payment": { "type": "number" },
+                      "car_loan_payment": { "type": "number" },
+                      "loan_interest": { "type": "number" },
+                      "child_expense": { "type": "number" },
                       "other": { "type": "number" }
-                    },
-                    "required": ["taxes", "mortgage_payment", "car_loan_payment", "loan_interest", "child_expense", "other"]
+                    }
                   },
-                  "assets": { 
-                    "type": "object", 
-                    "properties": { 
-                      "stocks": { 
-                        "type": "object",
-                        "description": "保有株式マップ。キー:銘柄名, 値:{ count: 数量, average_price: 平均単価 }"
-                      }, 
-                      "real_estate": { 
-                        "type": "array",
-                        "description": "保有不動産・ビジネスオブジェクトの配列"
-                      } 
-                    },
-                    "required": ["stocks", "real_estate"]
+                  "assets": {
+                    "type": "object",
+                    "properties": {
+                      "stocks": { "type": "object" },
+                      "real_estate": { "type": "array" }
+                    }
                   },
-                  "liabilities": { 
-                    "type": "object", 
-                    "properties": { 
-                      "mortgage": { "type": "number" }, 
-                      "car_loan": { "type": "number" }, 
+                  "liabilities": {
+                    "type": "object",
+                    "properties": {
+                      "mortgage": { "type": "number" },
+                      "car_loan": { "type": "number" },
                       "retail_debt": { "type": "number" },
-                      "bank_loan": { "type": "number", "default": 0, "description": "手動で借り入れた銀行ローンの総残高（1,000ドル単位）" }
-                    },
-                    "required": ["mortgage", "car_loan", "retail_debt", "bank_loan"]
+                      "bank_loan": { "type": "number" }
+                    }
                   }
-                },
-                "required": ["cash", "total_income", "total_expenses", "passive_income", "net_cash_flow", "expenses", "assets", "liabilities"]
+                }
               }
-            },
-            "required": ["name", "role", "profession", "game_phase", "position", "last_dice", "is_calculating", "calculation_phase", "children_count", "charity_turns_left", "downsized_turns_left", "financials"]
+            }
           }
-        },
-        "required": ["room_id", "user_id", "state"]
+        }
       }
     }
   },
-  "required": ["board_settings", "cards", "rooms", "participants"]
+  "required": ["professions", "board_settings", "cards", "rooms", "participants"]
 }
-
