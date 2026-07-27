@@ -72,6 +72,16 @@ async function syncAndFetchRoom() {
 function drawHostScreen() {
     console.log("【デバッグ】drawHostScreen");
 
+    // --- ここからデバッグ用ログを追加 ---
+    console.log("【デバッグ検証1: データの中身】decks =", decks);
+    console.log("【デバッグ検証2: DOM要素の取得状況】", {
+        smallDealElem: document.getElementById(DOM_SELECTORS.HOST.DECK_MONITOR.SMALL_DEAL_COUNT),
+        bigDealElem: document.getElementById(DOM_SELECTORS.HOST.DECK_MONITOR.BIG_DEAL_COUNT),
+        marketElem: document.getElementById(DOM_SELECTORS.HOST.DECK_MONITOR.MARKET_COUNT),
+        doodadElem: document.getElementById(DOM_SELECTORS.HOST.DECK_MONITOR.DOODAD_COUNT)
+    });
+    // --- 追加ここまで ---
+
     const state = activeRoomRecord?.game_state || {};
     const decks = state.decks || {};
 
