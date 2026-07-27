@@ -63,3 +63,5 @@ export async function loginUser(supabase, username) {
     }
     return currentUserId;
 }
+
+console.log("【デバッグ】index_auth.js が読み込まれました。");
