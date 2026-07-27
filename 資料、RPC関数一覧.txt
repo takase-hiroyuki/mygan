@@ -1,4 +1,4 @@
-以下の SQL 文を実行する
+以下の SQL 文を実行したときに、
 
 SELECT 
     p.proname AS function_name,
