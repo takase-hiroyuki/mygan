@@ -63,3 +63,5 @@ export async function actionEndTurn(supabase, currentUserId) {
         alert(`エラー: ${error.message}`);
     }
 }
+
+console.log("【デバッグ】index_actions.js が読み込まれました。");
