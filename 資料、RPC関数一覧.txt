@@ -1,0 +1,34 @@
+以下の SQL 文を実行する
+
+SELECT 
+    p.proname AS function_name,
+    pg_get_functiondef(p.oid) AS function_definition
+FROM pg_proc p
+JOIN pg_namespace n ON p.pronamespace = n.oid
+WHERE n.nspname = 'public'
+ORDER BY p.proname;
+
+結果は、以下の JSON となった
+
+[
+  {
+    "function_name": "claim_paycheck",
+    "function_definition": "CREATE OR REPLACE FUNCTION public.claim_paycheck(p_room_id text, p_user_id text)\n RETURNS void\n LANGUAGE plpgsql\nAS $function$\r\nDECLARE\r\n    v_room_record RECORD;\r\n    v_participant_state JSONB;\r\n    v_financials JSONB;\r\n    v_current_cash INT;\r\n    v_net_cash_flow INT;\r\nBEGIN\r\n    SELECT * INTO v_room_record FROM rooms WHERE id = p_room_id FOR UPDATE;\r\n    IF v_room_record.current_turn_user_id != p_user_id THEN RAISE EXCEPTION 'It is not your turn.'; END IF;\r\n\r\n    SELECT state INTO v_participant_state FROM participants WHERE room_id = p_room_id AND user_id = p_user_id FOR UPDATE;\r\n    IF v_participant_state->>'calculation_phase' != 'payday' THEN RAISE EXCEPTION 'No paycheck to claim.'; END IF;\r\n\r\n    v_financials := v_participant_state->'financials';\r\n    v_current_cash := COALESCE((v_financials->>'cash')::INT, 0);\r\n    v_net_cash_flow := COALESCE((v_financials->>'net_cash_flow')::INT, 0);\r\n\r\n    v_financials := v_financials || jsonb_build_object('cash', v_current_cash + v_net_cash_flow);\r\n\r\n    -- 資金を加算し、フェーズをnoneに戻す（これによりフロントエンドのボタンが非アクティブになる）\r\n    v_participant_state := v_participant_state || jsonb_build_object(\r\n        'financials', v_financials,\r\n        'calculation_phase', 'none',\r\n        'is_calculating', false\r\n    );\r\n\r\n    UPDATE participants SET state = v_participant_state WHERE room_id = p_room_id AND user_id = p_user_id;\r\nEND;\r\n$function$\n"
+  },
+  {
+    "function_name": "draw_card",
+    "function_definition": "CREATE OR REPLACE FUNCTION public.draw_card(p_room_id text, p_deck_type text)\n RETURNS json\n LANGUAGE plpgsql\nAS $function$\r\nDECLARE\r\n    v_drawn_card text;\r\n    v_current_deck jsonb;\r\nBEGIN\r\n    SELECT game_state->'decks'->p_deck_type INTO v_current_deck FROM rooms WHERE id = p_room_id FOR UPDATE;\r\n    IF jsonb_array_length(v_current_deck) = 0 THEN\r\n        RETURN json_build_object('success', false, 'message', '山札がありません。');\r\n    END IF;\r\n\r\n    v_drawn_card := v_current_deck->>0;\r\n\r\n    UPDATE rooms\r\n    SET game_state = jsonb_set(game_state, array['decks', p_deck_type], game_state->'decks'->p_deck_type - 0)\r\n    WHERE id = p_room_id;\r\n\r\n    RETURN json_build_object('success', true, 'card_id', v_drawn_card);\r\nEND;\r\n$function$\n"
+  },
+  {
+    "function_name": "merge_participant_state",
+    "function_definition": "CREATE OR REPLACE FUNCTION public.merge_participant_state(target_user_id text, state_patch jsonb)\n RETURNS void\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n  UPDATE participants SET state = COALESCE(state, '{}'::jsonb) || state_patch WHERE user_id = target_user_id;\r\nEND;\r\n$function$\n"
+  },
+  {
+    "function_name": "pass_and_end_turn",
+    "function_definition": "CREATE OR REPLACE FUNCTION public.pass_and_end_turn(p_room_id text, p_user_id text)\n RETURNS void\n LANGUAGE plpgsql\nAS $function$\r\nDECLARE\r\n    v_next_user_id text;\r\nBEGIN\r\n    -- 部屋全体をロック\r\n    PERFORM id FROM rooms WHERE id = p_room_id FOR UPDATE;\r\n\r\n    SELECT user_id INTO v_next_user_id FROM participants\r\n    WHERE room_id = p_room_id AND id > (SELECT id FROM participants WHERE room_id = p_room_id AND user_id = p_user_id)\r\n    ORDER BY id ASC LIMIT 1;\r\n\r\n    IF v_next_user_id IS NULL THEN\r\n        SELECT user_id INTO v_next_user_id FROM participants WHERE room_id = p_room_id ORDER BY id ASC LIMIT 1;\r\n    END IF;\r\n\r\n    UPDATE rooms SET current_turn_user_id = v_next_user_id WHERE id = p_room_id AND current_turn_user_id = p_user_id;\r\n\r\n    -- 手番終了時、万が一未請求のPaycheckがあっても権利を没収（noneリセット）\r\n    UPDATE participants\r\n    SET state = state || '{\"is_calculating\": false, \"calculation_phase\": \"none\", \"last_dice\": 0}'::jsonb\r\n    WHERE room_id = p_room_id AND user_id = p_user_id;\r\nEND;\r\n$function$\n"
+  },
+  {
+    "function_name": "roll_dice_and_move",
+    "function_definition": "CREATE OR REPLACE FUNCTION public.roll_dice_and_move(p_room_id text, p_user_id text)\n RETURNS void\n LANGUAGE plpgsql\nAS $function$\r\nDECLARE\r\n    v_room_record RECORD;\r\n    v_participant_state JSONB;\r\n    v_old_pos INT;\r\n    v_dice_roll INT;\r\n    v_new_pos INT;\r\n    v_crossed_payday BOOLEAN := false;\r\n    v_check_pos INT;\r\n    v_payday_cells INT[] := ARRAY[0, 5, 11, 18]; \r\nBEGIN\r\n    SELECT * INTO v_room_record FROM rooms WHERE id = p_room_id FOR UPDATE;\r\n    IF NOT FOUND THEN RAISE EXCEPTION 'Room not found.'; END IF;\r\n    IF v_room_record.current_turn_user_id != p_user_id THEN RAISE EXCEPTION 'It is not your turn.'; END IF;\r\n\r\n    SELECT state INTO v_participant_state FROM participants WHERE room_id = p_room_id AND user_id = p_user_id FOR UPDATE;\r\n    IF NOT FOUND THEN RAISE EXCEPTION 'Participant not found.'; END IF;\r\n    IF COALESCE((v_participant_state->>'last_dice')::INT, 0) > 0 THEN RAISE EXCEPTION 'Dice already rolled.'; END IF;\r\n\r\n    v_dice_roll := floor(random() * 6) + 1;\r\n    v_old_pos := COALESCE((v_participant_state->>'position')::INT, 0);\r\n\r\n    FOR i IN 1..v_dice_roll LOOP\r\n        v_check_pos := (v_old_pos + i) % 24;\r\n        IF v_check_pos = ANY(v_payday_cells) THEN v_crossed_payday := true; END IF;\r\n    END LOOP;\r\n    v_new_pos := (v_old_pos + v_dice_roll) % 24;\r\n\r\n    v_participant_state := v_participant_state || jsonb_build_object(\r\n        'position', v_new_pos,\r\n        'last_dice', v_dice_roll,\r\n        'calculation_phase', CASE WHEN v_crossed_payday THEN 'payday' ELSE 'none' END,\r\n        'is_calculating', v_crossed_payday\r\n    );\r\n\r\n    UPDATE participants SET state = v_participant_state WHERE room_id = p_room_id AND user_id = p_user_id;\r\nEND;\r\n$function$\n"
+  }
+]
