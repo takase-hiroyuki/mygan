@@ -6,6 +6,7 @@ import { disableAllActionButtons } from './index_ui.js';
 /**
  * プレイヤーの状態(state)内のflagsの一部を直接更新するヘルパー関数
  * （※将来的にRPCへ移行するまでの暫定的なJS-directアプローチ）
+ * （※既にRPC化されたアクションからは、データ競合を避けるため呼び出しません）
  */
 async function updatePlayerFlag(supabase, userId, flagName, value) {
     const { data, error: fetchError } = await supabase
@@ -49,7 +50,7 @@ async function getCurrentPlayerState(supabase, userId) {
 export async function actionRollDice(supabase, currentUserId) {
     if (!supabase || !currentUserId) return;
     
-    // ★追加: アクション実行前のガード処理（フラグ検証）
+    // アクション実行前のガード処理（フラグ検証）
     const state = await getCurrentPlayerState(supabase, currentUserId);
     if (!state) return;
     const flags = state.flags || {};
@@ -58,7 +59,7 @@ export async function actionRollDice(supabase, currentUserId) {
         return;
     }
 
-    // イベント発火として、対象のRPCを呼び出すだけ
+    // RPC呼び出し（フラグの更新はRPC内で行われます）
     const { error } = await supabase.rpc('roll_dice_and_move', { 
         p_room_id: roomId, 
         p_user_id: currentUserId 
@@ -67,10 +68,8 @@ export async function actionRollDice(supabase, currentUserId) {
     if (error) {
         console.error("サイコロ処理エラー:", error);
         alert(`処理エラー: ${error.message}`);
-    } else {
-        // 成功後、サイコロを振ったフラグを立てる
-        await updatePlayerFlag(supabase, currentUserId, 'has_rolled_dice', true);
     }
+    // 【修正】ここにあった updatePlayerFlag('has_rolled_dice') を削除（RPCと競合するため）
 }
 
 /**
@@ -83,6 +82,7 @@ export async function actionClaimPaycheck(supabase, currentUserId) {
     const claimButton = document.getElementById(DOM_SELECTORS.GUEST.CONTROLS.BTN_CLAIM_PAYCHECK);
     if (claimButton) claimButton.disabled = true;
 
+    // RPC呼び出し（フラグの更新はRPC内で行われます）
     const { error } = await supabase.rpc('claim_paycheck', { 
         p_room_id: roomId, 
         p_user_id: currentUserId 
@@ -93,15 +93,13 @@ export async function actionClaimPaycheck(supabase, currentUserId) {
         alert(`処理エラー: ${error.message}`);
         // エラー時はボタンを復旧
         if (claimButton) claimButton.disabled = false;
-    } else {
-        // 成功後、給料請求済みフラグを立てる
-        await updatePlayerFlag(supabase, currentUserId, 'is_paycheck_claimed', true);
     }
+    // 【修正】ここにあった updatePlayerFlag('is_paycheck_claimed') を削除（RPCと競合するため）
 }
 
 /**
  * パス（見送る）アクション
- * 行動完了フラグのみを立てる
+ * （※この処理はまだRPC化されていないため、暫定的にJS側でのフラグ更新を残します）
  */
 export async function actionPass(supabase, currentUserId) {
     if (!supabase || !currentUserId) return;
@@ -114,7 +112,7 @@ export async function actionPass(supabase, currentUserId) {
 export async function actionEndTurn(supabase, currentUserId) {
     if (!supabase || !currentUserId) return;
 
-    // ★追加: アクション実行前のガード処理（フラグ検証）
+    // アクション実行前のガード処理（フラグ検証）
     const state = await getCurrentPlayerState(supabase, currentUserId);
     if (!state) return;
     const flags = state.flags || {};
@@ -125,6 +123,8 @@ export async function actionEndTurn(supabase, currentUserId) {
     }
 
     disableAllActionButtons();
+    
+    // RPC呼び出し（次ターンの判定と、フラグの全リセットはRPC内で行われます）
     const { error } = await supabase.rpc('pass_and_end_turn', { 
         p_room_id: roomId, 
         p_user_id: currentUserId 
@@ -133,23 +133,8 @@ export async function actionEndTurn(supabase, currentUserId) {
     if (error) {
         console.error("手番終了エラー:", error);
         alert(`エラー: ${error.message}`);
-    } else {
-        // 次のターンに備えて、自分のフラグを全て false にリセットする
-        const { data } = await supabase.from('participants').select('state').eq('user_id', currentUserId).single();
-        if (data) {
-            const newState = { ...data.state };
-            // ★修正: 5つのフラグをすべてリセットするように定義
-            newState.flags = {
-                has_rolled_dice: false,
-                is_paycheck_claimed: false,
-                is_card_drawn: false,
-                is_action_completed: false,
-                is_calculating: false,
-                is_negative_cash_flow: false
-            };
-            await supabase.from('participants').update({ state: newState }).eq('user_id', currentUserId);
-        }
     }
+    // 【修正】ここにあった JS側からの newState.flags リセット上書き処理を完全に削除（RPCと競合するため）
 }
 
 console.log("【デバッグ】index_actions.js が読み込まれました。");
