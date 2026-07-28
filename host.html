@@ -28,25 +28,18 @@
 
         <br>
 
-        <!-- ▼ 追加: プレイヤーフラグ監視用テーブル ▼ -->
-        <fieldset>
-            <legend>プレイヤー状態フラグ監視 (デバッグ・同期確認用)</legend>
             <table border="1">
                 <thead>
                     <tr>
                         <th>名前</th>
-                        <th>has_rolled_dice</th>
-                        <th>is_paycheck_claimed</th>
-                        <th>is_card_drawn</th>
-                        <th>is_action_completed</th>
+                        <th>サイコロ</th>
+                        <th>入金処理</th>
+                        <th>カードひき</th>
+                        <th>カード処理</th>
                     </tr>
                 </thead>
-                <tbody id="host-flags-list">
-                    <!-- 動的生成エリア -->
-                </tbody>
+                <tbody id="host-flags-list"></tbody>
             </table>
-        </fieldset>
-        <!-- ▲ 追加ここまで ▲ -->
 
         <br>
         
