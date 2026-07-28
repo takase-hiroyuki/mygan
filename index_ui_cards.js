@@ -114,7 +114,7 @@ export function updateCardPhaseUI(position, flags = {}) {
  * カードアクション関連のイベントリスナーを初期化する
  */
 export function initCardEventListeners(supabase, currentUserId) {
-    // --- 【変更箇所】カードを引くアクションをサーバーサイド（RPC）に委譲 ---
+    console.log("【デバッグ】initCardEventListeners");
     const drawCardRpc = async () => {
         const { error } = await supabase.rpc('draw_card', {
             p_room_id: roomId,
