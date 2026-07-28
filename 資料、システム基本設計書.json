@@ -1,8 +1,8 @@
 {
   "system_design": {
     "title": "システム基本設計書",
-    "version": "2.1.0",
-    "last_updated": "2026-07-27",
+    "version": "2.2.1",
+    "last_updated": "2026-07-28",
     "description": "Supabaseをバックエンドとしたリアルタイム同期型ボードゲーム進行管理システム。",
     "architecture": {
       "frontend": {
@@ -18,12 +18,12 @@
       },
       "backend": {
         "stack": "Supabase (PostgreSQL, Realtime API, RPC)",
-        "role": "真のゲーム状態の保持、トランザクション管理、リアルタイム配信、ゲームロジック（移動、給料計算等）の中央処理"
+        "role": "真のゲーム状態の保持、トランザクション管理、リアルタイム配信、ゲームロジック（移動、給料計算、ステート・フラグ制御等）の中央処理"
       }
     },
     "database_core": {
       "rooms": "部屋ごとのライフサイクル状態、4種の山札（decks）、使用済み履歴、現在の手番を管理",
-      "participants": "各プレイヤーの動的状態（財務諸表、現在位置、職業など）をJSONBで管理",
+      "participants": "各プレイヤーの動的状態（財務諸表、現在位置、職業、進行フラグなど）をJSONBで管理",
       "cards": "全カードのマスターデータおよびルール（action_rule）"
     },
     "data_access_rules": [
@@ -43,6 +43,43 @@
         "rule": "排他制御（行ロック）の必須化",
         "detail": "資金変動を伴う処理は、RPC内で対象行に対して『FOR UPDATE』を発行し、連打や遅延による不整合を防止する。"
       }
-    ]
+    ],
+    "game_state_specifications": {
+      "overview": "participants.state 内の JSONB で管理されるプレイヤーごとの動的ステートおよびフラグの構造と評価基準",
+      "flags": {
+        "has_rolled_dice": {
+          "type": "boolean",
+          "description": "現在のターンでサイコロがすでに振られたかどうか",
+          "evaluation_criteria": "roll_dice_and_move RPC 実行時に true にセットされ、pass_and_end_turn RPC 実行時に false にリセットされる"
+        },
+        "is_card_drawn": {
+          "type": "boolean",
+          "description": "現在のターンでカードがすでに引かれたかどうか",
+          "evaluation_criteria": "draw_card RPC 実行時に true にセットされ、pass_and_end_turn RPC 実行時に false にリセットされる"
+        },
+        "is_action_completed": {
+          "type": "boolean",
+          "description": "引いたカードやマスのイベントに対するアクション（購入・支払い等）が完了したかどうか",
+          "evaluation_criteria": "対応するアクション処理 RPC 実行時に true にセットされ、pass_and_end_turn RPC 実行時に false にリセットされる"
+        },
+        "is_calculating": {
+          "type": "boolean",
+          "description": "給料日（Payday）などの特殊な計算フェーズが有効になっているかどうか",
+          "evaluation_criteria": "Payday マスの通過・停止時に true にセットされ、claim_paycheck RPC による精算完了時に false にリセットされる"
+        },
+        "is_negative_cash_flow": {
+          "type": "boolean",
+          "description": "月間キャッシュフロー（総収入 - 総支出）がマイナスになっているかどうか",
+          "evaluation_criteria": "職業選択時、ローン借入・返済時、その他財務状況が変動するRPCの実行時に再計算され、月間キャッシュフローの合算値が 0 未満の場合は true、0 以上場合は false にセットされる"
+        }
+      },
+      "calculation_phases": {
+        "field_name": "calculation_phase",
+        "values": {
+          "none": "通常の状態",
+          "payday": "給料日（Payday）の精算待ち状態"
+        }
+      }
+    }
   }
 }
