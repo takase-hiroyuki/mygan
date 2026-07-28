@@ -12,11 +12,25 @@ const CELLS_DOODAD = [1, 7, 14];
 const CELLS_MARKET = [12, 22];
 
 /**
+ * フラグをデータベースに直接保存するローカルヘルパー関数
+ */
+async function updateCardFlag(supabase, userId, flagName, value) {
+    if (!supabase || !userId) return;
+    const { data, error } = await supabase.from('participants').select('state').eq('user_id', userId).single();
+    if (error || !data) return;
+    
+    const newState = { ...data.state };
+    newState.flags = newState.flags || {};
+    newState.flags[flagName] = value;
+    await supabase.from('participants').update({ state: newState }).eq('user_id', userId);
+}
+
+/**
  * 現在地に応じてカードフェーズのUIを切り替える（手番終了のロック制御を含む）
  * ※ index.js から盤面移動直後などに直接呼び出される
  */
 export function updateCardPhaseUI(position) {
-    console.log("【デバッグ】updateCarPhaseUI");
+    console.log("【デバッグ】updateCardPhaseUI");
     const drawButtons = [
         SEL_G.CARD.BTN_DRAW_SMALL_DEAL,
         SEL_G.CARD.BTN_DRAW_BIG_DEAL,
@@ -66,13 +80,13 @@ export function updateCardPhaseUI(position) {
 
 /**
  * カードアクション関連のイベントリスナーを初期化する
- * ※ index.js の初期化処理（init等）で1度だけ呼び出される
+ * ※ index.js から DB通信用の supabase と currentUserId を受け取るように変更
  */
-export function initCardEventListeners() {
+export function initCardEventListeners(supabase, currentUserId) {
     // ------------------------------------------
-    // ドローボタン押下時のダミー動作
+    // ドローボタン押下時の動作
     // ------------------------------------------
-    document.getElementById(SEL_G.CARD.BTN_DRAW_SMALL_DEAL)?.addEventListener('click', () => {
+    document.getElementById(SEL_G.CARD.BTN_DRAW_SMALL_DEAL)?.addEventListener('click', async () => {
         console.log("【デバッグ】small deal card");
         setButtonActive(SEL_G.CARD.BTN_DRAW_SMALL_DEAL, false);
         setButtonActive(SEL_G.CARD.BTN_DRAW_BIG_DEAL, false);
@@ -82,9 +96,12 @@ export function initCardEventListeners() {
         
         const msg = document.getElementById(SEL_G.CARD.STATUS_MESSAGE);
         if (msg) msg.textContent = "【UIテスト】Small Dealを引きました。購入するか、パスしてください。";
+
+        // ★追加: カードを引いたフラグを立てる
+        await updateCardFlag(supabase, currentUserId, 'is_card_drawn', true);
     });
 
-    document.getElementById(SEL_G.CARD.BTN_DRAW_BIG_DEAL)?.addEventListener('click', () => {
+    document.getElementById(SEL_G.CARD.BTN_DRAW_BIG_DEAL)?.addEventListener('click', async () => {
         console.log("【デバッグ】big deal card");
         setButtonActive(SEL_G.CARD.BTN_DRAW_SMALL_DEAL, false);
         setButtonActive(SEL_G.CARD.BTN_DRAW_BIG_DEAL, false);
@@ -93,9 +110,12 @@ export function initCardEventListeners() {
         
         const msg = document.getElementById(SEL_G.CARD.STATUS_MESSAGE);
         if (msg) msg.textContent = "【UIテスト】Big Dealを引きました。購入するか、パスしてください。";
+
+        // ★追加: カードを引いたフラグを立てる
+        await updateCardFlag(supabase, currentUserId, 'is_card_drawn', true);
     });
 
-    document.getElementById(SEL_G.CARD.BTN_DRAW_MARKET)?.addEventListener('click', () => {
+    document.getElementById(SEL_G.CARD.BTN_DRAW_MARKET)?.addEventListener('click', async () => {
         console.log("【デバッグ】market card");
         setButtonActive(SEL_G.CARD.BTN_DRAW_MARKET, false);
         setButtonActive(SEL_G.CARD.BTN_SELL_STOCK, true);
@@ -103,9 +123,12 @@ export function initCardEventListeners() {
         
         const msg = document.getElementById(SEL_G.CARD.STATUS_MESSAGE);
         if (msg) msg.textContent = "【UIテスト】Marketを引きました。売却するか、パスしてください。";
+
+        // ★追加: カードを引いたフラグを立てる
+        await updateCardFlag(supabase, currentUserId, 'is_card_drawn', true);
     });
 
-    document.getElementById(SEL_G.CARD.BTN_DRAW_DOODAD)?.addEventListener('click', () => {
+    document.getElementById(SEL_G.CARD.BTN_DRAW_DOODAD)?.addEventListener('click', async () => {
         console.log("【デバッグ】doodad card");
         setButtonActive(SEL_G.CARD.BTN_DRAW_DOODAD, false);
         setButtonActive(SEL_G.CARD.BTN_PAY_DOODAD, true);
@@ -114,12 +137,15 @@ export function initCardEventListeners() {
         
         const msg = document.getElementById(SEL_G.CARD.STATUS_MESSAGE);
         if (msg) msg.textContent = "【UIテスト】Doodadを引きました。必ず費用を支払ってください。";
+
+        // ★追加: カードを引いたフラグを立てる
+        await updateCardFlag(supabase, currentUserId, 'is_card_drawn', true);
     });
 
     // ------------------------------------------
     // アクション完了後のUIリセット処理
     // ------------------------------------------
-    const resetCardUI = () => {
+    const resetCardUI = async () => {
         setMultipleButtonsActive([
             SEL_G.CARD.BTN_BUY_REALESTATE, SEL_G.CARD.BTN_BUY_STOCK, 
             SEL_G.CARD.BTN_SELL_STOCK, SEL_G.CARD.BTN_PAY_DOODAD, SEL_G.CARD.BTN_PASS
@@ -132,6 +158,9 @@ export function initCardEventListeners() {
         
         const msg = document.getElementById(SEL_G.CARD.STATUS_MESSAGE);
         if (msg) msg.textContent = "【UIテスト】カードアクション完了。ローン操作を行うか、手番を終了してください。";
+
+        // ★追加: アクション完了フラグを立てる
+        await updateCardFlag(supabase, currentUserId, 'is_action_completed', true);
     };
 
     // 各種アクションボタンにリセット処理を紐付け
