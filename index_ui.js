@@ -125,6 +125,10 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
                 setButtonActive(SEL_G.CONTROLS.BTN_CLAIM_PAYCHECK, false);
                 setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, false);
                 
+                // 手番開始時にローン操作を可能にする（UIテスト用）
+                setButtonActive(SEL_G.PORTFOLIO.BTN_BORROW_LOAN, true);
+                setButtonActive(SEL_G.PORTFOLIO.BTN_PAYBACK_LOAN, true);
+                
                 // サイコロを振る前はカードボタンを無効化
                 setMultipleButtonsActive([
                     SEL_G.CARD.BTN_DRAW_SMALL_DEAL, SEL_G.CARD.BTN_DRAW_BIG_DEAL,
@@ -174,10 +178,10 @@ document.getElementById(SEL_G.CARD.BTN_DRAW_SMALL_DEAL)?.addEventListener('click
     
     setButtonActive(SEL_G.CARD.BTN_BUY_STOCK, true);
     setButtonActive(SEL_G.CARD.BTN_BUY_REALESTATE, true);
-    setButtonActive(SEL_G.CARD.BTN_PASS, true);
+    setButtonActive(SEL_G.CARD.BTN_PASS, true); // パス可能
     
     const msg = document.getElementById(SEL_G.CARD.STATUS_MESSAGE);
-    if (msg) msg.textContent = "【UIテスト】Small Dealを引きました。アクションを選択してください。";
+    if (msg) msg.textContent = "【UIテスト】Small Dealを引きました。購入するか、パスしてください。";
 });
 
 document.getElementById(SEL_G.CARD.BTN_DRAW_BIG_DEAL)?.addEventListener('click', () => {
@@ -185,29 +189,55 @@ document.getElementById(SEL_G.CARD.BTN_DRAW_BIG_DEAL)?.addEventListener('click',
     setButtonActive(SEL_G.CARD.BTN_DRAW_BIG_DEAL, false);
     
     setButtonActive(SEL_G.CARD.BTN_BUY_REALESTATE, true);
-    setButtonActive(SEL_G.CARD.BTN_PASS, true);
+    setButtonActive(SEL_G.CARD.BTN_PASS, true); // パス可能
     
     const msg = document.getElementById(SEL_G.CARD.STATUS_MESSAGE);
-    if (msg) msg.textContent = "【UIテスト】Big Dealを引きました。アクションを選択してください。";
+    if (msg) msg.textContent = "【UIテスト】Big Dealを引きました。購入するか、パスしてください。";
 });
 
 document.getElementById(SEL_G.CARD.BTN_DRAW_MARKET)?.addEventListener('click', () => {
     setButtonActive(SEL_G.CARD.BTN_DRAW_MARKET, false);
     
     setButtonActive(SEL_G.CARD.BTN_SELL_STOCK, true);
-    setButtonActive(SEL_G.CARD.BTN_PASS, true);
+    setButtonActive(SEL_G.CARD.BTN_PASS, true); // パス可能
     
     const msg = document.getElementById(SEL_G.CARD.STATUS_MESSAGE);
-    if (msg) msg.textContent = "【UIテスト】Marketを引きました。アクションを選択してください。";
+    if (msg) msg.textContent = "【UIテスト】Marketを引きました。売却するか、パスしてください。";
 });
 
 document.getElementById(SEL_G.CARD.BTN_DRAW_DOODAD)?.addEventListener('click', () => {
     setButtonActive(SEL_G.CARD.BTN_DRAW_DOODAD, false);
     
     setButtonActive(SEL_G.CARD.BTN_PAY_DOODAD, true);
+    setButtonActive(SEL_G.CARD.BTN_PASS, false); // パス不可
+    setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, false); // ★強制支払いのため「手番終了」をロック
     
     const msg = document.getElementById(SEL_G.CARD.STATUS_MESSAGE);
-    if (msg) msg.textContent = "【UIテスト】Doodadを引きました。費用を支払ってください。";
+    if (msg) msg.textContent = "【UIテスト】Doodadを引きました。必ず費用を支払ってください。";
 });
+
+// --- 以下、カードアクション実行時のUIリセット用ダミー動作 ---
+const resetCardUI = () => {
+    setMultipleButtonsActive([
+        SEL_G.CARD.BTN_BUY_REALESTATE, SEL_G.CARD.BTN_BUY_STOCK, 
+        SEL_G.CARD.BTN_SELL_STOCK, SEL_G.CARD.BTN_PAY_DOODAD, SEL_G.CARD.BTN_PASS
+    ], false);
+    
+    setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, true); // 手番終了を再開
+    
+    // この時点でローン操作ボタンも有効化する（UIテスト用）
+    setButtonActive(SEL_G.PORTFOLIO.BTN_BORROW_LOAN, true);
+    setButtonActive(SEL_G.PORTFOLIO.BTN_PAYBACK_LOAN, true);
+    
+    const msg = document.getElementById(SEL_G.CARD.STATUS_MESSAGE);
+    if (msg) msg.textContent = "【UIテスト】カードアクション完了。ローン操作を行うか、手番を終了してください。";
+};
+
+// 各種アクションボタンにリセット処理を紐付け
+document.getElementById(SEL_G.CARD.BTN_PASS)?.addEventListener('click', resetCardUI);
+document.getElementById(SEL_G.CARD.BTN_BUY_STOCK)?.addEventListener('click', resetCardUI);
+document.getElementById(SEL_G.CARD.BTN_BUY_REALESTATE)?.addEventListener('click', resetCardUI);
+document.getElementById(SEL_G.CARD.BTN_SELL_STOCK)?.addEventListener('click', resetCardUI);
+document.getElementById(SEL_G.CARD.BTN_PAY_DOODAD)?.addEventListener('click', resetCardUI);
 
 console.log("【デバッグ】index_ui.js が読み込まれました。");
