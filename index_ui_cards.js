@@ -58,7 +58,7 @@ export function updateCardPhaseUI(position) {
     if (requireCardAction) {
         console.log("【デバッグ】アクション必須");
         setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, false);
-        if (statusMessage) statusMessage.textContent = "カードを引いてください。<br />（アクション完了まで手番は終了できません）";
+        if (statusMessage) statusMessage.textContent = "カードを引いてください。アクション必須";
     } else {
         if (statusMessage) statusMessage.textContent = "現在場に出ているカードはありません。";
     }
