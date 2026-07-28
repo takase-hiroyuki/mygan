@@ -48,13 +48,13 @@ export function waitForSupabase() {
 }
 
 // 盤面の特定のマスを示す定数
-export const PAYDAY_CELLS = [0, 5, 11, 18];       // 入金（給料マイナス経費）
+export const PAYDAY_CELLS = [0, 5, 11, 18];        // 入金（給料マイナス経費）
 export const OPPORTUNITY_CELLS = [2, 4, 6, 8, 10, 13, 15, 17, 19, 21, 23]; // 好機
-export const DOODAD_CELLS = [1, 7, 14];           // 娯楽
-export const MARKET_CELLS = [12, 22];             // 市場
-export const BABY_CELLS = [9];                    // 子供
-export const CHARITY_CELLS = [3, 16];             // 寄付
-export const DOWNSIZED_CELLS = [20];              // 解雇
+export const DOODAD_CELLS = [1, 7, 14];            // 娯楽
+export const MARKET_CELLS = [12, 22];              // 市場
+export const BABY_CELLS = [9];                     // 子供
+export const CHARITY_CELLS = [3, 16];              // 寄付
+export const DOWNSIZED_CELLS = [20];               // 解雇
 
 /**
  * プレイヤーの初期登録データを生成する関数
@@ -74,9 +74,10 @@ export function getInitialRegistrationState(username) {
         downsized_turns_left: 0,
         flags: {
             has_rolled_dice: false,
-            is_paycheck_claimed: false,
             is_card_drawn: false,
-            is_action_completed: false
+            is_action_completed: false,
+            is_calculating: false,
+            is_negative_cash_flow: false
         },
         financials: {
             cash: 0, total_income: 0, total_expenses: 0, passive_income: 0, net_cash_flow: 0,
