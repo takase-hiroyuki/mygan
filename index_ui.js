@@ -26,7 +26,7 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
 
     const state = record.state;
     const financials = state.financials || {};
-    const flags = state.flags || {}; // ★追加: データベースのフラグ情報を取得
+    const flags = state.flags || {}; 
     const turnUserId = cachedRoom ? cachedRoom.current_turn_user_id : null;
     const isMyTurn = (turnUserId === currentUserId);
     const isPlaying = cachedRoom?.game_state?.status === 'playing';
@@ -67,7 +67,6 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
                 setButtonActive(SEL_G.CONTROLS.BTN_ROLL_DICE, false);
                 setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, true);
                 
-                // ★修正: カードUIの更新関数に flags を一緒に渡す
                 updateCardPhaseUI(state.position, flags);
                 
                 // Paydayフェーズに応じたUIの切り替え
@@ -101,6 +100,12 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
         } else {
             diceStatusArea.textContent = `[${turnUserName}] がプレイ中`;
             disableAllActionButtons();
+            
+            // ★追加: 自分の手番ではない場合、カード状況テキストをリセットする
+            const statusMessage = document.getElementById(SEL_G.CARD.STATUS_MESSAGE);
+            if (statusMessage) {
+                statusMessage.textContent = "他のプレイヤーの行動を待っています。";
+            }
         }
     }
 
