@@ -1,4 +1,4 @@
-// dom_selectors.js
+// common_dom_selectors.js
 
 /**
  * My Game - DOMセレクター定数定義ファイル
@@ -37,7 +37,7 @@ export const DOM_SELECTORS = {
         CONTROLS: {
             STATUS_AREA: 'dice-status-area',
             DICE_RESULT: 'guest-dice-result',
-            MANUAL_ACTION_AREA: 'manual-action-area', // 追加: 手動アクションボタンのラッパー
+            MANUAL_ACTION_AREA: 'manual-action-area',
             BTN_ROLL_DICE: 'btn-roll-dice',
             BTN_CLAIM_PAYCHECK: 'btn-claim-paycheck', 
             BTN_END_TURN: 'btn-end-turn',              
@@ -134,7 +134,7 @@ export const DOM_SELECTORS = {
 
         // 手番プレイヤー手動制御エリア
         TURN_CONTROL: {
-            INPUT_NEXT_ORDER: 'input-next-turn-order', // 修正: HTMLに合わせて変更
+            INPUT_NEXT_ORDER: 'input-next-turn-order',
             BTN_SET_TURN: 'btn-set-turn'
         },
 
@@ -144,7 +144,7 @@ export const DOM_SELECTORS = {
             BTN_KICK_PARTICIPANT: 'btn-kick-participant'
         },
 
-        // 参加者名簿テーブル
+        // 参加者名簿テーブル関連
         PARTICIPANT_LIST: 'host-participant-list',
         
         // 名簿の各行（DOM行生成時やセレクター特定用）で利用するクラス・属性の識別子
@@ -153,9 +153,12 @@ export const DOM_SELECTORS = {
             PROFESSION_CLASS: 'host-participant-profession' 
         },
 
+        // ▼ 追加: プレイヤーフラグ監視用テーブル ▼
+        FLAGS_LIST: 'host-flags-list',
+
         // ホスト用盤面モニターID生成用のプレフィックス
         BOARD: {
-            CELL_PREFIX: 'rat-cell-' // 修正: HTML(host)の盤面idに合わせて変更
+            CELL_PREFIX: 'rat-cell-'
         }
     }
 };
