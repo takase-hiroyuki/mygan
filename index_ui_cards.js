@@ -16,6 +16,7 @@ const CELLS_MARKET = [12, 22];
  * ※ index.js から盤面移動直後などに直接呼び出される
  */
 export function updateCardPhaseUI(position) {
+    console.log("【デバッグ】updateCarPhaseUI");
     const drawButtons = [
         SEL_G.CARD.BTN_DRAW_SMALL_DEAL,
         SEL_G.CARD.BTN_DRAW_BIG_DEAL,
@@ -39,21 +40,25 @@ export function updateCardPhaseUI(position) {
 
     // 現在地のマス属性判定
     if (CELLS_OPPORTUNITY.includes(position)) {
+        console.log("【デバッグ】Cells Opportunity ?");
         setButtonActive(SEL_G.CARD.BTN_DRAW_SMALL_DEAL, true);
         setButtonActive(SEL_G.CARD.BTN_DRAW_BIG_DEAL, true);
         requireCardAction = true;
     } else if (CELLS_MARKET.includes(position)) {
+        console.log("【デバッグ】Cells Market ?");
         setButtonActive(SEL_G.CARD.BTN_DRAW_MARKET, true);
         requireCardAction = true;
     } else if (CELLS_DOODAD.includes(position)) {
+        console.log("【デバッグ】Cells Doodad ?");
         setButtonActive(SEL_G.CARD.BTN_DRAW_DOODAD, true);
         requireCardAction = true;
     }
 
     // アクション必須マスに止まった場合は手番終了をロック
     if (requireCardAction) {
+        console.log("【デバッグ】アクション必須");
         setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, false);
-        if (statusMessage) statusMessage.textContent = "カードを引いてください。（アクション完了まで手番は終了できません）";
+        if (statusMessage) statusMessage.textContent = "カードを引いてください。<br />（アクション完了まで手番は終了できません）";
     } else {
         if (statusMessage) statusMessage.textContent = "現在場に出ているカードはありません。";
     }
@@ -68,6 +73,7 @@ export function initCardEventListeners() {
     // ドローボタン押下時のダミー動作
     // ------------------------------------------
     document.getElementById(SEL_G.CARD.BTN_DRAW_SMALL_DEAL)?.addEventListener('click', () => {
+        console.log("【デバッグ】small deal card");
         setButtonActive(SEL_G.CARD.BTN_DRAW_SMALL_DEAL, false);
         setButtonActive(SEL_G.CARD.BTN_DRAW_BIG_DEAL, false);
         setButtonActive(SEL_G.CARD.BTN_BUY_STOCK, true);
@@ -79,6 +85,7 @@ export function initCardEventListeners() {
     });
 
     document.getElementById(SEL_G.CARD.BTN_DRAW_BIG_DEAL)?.addEventListener('click', () => {
+        console.log("【デバッグ】big deal card");
         setButtonActive(SEL_G.CARD.BTN_DRAW_SMALL_DEAL, false);
         setButtonActive(SEL_G.CARD.BTN_DRAW_BIG_DEAL, false);
         setButtonActive(SEL_G.CARD.BTN_BUY_REALESTATE, true);
@@ -89,6 +96,7 @@ export function initCardEventListeners() {
     });
 
     document.getElementById(SEL_G.CARD.BTN_DRAW_MARKET)?.addEventListener('click', () => {
+        console.log("【デバッグ】market card");
         setButtonActive(SEL_G.CARD.BTN_DRAW_MARKET, false);
         setButtonActive(SEL_G.CARD.BTN_SELL_STOCK, true);
         setButtonActive(SEL_G.CARD.BTN_PASS, true);
@@ -98,6 +106,7 @@ export function initCardEventListeners() {
     });
 
     document.getElementById(SEL_G.CARD.BTN_DRAW_DOODAD)?.addEventListener('click', () => {
+        console.log("【デバッグ】doodad card");
         setButtonActive(SEL_G.CARD.BTN_DRAW_DOODAD, false);
         setButtonActive(SEL_G.CARD.BTN_PAY_DOODAD, true);
         setButtonActive(SEL_G.CARD.BTN_PASS, false); // Doodadはパス不可
