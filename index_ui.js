@@ -24,7 +24,7 @@ export function toggleScreen(isLoggedIn) {
 }
 
 /**
- * 現在地に応じてUIを切り替える関数（ドローボタンの制御）
+ * 現在地に応じてUIを切り替える関数（ドローボタンの制御と手番終了のロック）
  */
 function updateCardPhaseUI(position) {
     // まず全てのドローボタンとアクションボタンを非アクティブ（無効）にする
@@ -46,16 +46,27 @@ function updateCardPhaseUI(position) {
     setMultipleButtonsActive(actionButtons, false);
 
     const statusMessage = document.getElementById(SEL_G.CARD.STATUS_MESSAGE);
-    if (statusMessage) statusMessage.textContent = "現在場に出ているカードはありません。";
+    let requireCardAction = false;
 
     // 現在地（position）のマス属性に応じて、該当するドローボタンだけを有効にする
     if (CELLS_OPPORTUNITY.includes(position)) {
         setButtonActive(SEL_G.CARD.BTN_DRAW_SMALL_DEAL, true);
         setButtonActive(SEL_G.CARD.BTN_DRAW_BIG_DEAL, true);
+        requireCardAction = true;
     } else if (CELLS_MARKET.includes(position)) {
         setButtonActive(SEL_G.CARD.BTN_DRAW_MARKET, true);
+        requireCardAction = true;
     } else if (CELLS_DOODAD.includes(position)) {
         setButtonActive(SEL_G.CARD.BTN_DRAW_DOODAD, true);
+        requireCardAction = true;
+    }
+
+    // カードアクションが必須のマスの場合は「手番終了」を即座にロックする
+    if (requireCardAction) {
+        setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, false);
+        if (statusMessage) statusMessage.textContent = "カードを引いてください。（アクション完了まで手番は終了できません）";
+    } else {
+        if (statusMessage) statusMessage.textContent = "現在場に出ているカードはありません。";
     }
 }
 
@@ -108,7 +119,7 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
                 setButtonActive(SEL_G.CONTROLS.BTN_ROLL_DICE, false);
                 setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, true);
                 
-                // サイコロを振った後はカードのUIを更新
+                // サイコロを振った後はカードのUIを更新（ここでカードマスなら手番終了がロックされる）
                 updateCardPhaseUI(state.position);
                 
                 // Paydayフェーズに応じたUIの切り替え
@@ -210,7 +221,7 @@ document.getElementById(SEL_G.CARD.BTN_DRAW_DOODAD)?.addEventListener('click', (
     
     setButtonActive(SEL_G.CARD.BTN_PAY_DOODAD, true);
     setButtonActive(SEL_G.CARD.BTN_PASS, false); // パス不可
-    setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, false); // ★強制支払いのため「手番終了」をロック
+    setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, false); // 強制支払いのためのロック継続
     
     const msg = document.getElementById(SEL_G.CARD.STATUS_MESSAGE);
     if (msg) msg.textContent = "【UIテスト】Doodadを引きました。必ず費用を支払ってください。";
@@ -223,7 +234,7 @@ const resetCardUI = () => {
         SEL_G.CARD.BTN_SELL_STOCK, SEL_G.CARD.BTN_PAY_DOODAD, SEL_G.CARD.BTN_PASS
     ], false);
     
-    setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, true); // 手番終了を再開
+    setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, true); // アクション完了により「手番終了」を再開
     
     // この時点でローン操作ボタンも有効化する（UIテスト用）
     setButtonActive(SEL_G.PORTFOLIO.BTN_BORROW_LOAN, true);
