@@ -40,7 +40,7 @@ export const DOM_SELECTORS = {
             MANUAL_ACTION_AREA: 'manual-action-area',
             BTN_ROLL_DICE: 'btn-roll-dice',
             BTN_CLAIM_PAYCHECK: 'btn-claim-paycheck', 
-            BTN_END_TURN: 'btn-end-turn',              
+            BTN_END_TURN: 'btn-end-turn',            
             BTN_ESCAPE_RAT_RACE: 'btn-escape-rat-race' 
         },
 
@@ -50,7 +50,7 @@ export const DOM_SELECTORS = {
             LEGEND: 'display-card-legend',                 
             STATUS_MESSAGE: 'card-status-message',         
             NUMERICAL_DETAILS_CONTAINER: 'card-numerical-details', 
-            DETAIL_COST: 'card-detail-cost',                
+            DETAIL_COST: 'card-detail-cost',               
             DETAIL_DOWNPAYMENT: 'card-detail-downpayment', 
             DETAIL_CASHFLOW: 'card-detail-cashflow',       
             DRAW_OPTIONS_CONTAINER: 'deck-draw-options',   
@@ -58,7 +58,7 @@ export const DOM_SELECTORS = {
             BTN_DRAW_BIG_DEAL: 'btn-draw-big-deal',        
             BTN_DRAW_MARKET: 'btn-draw-market',            
             BTN_DRAW_DOODAD: 'btn-draw-doodad',            
-            OPTIONS_CONTAINER: 'card-action-options',   
+            OPTIONS_CONTAINER: 'card-action-options',    
             BTN_BUY_REALESTATE: 'btn-card-buy-realestate', 
             BTN_BUY_STOCK: 'btn-card-buy-stock',           
             BTN_SELL_STOCK: 'btn-card-sell-stock',         
@@ -90,9 +90,9 @@ export const DOM_SELECTORS = {
             LIABILITY_CAR_LOAN: 'display-liability-carloan',
             LIABILITY_RETAIL: 'display-liability-retail',
             LOAN_CONTROL_CONTAINER: 'bank-loan-control',  
-            BTN_BORROW_LOAN: 'btn-borrow-loan',            
-            BTN_PAYBACK_LOAN: 'btn-payback-loan',          
-            DISPLAY_LIABILITY_BANKLOAN: 'display-liability-bankloan',   
+            BTN_BORROW_LOAN: 'btn-borrow-loan',           
+            BTN_PAYBACK_LOAN: 'btn-payback-loan',         
+            DISPLAY_LIABILITY_BANKLOAN: 'display-liability-bankloan',    
             DISPLAY_EXPENSE_LOANINTEREST: 'display-expense-loaninterest' 
         },
 
@@ -111,9 +111,9 @@ export const DOM_SELECTORS = {
         
         // 🌟部屋ステータス管理・ライフサイクル制御エリア
         LIFECYCLE: {
-            DISPLAY_ROOM_STATUS: 'host-room-status',              
+            DISPLAY_ROOM_STATUS: 'host-room-status',             
             BTN_INITIAL_SHUFFLE: 'btn-initial-shuffle-start',     
-            BTN_FORCE_GAME_END: 'btn-force-game-end'             
+            BTN_FORCE_GAME_END: 'btn-force-game-end'              
         },
 
         // 🌟4種類の山札および使用済みカードの残り枚数監視モニター
@@ -153,7 +153,7 @@ export const DOM_SELECTORS = {
             PROFESSION_CLASS: 'host-participant-profession' 
         },
 
-        // ▼ 追加: プレイヤーフラグ監視用テーブル ▼
+        // プレイヤーフラグ監視用テーブル
         FLAGS_LIST: 'host-flags-list',
 
         // ホスト用盤面モニターID生成用のプレフィックス
