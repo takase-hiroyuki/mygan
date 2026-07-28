@@ -8,7 +8,6 @@ import { disableAllActionButtons } from './index_ui.js';
  * （※将来的にRPCへ移行するまでの暫定的なJS-directアプローチ）
  */
 async function updatePlayerFlag(supabase, userId, flagName, value) {
-    // 現在のstateを取得
     const { data, error: fetchError } = await supabase
         .from('participants')
         .select('state')
@@ -20,16 +19,28 @@ async function updatePlayerFlag(supabase, userId, flagName, value) {
         return;
     }
 
-    // stateを複製して指定のフラグだけを上書き
     const newState = { ...data.state };
     newState.flags = newState.flags || {};
     newState.flags[flagName] = value;
 
-    // データベースへ保存
     await supabase
         .from('participants')
         .update({ state: newState })
         .eq('user_id', userId);
+}
+
+/**
+ * 現在のプレイヤー状態をDBから取得するヘルパー関数（ガード処理用）
+ */
+async function getCurrentPlayerState(supabase, userId) {
+    const { data, error } = await supabase
+        .from('participants')
+        .select('state')
+        .eq('user_id', userId)
+        .single();
+    
+    if (error || !data) return null;
+    return data.state || {};
 }
 
 /**
@@ -38,6 +49,15 @@ async function updatePlayerFlag(supabase, userId, flagName, value) {
 export async function actionRollDice(supabase, currentUserId) {
     if (!supabase || !currentUserId) return;
     
+    // ★追加: アクション実行前のガード処理（フラグ検証）
+    const state = await getCurrentPlayerState(supabase, currentUserId);
+    if (!state) return;
+    const flags = state.flags || {};
+    if (flags.has_rolled_dice || flags.is_calculating) {
+        console.warn("【ガード】既にサイコロを振ったか、計算中のためサイコロを振れません。");
+        return;
+    }
+
     // イベント発火として、対象のRPCを呼び出すだけ
     const { error } = await supabase.rpc('roll_dice_and_move', { 
         p_room_id: roomId, 
@@ -94,6 +114,16 @@ export async function actionPass(supabase, currentUserId) {
 export async function actionEndTurn(supabase, currentUserId) {
     if (!supabase || !currentUserId) return;
 
+    // ★追加: アクション実行前のガード処理（フラグ検証）
+    const state = await getCurrentPlayerState(supabase, currentUserId);
+    if (!state) return;
+    const flags = state.flags || {};
+    
+    if (!flags.has_rolled_dice || flags.is_calculating || flags.is_negative_cash_flow) {
+        console.warn("【ガード】ターン終了の条件を満たしていません（未ロール、計算中、またはマイナスキャッシュフロー）。");
+        return;
+    }
+
     disableAllActionButtons();
     const { error } = await supabase.rpc('pass_and_end_turn', { 
         p_room_id: roomId, 
@@ -108,11 +138,14 @@ export async function actionEndTurn(supabase, currentUserId) {
         const { data } = await supabase.from('participants').select('state').eq('user_id', currentUserId).single();
         if (data) {
             const newState = { ...data.state };
+            // ★修正: 5つのフラグをすべてリセットするように定義
             newState.flags = {
                 has_rolled_dice: false,
                 is_paycheck_claimed: false,
                 is_card_drawn: false,
-                is_action_completed: false
+                is_action_completed: false,
+                is_calculating: false,
+                is_negative_cash_flow: false
             };
             await supabase.from('participants').update({ state: newState }).eq('user_id', currentUserId);
         }
