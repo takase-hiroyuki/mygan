@@ -1,7 +1,7 @@
 // index_ui.js
 import { DOM_SELECTORS } from './common_dom_selectors.js';
 import { setButtonActive, setMultipleButtonsActive, BOARD_CELL_NAMES } from './common_utils.js';
-import { updateCardPhaseUI } from './index_ui_cards.js'; // ★追加: 分割したモジュールから関数を呼び出す
+import { updateCardPhaseUI } from './index_ui_cards.js'; 
 
 const SEL_G = DOM_SELECTORS.GUEST;
 const sectionLogin = document.getElementById(SEL_G.LOGIN.SECTION);
@@ -17,8 +17,6 @@ export function toggleScreen(isLoggedIn) {
     sectionGuest.hidden = !isLoggedIn;
 }
 
-// ★削除: ここにあった updateCardPhaseUI の関数定義は index_ui_cards.js に移動したため削除しました
-
 /**
  * ゲスト画面全体の描画更新（純粋なView関数）
  */
@@ -28,6 +26,7 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
 
     const state = record.state;
     const financials = state.financials || {};
+    const flags = state.flags || {}; // ★追加: データベースのフラグ情報を取得
     const turnUserId = cachedRoom ? cachedRoom.current_turn_user_id : null;
     const isMyTurn = (turnUserId === currentUserId);
     const isPlaying = cachedRoom?.game_state?.status === 'playing';
@@ -68,9 +67,8 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
                 setButtonActive(SEL_G.CONTROLS.BTN_ROLL_DICE, false);
                 setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, true);
                 
-                // サイコロを振った後はカードのUIを更新（ここでカードマスなら手番終了がロックされる）
-                // ★ index_ui_cards.js から import した関数を実行します
-                updateCardPhaseUI(state.position);
+                // ★修正: カードUIの更新関数に flags を一緒に渡す
+                updateCardPhaseUI(state.position, flags);
                 
                 // Paydayフェーズに応じたUIの切り替え
                 if (state.calculation_phase === 'payday') {
