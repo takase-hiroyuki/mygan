@@ -6,6 +6,7 @@ import { setButtonActive, BOARD_CELL_NAMES, waitForSupabase } from './common_uti
 let supabase = null;
 const HOST_ADMIN_ID = 'host-admin-01';
 const listBody = document.getElementById(DOM_SELECTORS.HOST.PARTICIPANT_LIST);
+const flagsListBody = document.getElementById(DOM_SELECTORS.HOST.FLAGS_LIST); // ★追加: フラグ一覧テーブルのtbody要素
 const displayRoomStatus = document.getElementById(DOM_SELECTORS.HOST.LIFECYCLE.DISPLAY_ROOM_STATUS);
 const btnInitialShuffleStart = document.getElementById(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE);
 const btnForceGameEnd = document.getElementById(DOM_SELECTORS.HOST.LIFECYCLE.BTN_FORCE_GAME_END);
@@ -75,14 +76,6 @@ function drawHostScreen() {
     const state = activeRoomRecord?.game_state || {};
     const decks = state.decks || {};
 
-    console.log("【デバッグ】データの中身：", decks);
-    console.log("【デバッグ】DOM要素：", {
-        smallDealElem: document.getElementById(DOM_SELECTORS.HOST.DECK_MONITOR.SMALL_DEAL_COUNT),
-        bigDealElem: document.getElementById(DOM_SELECTORS.HOST.DECK_MONITOR.BIG_DEAL_COUNT),
-        marketElem: document.getElementById(DOM_SELECTORS.HOST.DECK_MONITOR.MARKET_COUNT),
-        doodadElem: document.getElementById(DOM_SELECTORS.HOST.DECK_MONITOR.DOODAD_COUNT)
-    });
-
     const elSmallCount = document.getElementById(DOM_SELECTORS.HOST.DECK_MONITOR.SMALL_DEAL_COUNT);
     if (elSmallCount) elSmallCount.textContent = `${decks.small_deal ? decks.small_deal.length : 0} 枚`;
 
@@ -107,7 +100,9 @@ function drawHostScreen() {
 
     const itemSEL = DOM_SELECTORS.HOST.PARTICIPANT_ITEM;
     const boardSEL = DOM_SELECTORS.HOST.BOARD;
-    listBody.innerHTML = '';
+    
+    if (listBody) listBody.innerHTML = '';
+    if (flagsListBody) flagsListBody.innerHTML = ''; // ★追加: フラグテーブルの初期化
     
     for (let i = 0; i < 24; i++) {
         const cell = document.getElementById(`${boardSEL.CELL_PREFIX}${i}`);
@@ -115,12 +110,12 @@ function drawHostScreen() {
     }
 
     currentParticipants.forEach((p, idx) => {
-        console.log("【デバッグ】currentParticipants");
-
         const pState = p.state || {};
         const financials = pState.financials || {};
         const position = pState.position ?? 0;
+        const flags = pState.flags || {}; // ★追加: フラグデータの抽出
 
+        // 1. 参加者名簿テーブルの行生成
         const tr = document.createElement('tr');
         tr.classList.add(itemSEL.ROW_CLASS);
         tr.innerHTML = `
@@ -130,8 +125,22 @@ function drawHostScreen() {
             <td>${String(position).padStart(2, '0')}${BOARD_CELL_NAMES[position] || ""}</td>
             <td>$${(financials.cash || 0).toLocaleString()}</td>
         `;
-        listBody.appendChild(tr);
+        if (listBody) listBody.appendChild(tr);
 
+        // 2. ★追加: フラグ監視テーブルの行生成
+        if (flagsListBody) {
+            const trFlags = document.createElement('tr');
+            trFlags.innerHTML = `
+                <td>${pState.name || '不明'}</td>
+                <td>${!!flags.has_rolled_dice}</td>
+                <td>${!!flags.is_paycheck_claimed}</td>
+                <td>${!!flags.is_card_drawn}</td>
+                <td>${!!flags.is_action_completed}</td>
+            `;
+            flagsListBody.appendChild(trFlags);
+        }
+
+        // 3. 盤面のプレイヤーコマ描画
         const targetCell = document.getElementById(`${boardSEL.CELL_PREFIX}${position}`);
         if (targetCell) {
             const table = document.createElement('table');
