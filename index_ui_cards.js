@@ -26,11 +26,11 @@ async function updateCardFlag(supabase, userId, flagName, value) {
 }
 
 /**
- * 現在地に応じてカードフェーズのUIを切り替える（手番終了のロック制御を含む）
- * ※ index.js から盤面移動直後などに直接呼び出される
+ * 現在地とフラグ状態に応じてカードフェーズのUIを切り替える
+ * ※ index_ui.js から盤面移動直後や同期時に呼び出される
  */
-export function updateCardPhaseUI(position) {
-    console.log("【デバッグ】updateCardPhaseUI");
+export function updateCardPhaseUI(position, flags = {}) {
+    console.log("【デバッグ】updateCardPhaseUI", flags);
     const drawButtons = [
         SEL_G.CARD.BTN_DRAW_SMALL_DEAL,
         SEL_G.CARD.BTN_DRAW_BIG_DEAL,
@@ -50,27 +50,57 @@ export function updateCardPhaseUI(position) {
     setMultipleButtonsActive(actionButtons, false);
 
     const statusMessage = document.getElementById(SEL_G.CARD.STATUS_MESSAGE);
+
+    // ==========================================
+    // 状態1: 既にアクションを完了している場合
+    // ==========================================
+    if (flags.is_action_completed) {
+        setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, true);
+        if (statusMessage) statusMessage.textContent = "カードアクション完了。ローン操作を行うか、手番を終了してください。";
+        return; // ここで処理を終了し、これ以上ボタンを触らない
+    }
+
+    // ==========================================
+    // 状態2: カードを引いた後（アクション選択中）の場合
+    // ==========================================
+    if (flags.is_card_drawn) {
+        setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, false); // アクションが完了するまで手番終了はロック
+
+        if (CELLS_OPPORTUNITY.includes(position)) {
+            setButtonActive(SEL_G.CARD.BTN_BUY_STOCK, true);
+            setButtonActive(SEL_G.CARD.BTN_BUY_REALESTATE, true);
+            setButtonActive(SEL_G.CARD.BTN_PASS, true);
+            if (statusMessage) statusMessage.textContent = "ディールカードを引きました。購入するか、パスしてください。";
+        } else if (CELLS_MARKET.includes(position)) {
+            setButtonActive(SEL_G.CARD.BTN_SELL_STOCK, true);
+            setButtonActive(SEL_G.CARD.BTN_PASS, true);
+            if (statusMessage) statusMessage.textContent = "マーケットカードを引きました。売却するか、パスしてください。";
+        } else if (CELLS_DOODAD.includes(position)) {
+            setButtonActive(SEL_G.CARD.BTN_PAY_DOODAD, true);
+            if (statusMessage) statusMessage.textContent = "Doodadカードを引きました。必ず費用を支払ってください。";
+        }
+        return; // ここで処理を終了
+    }
+
+    // ==========================================
+    // 状態3: まだカードを引いていない初期状態
+    // ==========================================
     let requireCardAction = false;
 
-    // 現在地のマス属性判定
     if (CELLS_OPPORTUNITY.includes(position)) {
-        console.log("【デバッグ】Cells Opportunity ?");
         setButtonActive(SEL_G.CARD.BTN_DRAW_SMALL_DEAL, true);
         setButtonActive(SEL_G.CARD.BTN_DRAW_BIG_DEAL, true);
         requireCardAction = true;
     } else if (CELLS_MARKET.includes(position)) {
-        console.log("【デバッグ】Cells Market ?");
         setButtonActive(SEL_G.CARD.BTN_DRAW_MARKET, true);
         requireCardAction = true;
     } else if (CELLS_DOODAD.includes(position)) {
-        console.log("【デバッグ】Cells Doodad ?");
         setButtonActive(SEL_G.CARD.BTN_DRAW_DOODAD, true);
         requireCardAction = true;
     }
 
     // アクション必須マスに止まった場合は手番終了をロック
     if (requireCardAction) {
-        console.log("【デバッグ】アクション必須");
         setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, false);
         if (statusMessage) statusMessage.textContent = "カードを引いてください。アクション必須";
     } else {
@@ -80,90 +110,28 @@ export function updateCardPhaseUI(position) {
 
 /**
  * カードアクション関連のイベントリスナーを初期化する
- * ※ index.js から DB通信用の supabase と currentUserId を受け取るように変更
  */
 export function initCardEventListeners(supabase, currentUserId) {
-    // ------------------------------------------
-    // ドローボタン押下時の動作
-    // ------------------------------------------
     document.getElementById(SEL_G.CARD.BTN_DRAW_SMALL_DEAL)?.addEventListener('click', async () => {
-        console.log("【デバッグ】small deal card");
-        setButtonActive(SEL_G.CARD.BTN_DRAW_SMALL_DEAL, false);
-        setButtonActive(SEL_G.CARD.BTN_DRAW_BIG_DEAL, false);
-        setButtonActive(SEL_G.CARD.BTN_BUY_STOCK, true);
-        setButtonActive(SEL_G.CARD.BTN_BUY_REALESTATE, true);
-        setButtonActive(SEL_G.CARD.BTN_PASS, true);
-        
-        const msg = document.getElementById(SEL_G.CARD.STATUS_MESSAGE);
-        if (msg) msg.textContent = "【UIテスト】Small Dealを引きました。購入するか、パスしてください。";
-
-        // ★追加: カードを引いたフラグを立てる
         await updateCardFlag(supabase, currentUserId, 'is_card_drawn', true);
     });
 
     document.getElementById(SEL_G.CARD.BTN_DRAW_BIG_DEAL)?.addEventListener('click', async () => {
-        console.log("【デバッグ】big deal card");
-        setButtonActive(SEL_G.CARD.BTN_DRAW_SMALL_DEAL, false);
-        setButtonActive(SEL_G.CARD.BTN_DRAW_BIG_DEAL, false);
-        setButtonActive(SEL_G.CARD.BTN_BUY_REALESTATE, true);
-        setButtonActive(SEL_G.CARD.BTN_PASS, true);
-        
-        const msg = document.getElementById(SEL_G.CARD.STATUS_MESSAGE);
-        if (msg) msg.textContent = "【UIテスト】Big Dealを引きました。購入するか、パスしてください。";
-
-        // ★追加: カードを引いたフラグを立てる
         await updateCardFlag(supabase, currentUserId, 'is_card_drawn', true);
     });
 
     document.getElementById(SEL_G.CARD.BTN_DRAW_MARKET)?.addEventListener('click', async () => {
-        console.log("【デバッグ】market card");
-        setButtonActive(SEL_G.CARD.BTN_DRAW_MARKET, false);
-        setButtonActive(SEL_G.CARD.BTN_SELL_STOCK, true);
-        setButtonActive(SEL_G.CARD.BTN_PASS, true);
-        
-        const msg = document.getElementById(SEL_G.CARD.STATUS_MESSAGE);
-        if (msg) msg.textContent = "【UIテスト】Marketを引きました。売却するか、パスしてください。";
-
-        // ★追加: カードを引いたフラグを立てる
         await updateCardFlag(supabase, currentUserId, 'is_card_drawn', true);
     });
 
     document.getElementById(SEL_G.CARD.BTN_DRAW_DOODAD)?.addEventListener('click', async () => {
-        console.log("【デバッグ】doodad card");
-        setButtonActive(SEL_G.CARD.BTN_DRAW_DOODAD, false);
-        setButtonActive(SEL_G.CARD.BTN_PAY_DOODAD, true);
-        setButtonActive(SEL_G.CARD.BTN_PASS, false); // Doodadはパス不可
-        setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, false); // 強制支払いのためのロック
-        
-        const msg = document.getElementById(SEL_G.CARD.STATUS_MESSAGE);
-        if (msg) msg.textContent = "【UIテスト】Doodadを引きました。必ず費用を支払ってください。";
-
-        // ★追加: カードを引いたフラグを立てる
         await updateCardFlag(supabase, currentUserId, 'is_card_drawn', true);
     });
 
-    // ------------------------------------------
-    // アクション完了後のUIリセット処理
-    // ------------------------------------------
     const resetCardUI = async () => {
-        setMultipleButtonsActive([
-            SEL_G.CARD.BTN_BUY_REALESTATE, SEL_G.CARD.BTN_BUY_STOCK, 
-            SEL_G.CARD.BTN_SELL_STOCK, SEL_G.CARD.BTN_PAY_DOODAD, SEL_G.CARD.BTN_PASS
-        ], false);
-        
-        // アクション完了により「手番終了」と「ローン操作」を解放
-        setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, true);
-        setButtonActive(SEL_G.PORTFOLIO.BTN_BORROW_LOAN, true);
-        setButtonActive(SEL_G.PORTFOLIO.BTN_PAYBACK_LOAN, true);
-        
-        const msg = document.getElementById(SEL_G.CARD.STATUS_MESSAGE);
-        if (msg) msg.textContent = "【UIテスト】カードアクション完了。ローン操作を行うか、手番を終了してください。";
-
-        // ★追加: アクション完了フラグを立てる
         await updateCardFlag(supabase, currentUserId, 'is_action_completed', true);
     };
 
-    // 各種アクションボタンにリセット処理を紐付け
     document.getElementById(SEL_G.CARD.BTN_PASS)?.addEventListener('click', resetCardUI);
     document.getElementById(SEL_G.CARD.BTN_BUY_STOCK)?.addEventListener('click', resetCardUI);
     document.getElementById(SEL_G.CARD.BTN_BUY_REALESTATE)?.addEventListener('click', resetCardUI);
