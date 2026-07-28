@@ -150,6 +150,15 @@
               "children_count": { "type": "number" },
               "charity_turns_left": { "type": "number" },
               "downsized_turns_left": { "type": "number" },
+              "flags": {
+                "type": "object",
+                "properties": {
+                  "has_rolled_dice": { "type": "boolean" },
+                  "is_paycheck_claimed": { "type": "boolean" },
+                  "is_card_drawn": { "type": "boolean" },
+                  "is_action_completed": { "type": "boolean" }
+                }
+              },
               "financials": {
                 "type": "object",
                 "properties": {
