@@ -75,17 +75,14 @@ function drawHostScreen() {
     const state = activeRoomRecord?.game_state || {};
     const decks = state.decks || {};
 
-    // --- ここからデバッグ用ログを追加 ---
-    console.log("【デバッグ検証1: データの中身】decks =", decks);
-    console.log("【デバッグ検証2: DOM要素の取得状況】", {
+    console.log("【デバッグ】データの中身：", decks);
+    console.log("【デバッグ】DOM要素：", {
         smallDealElem: document.getElementById(DOM_SELECTORS.HOST.DECK_MONITOR.SMALL_DEAL_COUNT),
         bigDealElem: document.getElementById(DOM_SELECTORS.HOST.DECK_MONITOR.BIG_DEAL_COUNT),
         marketElem: document.getElementById(DOM_SELECTORS.HOST.DECK_MONITOR.MARKET_COUNT),
         doodadElem: document.getElementById(DOM_SELECTORS.HOST.DECK_MONITOR.DOODAD_COUNT)
     });
-    // --- 追加ここまで ---
 
-    // --- 修正：定義ファイル(DOM_SELECTORS)を用いたデッキ枚数の描画処理 ---
     const elSmallCount = document.getElementById(DOM_SELECTORS.HOST.DECK_MONITOR.SMALL_DEAL_COUNT);
     if (elSmallCount) elSmallCount.textContent = `${decks.small_deal ? decks.small_deal.length : 0} 枚`;
 
@@ -97,7 +94,6 @@ function drawHostScreen() {
 
     const elDoodadCount = document.getElementById(DOM_SELECTORS.HOST.DECK_MONITOR.DOODAD_COUNT);
     if (elDoodadCount) elDoodadCount.textContent = `${decks.doodad ? decks.doodad.length : 0} 枚`;
-    // --- 追加ここまで ---
 
     if (hostDiceMonitor) {
         const activeId = activeRoomRecord ? activeRoomRecord.current_turn_user_id : null;
@@ -119,6 +115,8 @@ function drawHostScreen() {
     }
 
     currentParticipants.forEach((p, idx) => {
+        console.log("【デバッグ】currentParticipants");
+
         const pState = p.state || {};
         const financials = pState.financials || {};
         const position = pState.position ?? 0;
@@ -137,13 +135,22 @@ function drawHostScreen() {
         const targetCell = document.getElementById(`${boardSEL.CELL_PREFIX}${position}`);
         if (targetCell) {
             const table = document.createElement('table');
-            table.setAttribute('border', '0'); table.setAttribute('cellspacing', '0'); table.setAttribute('cellpadding', '2'); table.setAttribute('width', '100%');
-            const trNode = document.createElement('tr'); const tdNode = document.createElement('td');
-            tdNode.setAttribute('bgcolor', '#00bcd4'); tdNode.setAttribute('align', 'center');
-            const fontNode = document.createElement('font'); fontNode.setAttribute('color', 'white'); fontNode.setAttribute('size', '2');
+            table.setAttribute('border', '0');
+            table.setAttribute('cellspacing', '0');
+            table.setAttribute('cellpadding', '2');
+            table.setAttribute('width', '100%');
+            const trNode = document.createElement('tr');
+            const tdNode = document.createElement('td');
+            tdNode.setAttribute('bgcolor', '#00bcd4');
+            tdNode.setAttribute('align', 'center');
+            const fontNode = document.createElement('font');
+            fontNode.setAttribute('color', 'white');
+            fontNode.setAttribute('size', '2');
             fontNode.textContent = pState.name || '不明';
             
-            tdNode.appendChild(fontNode); trNode.appendChild(tdNode); table.appendChild(trNode);
+            tdNode.appendChild(fontNode);
+            trNode.appendChild(tdNode);
+            table.appendChild(trNode);
             targetCell.appendChild(table);
         }
     });
