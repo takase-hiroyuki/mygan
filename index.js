@@ -2,6 +2,7 @@
 import { roomId } from './common_config.js';
 import { DOM_SELECTORS } from './common_dom_selectors.js';
 import { toggleScreen } from './index_ui.js';
+import { initCardEventListeners } from './index_ui_cards.js'; // ★追加: カードUIモジュールの読み込み
 import { initSupabaseClient, checkExistingLogin, loginUser } from './index_auth.js';
 import { startSubscriptions } from './index_state.js';
 import { actionRollDice, actionEndTurn, actionClaimPaycheck } from './index_actions.js';
@@ -19,6 +20,9 @@ let currentUserId = null;
 (async function init() {
     supabase = await initSupabaseClient();
     currentUserId = await checkExistingLogin(supabase, SEL_G);
+
+    // ★追加: アプリ起動時に一度だけカードアクションのイベントリスナーを登録する
+    initCardEventListeners();
 
     if (currentUserId) {
         toggleScreen(true);
