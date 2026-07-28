@@ -6,7 +6,7 @@ import { setButtonActive, BOARD_CELL_NAMES, waitForSupabase } from './common_uti
 let supabase = null;
 const HOST_ADMIN_ID = 'host-admin-01';
 const listBody = document.getElementById(DOM_SELECTORS.HOST.PARTICIPANT_LIST);
-const flagsListBody = document.getElementById(DOM_SELECTORS.HOST.FLAGS_LIST); // ★追加: フラグ一覧テーブルのtbody要素
+const flagsListBody = document.getElementById(DOM_SELECTORS.HOST.FLAGS_LIST); // フラグ一覧テーブルのtbody要素
 const displayRoomStatus = document.getElementById(DOM_SELECTORS.HOST.LIFECYCLE.DISPLAY_ROOM_STATUS);
 const btnInitialShuffleStart = document.getElementById(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE);
 const btnForceGameEnd = document.getElementById(DOM_SELECTORS.HOST.LIFECYCLE.BTN_FORCE_GAME_END);
@@ -102,7 +102,7 @@ function drawHostScreen() {
     const boardSEL = DOM_SELECTORS.HOST.BOARD;
     
     if (listBody) listBody.innerHTML = '';
-    if (flagsListBody) flagsListBody.innerHTML = ''; // ★追加: フラグテーブルの初期化
+    if (flagsListBody) flagsListBody.innerHTML = ''; 
     
     for (let i = 0; i < 24; i++) {
         const cell = document.getElementById(`${boardSEL.CELL_PREFIX}${i}`);
@@ -113,7 +113,7 @@ function drawHostScreen() {
         const pState = p.state || {};
         const financials = pState.financials || {};
         const position = pState.position ?? 0;
-        const flags = pState.flags || {}; // ★追加: フラグデータの抽出
+        const flags = pState.flags || {}; 
 
         // 1. 参加者名簿テーブルの行生成
         const tr = document.createElement('tr');
@@ -127,15 +127,16 @@ function drawHostScreen() {
         `;
         if (listBody) listBody.appendChild(tr);
 
-        // 2. ★追加: フラグ監視テーブルの行生成
+        // 2. 5つのフラグ監視テーブルの行生成
         if (flagsListBody) {
             const trFlags = document.createElement('tr');
             trFlags.innerHTML = `
                 <td>${pState.name || '不明'}</td>
                 <td>${!!flags.has_rolled_dice}</td>
-                <td>${!!flags.is_paycheck_claimed}</td>
                 <td>${!!flags.is_card_drawn}</td>
                 <td>${!!flags.is_action_completed}</td>
+                <td>${!!flags.is_calculating}</td>
+                <td>${!!flags.is_negative_cash_flow}</td>
             `;
             flagsListBody.appendChild(trFlags);
         }
