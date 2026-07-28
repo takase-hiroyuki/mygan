@@ -1,4 +1,5 @@
 // index_ui_cards.js
+import { roomId } from './common_config.js'; // 追加: RPCの呼び出しに必要
 import { DOM_SELECTORS } from './common_dom_selectors.js';
 import { setButtonActive, setMultipleButtonsActive } from './common_utils.js';
 
@@ -13,6 +14,7 @@ const CELLS_MARKET = [12, 22];
 
 /**
  * フラグをデータベースに直接保存するローカルヘルパー関数
+ * ※ 次のステップでアクション完了処理をRPC化するまで、一時的に維持します。
  */
 async function updateCardFlag(supabase, userId, flagName, value) {
     if (!supabase || !userId) return;
@@ -112,22 +114,24 @@ export function updateCardPhaseUI(position, flags = {}) {
  * カードアクション関連のイベントリスナーを初期化する
  */
 export function initCardEventListeners(supabase, currentUserId) {
-    document.getElementById(SEL_G.CARD.BTN_DRAW_SMALL_DEAL)?.addEventListener('click', async () => {
-        await updateCardFlag(supabase, currentUserId, 'is_card_drawn', true);
-    });
+    // --- 【変更箇所】カードを引くアクションをサーバーサイド（RPC）に委譲 ---
+    const drawCardRpc = async () => {
+        const { error } = await supabase.rpc('draw_card', {
+            p_room_id: roomId,
+            p_user_id: currentUserId
+        });
+        if (error) {
+            console.error("カードドローエラー:", error);
+            alert(`エラー: ${error.message}`);
+        }
+    };
 
-    document.getElementById(SEL_G.CARD.BTN_DRAW_BIG_DEAL)?.addEventListener('click', async () => {
-        await updateCardFlag(supabase, currentUserId, 'is_card_drawn', true);
-    });
+    document.getElementById(SEL_G.CARD.BTN_DRAW_SMALL_DEAL)?.addEventListener('click', drawCardRpc);
+    document.getElementById(SEL_G.CARD.BTN_DRAW_BIG_DEAL)?.addEventListener('click', drawCardRpc);
+    document.getElementById(SEL_G.CARD.BTN_DRAW_MARKET)?.addEventListener('click', drawCardRpc);
+    document.getElementById(SEL_G.CARD.BTN_DRAW_DOODAD)?.addEventListener('click', drawCardRpc);
 
-    document.getElementById(SEL_G.CARD.BTN_DRAW_MARKET)?.addEventListener('click', async () => {
-        await updateCardFlag(supabase, currentUserId, 'is_card_drawn', true);
-    });
-
-    document.getElementById(SEL_G.CARD.BTN_DRAW_DOODAD)?.addEventListener('click', async () => {
-        await updateCardFlag(supabase, currentUserId, 'is_card_drawn', true);
-    });
-
+    // --- 【維持】アクションの完了（購入、支払い、パスなど） ---
     const resetCardUI = async () => {
         await updateCardFlag(supabase, currentUserId, 'is_action_completed', true);
     };
