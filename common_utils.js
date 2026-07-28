@@ -1,4 +1,4 @@
-// utils.js
+// common_utils.js
 
 /**
  * 単一のボタンの有効/無効とテキストプレフィックス(O/X)を同期する
@@ -72,6 +72,12 @@ export function getInitialRegistrationState(username) {
         children_count: 0,
         charity_turns_left: 0,
         downsized_turns_left: 0,
+        flags: {
+            has_rolled_dice: false,
+            is_paycheck_claimed: false,
+            is_card_drawn: false,
+            is_action_completed: false
+        },
         financials: {
             cash: 0, total_income: 0, total_expenses: 0, passive_income: 0, net_cash_flow: 0,
             expenses: { taxes: 0, mortgage_payment: 0, car_loan_payment: 0, loan_interest: 0, child_expense: 0, other: 0 },
