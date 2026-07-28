@@ -6,7 +6,7 @@ import { setButtonActive, BOARD_CELL_NAMES, waitForSupabase } from './common_uti
 let supabase = null;
 const HOST_ADMIN_ID = 'host-admin-01';
 const listBody = document.getElementById(DOM_SELECTORS.HOST.PARTICIPANT_LIST);
-const flagsListBody = document.getElementById(DOM_SELECTORS.HOST.FLAGS_LIST); // フラグ一覧テーブルのtbody要素
+const flagsListBody = document.getElementById(DOM_SELECTORS.HOST.FLAGS_LIST);
 const displayRoomStatus = document.getElementById(DOM_SELECTORS.HOST.LIFECYCLE.DISPLAY_ROOM_STATUS);
 const btnInitialShuffleStart = document.getElementById(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE);
 const btnForceGameEnd = document.getElementById(DOM_SELECTORS.HOST.LIFECYCLE.BTN_FORCE_GAME_END);
@@ -127,12 +127,13 @@ function drawHostScreen() {
         `;
         if (listBody) listBody.appendChild(tr);
 
-        // 2. 5つのフラグ監視テーブルの行生成
+        // 2. フラグ監視テーブルの行生成（マッピング修正）
         if (flagsListBody) {
             const trFlags = document.createElement('tr');
             trFlags.innerHTML = `
                 <td>${pState.name || '不明'}</td>
                 <td>${!!flags.has_rolled_dice}</td>
+                <td>${!!flags.is_paycheck_claimed}</td>
                 <td>${!!flags.is_card_drawn}</td>
                 <td>${!!flags.is_action_completed}</td>
                 <td>${!!flags.is_calculating}</td>
@@ -161,6 +162,7 @@ function drawHostScreen() {
             tdNode.appendChild(fontNode);
             trNode.appendChild(tdNode);
             table.appendChild(trNode);
+            targetCell.appendChild(targetCell.firstChild ? document.createElement('br') : document.createDocumentFragment()); // 重なり防止
             targetCell.appendChild(table);
         }
     });
