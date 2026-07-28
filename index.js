@@ -2,7 +2,7 @@
 import { roomId } from './common_config.js';
 import { DOM_SELECTORS } from './common_dom_selectors.js';
 import { toggleScreen } from './index_ui.js';
-import { initCardEventListeners } from './index_ui_cards.js'; // ★追加: カードUIモジュールの読み込み
+import { initCardEventListeners } from './index_ui_cards.js'; 
 import { initSupabaseClient, checkExistingLogin, loginUser } from './index_auth.js';
 import { startSubscriptions } from './index_state.js';
 import { actionRollDice, actionEndTurn, actionClaimPaycheck } from './index_actions.js';
@@ -16,15 +16,22 @@ const btnClaimPaycheck = document.getElementById(SEL_G.CONTROLS.BTN_CLAIM_PAYCHE
 const btnEndTurn = document.getElementById(SEL_G.CONTROLS.BTN_END_TURN);
 
 let currentUserId = null;
+let isCardListenersReady = false; // イベントリスナーの重複登録を防止するフラグ
+
+// ユーザーID確定後にカードイベントを登録し、DB更新用情報を受け渡す
+function setupCardListeners() {
+    if (!isCardListenersReady && supabase && currentUserId) {
+        initCardEventListeners(supabase, currentUserId);
+        isCardListenersReady = true;
+    }
+}
 
 (async function init() {
     supabase = await initSupabaseClient();
     currentUserId = await checkExistingLogin(supabase, SEL_G);
 
-    // ★追加: アプリ起動時に一度だけカードアクションのイベントリスナーを登録する
-    initCardEventListeners();
-
     if (currentUserId) {
+        setupCardListeners(); // 既存ログイン確認後に登録
         toggleScreen(true);
         startSubscriptions(supabase, roomId, currentUserId);
     } else {
@@ -42,6 +49,7 @@ btnLogin.addEventListener('click', async () => {
     
     if (newUserId) {
         currentUserId = newUserId;
+        setupCardListeners(); // 新規ログイン完了後に登録
         toggleScreen(true);
         startSubscriptions(supabase, roomId, currentUserId);
     } else {
