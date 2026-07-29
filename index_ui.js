@@ -100,7 +100,7 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
         safeUpdate(SEL_G.PORTFOLIO.DISPLAY_EXPENSE_CHILD, toCurrency(exp.child_expense));
     }
 
-    // 4. ボタン・ステータス制御
+    // 4. ステータスメッセージ・個別ボタン制御
     if (!isPlaying) {
         diceStatusArea.textContent = "ホストがゲームを開始するまでお待ちください。";
         disableAllActionButtons();
@@ -109,25 +109,20 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
         const turnUserName = turnUser ? turnUser.state.name : "他のプレイヤー";
 
         if (isMyTurn) {
+            // ※ メインのアクションボタンの有効/無効化は index_state.js の updateActionButtonsState に移譲されているため、
+            // ここではテキストメッセージの更新と、それに付随する補助ボタンのみを制御する。
             if (state.last_dice > 0) {
-                setButtonActive(SEL_G.CONTROLS.BTN_ROLL_DICE, false);
-                setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, true);
-                
                 updateCardPhaseUI(state.position, flags);
                 
-                // Paydayフェーズに応じたUIの切り替え
-                if (state.calculation_phase === 'payday') {
-                    diceStatusArea.textContent = `結果:【${state.last_dice}】 Paycheck請求可能`;
-                    setButtonActive(SEL_G.CONTROLS.BTN_CLAIM_PAYCHECK, true);
+                // pending_paydays（給料）の状態を判定してメッセージを切り替え
+                const pendingPaydays = parseInt(flags.pending_paydays || 0, 10);
+                if (pendingPaydays > 0) {
+                    diceStatusArea.textContent = `結果:【${state.last_dice}】 Paycheck請求可能（${pendingPaydays}回分）`;
                 } else {
                     diceStatusArea.textContent = `結果:【${state.last_dice}】`;
-                    setButtonActive(SEL_G.CONTROLS.BTN_CLAIM_PAYCHECK, false);
                 }
             } else {
                 diceStatusArea.textContent = "あなたの手番";
-                setButtonActive(SEL_G.CONTROLS.BTN_ROLL_DICE, true);
-                setButtonActive(SEL_G.CONTROLS.BTN_CLAIM_PAYCHECK, false);
-                setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, false);
                 
                 // 手番開始時にローン操作を可能にする
                 setButtonActive(SEL_G.PORTFOLIO.BTN_BORROW_LOAN, true);
@@ -141,10 +136,11 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
                 const statusMessage = document.getElementById(SEL_G.CARD.STATUS_MESSAGE);
                 if (statusMessage) statusMessage.textContent = "サイコロを振って移動してください。";
             }
-            setButtonActive(SEL_G.CONTROLS.BTN_ESCAPE_RAT_RACE, false);
             
-            // ★修正: 計算フェーズ（is_calculating が true）のときのみ計算チェックボタンを有効化する
+            // 常に無効化しておくボタン等
+            setButtonActive(SEL_G.CONTROLS.BTN_ESCAPE_RAT_RACE, false);
             setButtonActive(SEL_G.FINANCIALS.BTN_CHECK_CALCULATIONS, !!flags.is_calculating);
+            
         } else {
             diceStatusArea.textContent = `[${turnUserName}] がプレイ中`;
             disableAllActionButtons();
@@ -172,7 +168,9 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
 export function disableAllActionButtons() {
     const { CONTROLS, CARD, PORTFOLIO, FINANCIALS } = DOM_SELECTORS.GUEST;
     const actionButtonIds = [
-        CONTROLS.BTN_ROLL_DICE, CONTROLS.BTN_CLAIM_PAYCHECK, CONTROLS.BTN_END_TURN, CONTROLS.BTN_ESCAPE_RAT_RACE,
+        // ★追加: BTN_ROLL_DICE_2 を無効化リストに含める
+        CONTROLS.BTN_ROLL_DICE, CONTROLS.BTN_ROLL_DICE_2, CONTROLS.BTN_CLAIM_PAYCHECK, 
+        CONTROLS.BTN_END_TURN, CONTROLS.BTN_ESCAPE_RAT_RACE,
         CARD.BTN_DRAW_SMALL_DEAL, CARD.BTN_DRAW_BIG_DEAL, CARD.BTN_DRAW_MARKET, CARD.BTN_DRAW_DOODAD,
         CARD.BTN_BUY_REALESTATE, CARD.BTN_BUY_STOCK, CARD.BTN_SELL_STOCK, CARD.BTN_PAY_DOODAD, CARD.BTN_PASS,
         PORTFOLIO.BTN_BORROW_LOAN, PORTFOLIO.BTN_PAYBACK_LOAN,
