@@ -32,7 +32,7 @@ export const DOM_SELECTORS = {
             ROLE: 'guest-role',
             PROFESSION: 'guest-profession',
             CHILDREN_COUNT: 'guest-children-count',
-            PER_CHILD_EXPENSE: 'guest-per-child-expense' // ★これを追加
+            PER_CHILD_EXPENSE: 'guest-per-child-expense'
         },
 
         // 手番・サイコロ制御エリア
@@ -41,6 +41,7 @@ export const DOM_SELECTORS = {
             DICE_RESULT: 'guest-dice-result',
             MANUAL_ACTION_AREA: 'manual-action-area',
             BTN_ROLL_DICE: 'btn-roll-dice',
+            BTN_ROLL_DICE_2: 'btn-roll-dice-2', // ★サイコロ2個用を追加
             BTN_CLAIM_PAYCHECK: 'btn-claim-paycheck', 
             BTN_END_TURN: 'btn-end-turn',            
             BTN_ESCAPE_RAT_RACE: 'btn-escape-rat-race' 
