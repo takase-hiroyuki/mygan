@@ -1,13 +1,13 @@
 // index_state.js
 import { renderGuestUI } from './index_ui.js';
-import { DOM_SELECTORS } from './common_dom_selectors.js'; // ★追加
-import { setButtonActive } from './common_utils.js';       // ★追加
+import { DOM_SELECTORS } from './common_dom_selectors.js';
+import { setButtonActive } from './common_utils.js';       
 
 let cachedParticipants = [];
 let cachedRoom = null;
 
 /**
- * ★追加: プレイヤーの状態（フラグなど）に基づいて、アクションボタンの有効/無効を厳格に制御する
+ * プレイヤーの状態（フラグなど）に基づいて、アクションボタンの有効/無効を厳格に制御する
  */
 function updateActionButtonsState(playerState, isMyTurn) {
     const flags = playerState.flags || {};
@@ -72,11 +72,17 @@ export async function fetchAndRender(supabase, roomId, currentUserId) {
     if (resPart.data) cachedParticipants = resPart.data;
     if (resRoom.data) cachedRoom = resRoom.data;
     
+    const myParticipantRecord = cachedParticipants.find(p => p.user_id === currentUserId);
+    
+    // ★追加デバッグ: 描画関数へ渡す直前の自プレイヤーの財務データをコンソールに出力
+    if (myParticipantRecord) {
+        console.log("【デバッグ】UI描画直前: state.financialsの中身:", JSON.stringify(myParticipantRecord.state?.financials, null, 2));
+    }
+
     // 描画関数を呼び出し、最新のキャッシュを渡す
     renderGuestUI(currentUserId, cachedParticipants, cachedRoom);
 
-    // ★追加: 描画後にボタンの厳格な状態制御を実行
-    const myParticipantRecord = cachedParticipants.find(p => p.user_id === currentUserId);
+    // 描画後にボタンの厳格な状態制御を実行
     if (myParticipantRecord && cachedRoom) {
         const playerState = myParticipantRecord.state || {};
         const isMyTurn = (cachedRoom.current_turn_user_id === currentUserId);
