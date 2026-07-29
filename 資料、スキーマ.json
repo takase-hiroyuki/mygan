@@ -145,7 +145,6 @@
               "game_phase": { "type": "string", "enum": ["rat_race", "fast_track"] },
               "position": { "type": "number" },
               "last_dice": { "type": "number" },
-              "is_calculating": { "type": "boolean" },
               "calculation_phase": { "type": "string", "enum": ["income_tax", "payday", "deal", "none"] },
               "children_count": { "type": "number" },
               "charity_turns_left": { "type": "number" },
@@ -156,7 +155,8 @@
                   "has_rolled_dice": { "type": "boolean" },
                   "is_paycheck_claimed": { "type": "boolean" },
                   "is_card_drawn": { "type": "boolean" },
-                  "is_action_completed": { "type": "boolean" }
+                  "is_action_completed": { "type": "boolean" },
+                  "is_calculating": { "type": "boolean" }
                 }
               },
               "financials": {
@@ -167,6 +167,7 @@
                   "total_expenses": { "type": "number" },
                   "passive_income": { "type": "number" },
                   "net_cash_flow": { "type": "number" },
+                  "per_child_expense": { "type": "number" },
                   "expenses": {
                     "type": "object",
                     "properties": {
