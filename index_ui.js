@@ -43,6 +43,8 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
     document.getElementById(SEL_G.STATUS.DISPLAY_CURRENT_CASH).textContent = toCurrency(financials.cash);
     document.getElementById(SEL_G.STATUS.PROFESSION).textContent = state.profession || "未定";
     document.getElementById(SEL_G.STATUS.ROLE).textContent = state.role || "general";
+    // ★追加: 子供の数の描画 (undefined の場合は 0 とする)
+    document.getElementById(SEL_G.STATUS.CHILDREN_COUNT).textContent = state.children_count || 0;
 
     // 2. 盤面描画
     for (let i = 0; i < 24; i++) {
@@ -91,6 +93,8 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
         
         // ローン利息支出
         safeUpdate(SEL_G.PORTFOLIO.DISPLAY_EXPENSE_LOANINTEREST, toCurrency(exp.bank_loan_payment));
+        // ★追加: 子供の養育費の描画
+        safeUpdate(SEL_G.PORTFOLIO.DISPLAY_EXPENSE_CHILD, toCurrency(exp.child_expense));
     }
 
     // 4. ボタン・ステータス制御
