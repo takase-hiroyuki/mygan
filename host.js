@@ -216,7 +216,7 @@ btnInitialShuffleStart?.addEventListener('click', async (event) => {
 });
 
 // ==========================================
-// 退室処理ボタン (追加実装)
+// 退室処理ボタン
 // ==========================================
 btnKickParticipant?.addEventListener('click', async () => {
     if (!supabase) return;
@@ -249,6 +249,41 @@ btnKickParticipant?.addEventListener('click', async () => {
     } catch (error) {
         console.error("[DEBUG] 退室処理エラー:", error);
         alert(`[エラー] 退室処理失敗\n詳細: ${error.message}\n※データベース側に kick_participant 関数を作成する必要があります。`);
+    }
+});
+
+// ==========================================
+// 手番プレイヤー手動制御ボタン (追加実装)
+// ==========================================
+btnSetTurn?.addEventListener('click', async () => {
+    if (!supabase) return;
+    const orderInput = inputNextTurnOrder.value.trim();
+    const orderIdx = parseInt(orderInput, 10) - 1;
+    
+    if (isNaN(orderIdx) || orderIdx < 0 || orderIdx >= currentParticipants.length) {
+        alert("有効なプレイヤーの番号（入室順）を入力してください。");
+        return;
+    }
+
+    const targetUser = currentParticipants[orderIdx];
+    const targetName = targetUser.state?.name || '不明';
+
+    if (!confirm(`手番を ${targetName} (入室順: ${orderIdx + 1}) に強制的に移動させますか？`)) {
+        return;
+    }
+
+    try {
+        // データ整合性を保つため、RPCを呼び出して手番を更新する
+        await callRpcWithDebug(supabase, 'force_set_turn', { 
+            p_room_id: roomId, 
+            p_target_user_id: targetUser.user_id 
+        });
+        console.log(`[DEBUG] 手番を ${targetName} に強制移動しました。`);
+        inputNextTurnOrder.value = '';
+        await syncAndFetchRoom();
+    } catch (error) {
+        console.error("[DEBUG] 手番変更エラー:", error);
+        alert(`[エラー] 手番変更失敗\n詳細: ${error.message}`);
     }
 });
 
