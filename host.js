@@ -1,7 +1,7 @@
 // host.js
 import { roomId, SUPABASE_URL, SUPABASE_KEY } from './common_config.js';
 import { DOM_SELECTORS } from './common_dom_selectors.js';
-import { setButtonActive, BOARD_CELL_NAMES, waitForSupabase } from './common_utils.js';
+import { setButtonActive, BOARD_CELL_NAMES, waitForSupabase, callRpcWithDebug } from './common_utils.js'; // ★ callRpcWithDebug をインポート
 
 let supabase = null;
 const HOST_ADMIN_ID = 'host-admin-01';
@@ -144,16 +144,18 @@ function drawHostScreen() {
         `;
         if (listBody) listBody.appendChild(tr);
 
-        // 2. フラグ監視テーブルの行生成（マッピング修正）
+        // 2. ★修正: 整数値スキーマに対応したフラグ監視テーブルの行生成
         if (flagsListBody) {
             const trFlags = document.createElement('tr');
             trFlags.innerHTML = `
                 <td>${pState.name || '不明'}</td>
                 <td>${!!flags.has_rolled_dice}</td>
-                <td>${!!flags.is_paycheck_claimed}</td>
+                <td>${flags.pending_paydays || 0}</td>
                 <td>${!!flags.is_card_drawn}</td>
                 <td>${!!flags.is_action_completed}</td>
                 <td>${!!flags.is_calculating}</td>
+                <td>${flags.charity_turns_left || 0}</td>
+                <td>${flags.downsized_turns_left || 0}</td>
                 <td>${!!flags.is_negative_cash_flow}</td>
             `;
             flagsListBody.appendChild(trFlags);
@@ -186,28 +188,6 @@ function drawHostScreen() {
     });
 }
 
-// 【デバッグ用】ゲーム開始RPC呼び出し関数
-async function debugStartGameWithProfessions(targetRoomId) {
-    console.log("[DEBUG-JS] RPC: start_game_with_professions 呼び出し開始", { p_room_id: targetRoomId });
-    
-    try {
-        const { data, error } = await supabase.rpc('start_game_with_professions', { p_room_id: targetRoomId });
-        
-        if (error) {
-            console.error("[FATAL ERROR] RPC実行失敗:", error);
-            alert(`[エラー] ゲーム開始失敗\nコード: ${error.code}\n詳細: ${error.message}\nヒント: ${error.hint}\n※コンソールを確認せよ`);
-            return false;
-        }
-        
-        console.log("[DEBUG-JS] RPC: 完了。データ:", data);
-        return true;
-    } catch (err) {
-        console.error("[FATAL ERROR] ネットワークまたは予期せぬエラー:", err);
-        alert(`[致命的エラー] ネットワークまたは予期せぬエラー\n詳細: ${err.message}`);
-        return false;
-    }
-}
-
 btnInitialShuffleStart?.addEventListener('click', async (event) => {
     if (!supabase) return;
     const debugFunctionName = event.currentTarget.id;
@@ -216,15 +196,14 @@ btnInitialShuffleStart?.addEventListener('click', async (event) => {
     if (!confirm("職業割り当てとキャッシュフローを含めてゲームを開始しますか？")) return;
     setButtonActive(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE, false);
 
-    const success = await debugStartGameWithProfessions(roomId);
-
-    console.log("【デバッグ2】", debugFunctionName, "success:", success);
-
-    if (!success) {
-        setButtonActive(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE, true);
-    } else {
+    try {
+        // ★修正: 共通ラッパー関数 (callRpcWithDebug) に置き換え
+        await callRpcWithDebug(supabase, 'start_game_with_professions', { p_room_id: roomId });
+        console.log("【デバッグ2】", debugFunctionName, "success");
         await syncAndFetchRoom();
-        setButtonActive(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE, false);
+    } catch (error) {
+        alert(`[エラー] ゲーム開始失敗\n詳細: ${error.message}\n※コンソールを確認してください`);
+        setButtonActive(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE, true);
     }
 
     console.log("【デバッグ3】", debugFunctionName);
