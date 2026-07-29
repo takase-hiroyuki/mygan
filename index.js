@@ -5,7 +5,7 @@ import { toggleScreen } from './index_ui.js';
 import { initCardEventListeners } from './index_ui_cards.js'; 
 import { initSupabaseClient, checkExistingLogin, loginUser } from './index_auth.js';
 import { startSubscriptions } from './index_state.js';
-import { actionRollDice, actionEndTurn, actionClaimPaycheck } from './index_actions.js';
+import { actionRollDice, actionEndTurn, actionClaimPaycheck, actionCheckCalculations } from './index_actions.js';
 
 let supabase = null;
 const SEL_G = DOM_SELECTORS.GUEST;
@@ -14,6 +14,7 @@ const btnLogin = document.getElementById(SEL_G.LOGIN.BTN_LOGIN);
 const btnRollDice = document.getElementById(SEL_G.CONTROLS.BTN_ROLL_DICE);
 const btnClaimPaycheck = document.getElementById(SEL_G.CONTROLS.BTN_CLAIM_PAYCHECK);
 const btnEndTurn = document.getElementById(SEL_G.CONTROLS.BTN_END_TURN);
+const btnCheckCalculations = document.getElementById(SEL_G.FINANCIALS.BTN_CHECK_CALCULATIONS);
 
 let currentUserId = null;
 let isCardListenersReady = false; // イベントリスナーの重複登録を防止するフラグ
@@ -66,6 +67,9 @@ btnClaimPaycheck.addEventListener(
 );
 btnEndTurn.addEventListener(
     'click', () => actionEndTurn(supabase, currentUserId)
+);
+btnCheckCalculations.addEventListener(
+    'click', () => actionCheckCalculations(supabase, currentUserId)
 );
 
 console.log("【デバッグ】index.js が読み込まれました。");
