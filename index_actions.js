@@ -2,6 +2,7 @@
 import { roomId } from './common_config.js';
 import { DOM_SELECTORS } from './common_dom_selectors.js';
 import { disableAllActionButtons } from './index_ui.js';
+import { callRpcWithDebug } from './common_utils.js'; // ★共通ラッパー関数のインポート
 
 /**
  * プレイヤーの状態(state)内のflagsの一部を直接更新するヘルパー関数
@@ -44,8 +45,11 @@ async function getCurrentPlayerState(supabase, userId) {
 
 /**
  * サイコロを振るアクション
+ * @param {Object} supabase - Supabaseクライアント
+ * @param {string} currentUserId - 現在のユーザーID
+ * @param {number} diceCount - 振るサイコロの数（デフォルト 1）
  */
-export async function actionRollDice(supabase, currentUserId) {
+export async function actionRollDice(supabase, currentUserId, diceCount = 1) { // ★修正: 引数にdiceCountを追加
     if (!supabase || !currentUserId) return;
     
     const state = await getCurrentPlayerState(supabase, currentUserId);
@@ -56,14 +60,14 @@ export async function actionRollDice(supabase, currentUserId) {
         return;
     }
 
-    // 1. サイコロを振るRPCを実行
-    const { error } = await supabase.rpc('roll_dice_and_move', { 
-        p_room_id: roomId, 
-        p_user_id: currentUserId 
-    });
-    
-    if (error) {
-        console.error("サイコロ処理エラー:", error);
+    // 1. サイコロを振るRPCを実行 (★修正: callRpcWithDebugを使用し、diceCountを渡す)
+    try {
+        await callRpcWithDebug(supabase, 'roll_dice_and_move', { 
+            p_room_id: roomId, 
+            p_user_id: currentUserId,
+            p_dice_count: diceCount
+        });
+    } catch (error) {
         alert(`処理エラー: ${error.message}`);
         return;
     }
@@ -71,23 +75,22 @@ export async function actionRollDice(supabase, currentUserId) {
     // 2. 移動後の位置を取得
     const newState = await getCurrentPlayerState(supabase, currentUserId);
     if (newState) {
-        // ★修正: 09番マス (子供) に止まった場合のRPC呼び出し処理を追加
+        // 09番マス (子供) に止まった場合のRPC呼び出し処理を追加
         if (newState.position === 9) {
             console.log("[DEBUG-ACTION] 子供マスに停止。action_land_on_baby を呼び出します。");
-            const { data: babyData, error: babyError } = await supabase.rpc('action_land_on_baby', {
-                p_room_id: roomId,
-                p_user_id: currentUserId
-            });
-            
-            if (babyError) {
-                console.error("子供マス処理エラー:", babyError);
-                alert(`子供マス処理エラー: ${babyError.message}`);
-            } else {
+            try {
+                // ★修正: callRpcWithDebug を使用
+                const babyData = await callRpcWithDebug(supabase, 'action_land_on_baby', {
+                    p_room_id: roomId,
+                    p_user_id: currentUserId
+                });
+                
                 console.log("[DEBUG-ACTION] 子供マス処理成功:", babyData);
-                // 成功時のアラート表示（任意）
                 if (babyData && babyData.message) {
                     alert(babyData.message);
                 }
+            } catch (babyError) {
+                alert(`子供マス処理エラー: ${babyError.message}`);
             }
         }
     }
@@ -102,13 +105,13 @@ export async function actionClaimPaycheck(supabase, currentUserId) {
     const claimButton = document.getElementById(DOM_SELECTORS.GUEST.CONTROLS.BTN_CLAIM_PAYCHECK);
     if (claimButton) claimButton.disabled = true;
 
-    const { error } = await supabase.rpc('claim_paycheck', { 
-        p_room_id: roomId, 
-        p_user_id: currentUserId 
-    });
-    
-    if (error) {
-        console.error("Paycheck請求エラー:", error);
+    try {
+        // ★修正: callRpcWithDebug を使用
+        await callRpcWithDebug(supabase, 'claim_paycheck', { 
+            p_room_id: roomId, 
+            p_user_id: currentUserId 
+        });
+    } catch (error) {
         alert(`処理エラー: ${error.message}`);
         if (claimButton) claimButton.disabled = false;
     }
@@ -139,34 +142,32 @@ export async function actionEndTurn(supabase, currentUserId) {
 
     disableAllActionButtons();
     
-    const { error } = await supabase.rpc('pass_and_end_turn', { 
-        p_room_id: roomId, 
-        p_user_id: currentUserId 
-    });
-
-    if (error) {
-        console.error("手番終了エラー:", error);
+    try {
+        // ★修正: callRpcWithDebug を使用
+        await callRpcWithDebug(supabase, 'pass_and_end_turn', { 
+            p_room_id: roomId, 
+            p_user_id: currentUserId 
+        });
+    } catch (error) {
         alert(`エラー: ${error.message}`);
     }
 }
 
 /**
- * 【追加】手入力した計算結果を検証し、正しければ計算フェーズを解除する
+ * 手入力した計算結果を検証し、正しければ計算フェーズを解除する
  */
 export async function actionCheckCalculations(supabase, currentUserId) {
     if (!supabase || !currentUserId) return;
 
-    // ★修正: DOM_SELECTORS.GUEST.FINANCIALS.INPUT_NET_CASHFLOW を参照するように変更
     const inputIncomeEl = document.getElementById(DOM_SELECTORS.GUEST.FINANCIALS.INPUT_TOTAL_INCOME);
     const inputCashflowEl = document.getElementById(DOM_SELECTORS.GUEST.FINANCIALS.INPUT_NET_CASHFLOW);
 
-    // ★ デバッグログの追加：要素が正しく取得できているか確認
     console.log("[DEBUG] Income Element:", inputIncomeEl);
     console.log("[DEBUG] Cashflow Element:", inputCashflowEl);
     if (inputIncomeEl) console.log("[DEBUG] Income Value:", inputIncomeEl.value);
     if (inputCashflowEl) console.log("[DEBUG] Cashflow Value:", inputCashflowEl.value);
 
-    // 空文字の場合はNaNになるように処理を修正（カンマを取り除く処理も追加）
+    // 空文字の場合はNaNになるように処理
     const rawIncome = inputIncomeEl ? inputIncomeEl.value.replace(/,/g, '').trim() : "";
     const rawCashflow = inputCashflowEl ? inputCashflowEl.value.replace(/,/g, '').trim() : "";
 
@@ -178,29 +179,27 @@ export async function actionCheckCalculations(supabase, currentUserId) {
         return;
     }
 
-    // RPC関数の呼び出し
-    const { data, error } = await supabase.rpc('action_check_calculations', {
-        p_room_id: roomId,
-        p_user_id: currentUserId,
-        p_input_income: userInputIncome,
-        p_input_cashflow: userInputCashflow
-    });
+    try {
+        // ★修正: callRpcWithDebug を使用
+        const data = await callRpcWithDebug(supabase, 'action_check_calculations', {
+            p_room_id: roomId,
+            p_user_id: currentUserId,
+            p_input_income: userInputIncome,
+            p_input_cashflow: userInputCashflow
+        });
 
-    if (error) {
-        console.error("計算チェックRPCエラー:", error);
+        // RPCから返却された JSONB の status を判定
+        if (data.status === 'error') {
+            alert(data.message); // 「計算結果が正しくありません」などを表示
+        } else {
+            alert(data.message); // 成功メッセージを表示
+            
+            // 成功後、入力フィールドをクリアする
+            if (inputIncomeEl) inputIncomeEl.value = '';
+            if (inputCashflowEl) inputCashflowEl.value = '';
+        }
+    } catch (error) {
         alert('エラーが発生しました: ' + error.message);
-        return;
-    }
-
-    // RPCから返却された JSONB の status を判定
-    if (data.status === 'error') {
-        alert(data.message); // 「計算結果が正しくありません」などを表示
-    } else {
-        alert(data.message); // 成功メッセージを表示
-        
-        // 成功後、入力フィールドをクリアする（任意）
-        if (inputIncomeEl) inputIncomeEl.value = '';
-        if (inputCashflowEl) inputCashflowEl.value = '';
     }
 }
 
