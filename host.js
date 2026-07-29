@@ -92,6 +92,7 @@ function drawHostScreen() {
 
     const state = activeRoomRecord?.game_state || {};
     const decks = state.decks || {};
+    const currentTurnUserId = activeRoomRecord ? activeRoomRecord.current_turn_user_id : null;
 
     const elSmallCount = document.getElementById(DOM_SELECTORS.HOST.DECK_MONITOR.SMALL_DEAL_COUNT);
     if (elSmallCount) elSmallCount.textContent = `${decks.small_deal ? decks.small_deal.length : 0} 枚`;
@@ -106,12 +107,11 @@ function drawHostScreen() {
     if (elDoodadCount) elDoodadCount.textContent = `${decks.doodad ? decks.doodad.length : 0} 枚`;
 
     if (hostDiceMonitor) {
-        const activeId = activeRoomRecord ? activeRoomRecord.current_turn_user_id : null;
-        if (!activeId) {
+        if (!currentTurnUserId) {
             hostDiceMonitor.textContent = "手番が設定されていません";
         } else {
-            const player = currentParticipants.find(p => p.user_id === activeId);
-            hostDiceMonitor.textContent = `次は ${player?.state?.name || activeId} の番です`;
+            const player = currentParticipants.find(p => p.user_id === currentTurnUserId);
+            hostDiceMonitor.textContent = `次は ${player?.state?.name || currentTurnUserId} の番です`;
         }
     }
 
@@ -132,23 +132,28 @@ function drawHostScreen() {
         const position = pState.position ?? 0;
         const flags = pState.flags || {}; 
 
-        // 1. 参加者名簿テーブルの行生成
+        // ★修正: 名前の先頭に「★」を付けるだけにする（手番プレイヤー判定）
+        const isCurrentTurn = (p.user_id === currentTurnUserId);
+        const displayName = (isCurrentTurn ? '★' : '') + (pState.name || '不明');
+
+        // 1. 参加者名簿テーブルの行生成 (列数: 6)
         const tr = document.createElement('tr');
         tr.classList.add(itemSEL.ROW_CLASS);
         tr.innerHTML = `
             <td>${idx + 1}</td>
-            <td>${pState.name || '不明'} (${p.user_id})</td>
+            <td>${displayName} (${p.user_id})</td>
             <td class="${itemSEL.PROFESSION_CLASS}">${pState.profession || '未定'}</td>
+            <td>${pState.children_count || 0}</td>
             <td>${String(position).padStart(2, '0')}${BOARD_CELL_NAMES[position] || ""}</td>
             <td>$${(financials.cash || 0).toLocaleString()}</td>
         `;
         if (listBody) listBody.appendChild(tr);
 
-        // 2. ★修正: 整数値スキーマに対応したフラグ監視テーブルの行生成
+        // 2. フラグ監視テーブルの行生成 (列数: 9)
         if (flagsListBody) {
             const trFlags = document.createElement('tr');
             trFlags.innerHTML = `
-                <td>${pState.name || '不明'}</td>
+                <td>${displayName}</td>
                 <td>${!!flags.has_rolled_dice}</td>
                 <td>${flags.pending_paydays || 0}</td>
                 <td>${!!flags.is_card_drawn}</td>
@@ -177,7 +182,8 @@ function drawHostScreen() {
             const fontNodeColor = 'white';
             fontNode.setAttribute('color', fontNodeColor);
             fontNode.setAttribute('size', '2');
-            fontNode.textContent = pState.name || '不明';
+            // 盤面のコマの名前にも★を反映する
+            fontNode.textContent = displayName;
             
             tdNode.appendChild(fontNode);
             trNode.appendChild(tdNode);
@@ -197,7 +203,7 @@ btnInitialShuffleStart?.addEventListener('click', async (event) => {
     setButtonActive(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE, false);
 
     try {
-        // ★修正: 共通ラッパー関数 (callRpcWithDebug) に置き換え
+        // 共通ラッパー関数 (callRpcWithDebug) に置き換え
         await callRpcWithDebug(supabase, 'start_game_with_professions', { p_room_id: roomId });
         console.log("【デバッグ2】", debugFunctionName, "success");
         await syncAndFetchRoom();
