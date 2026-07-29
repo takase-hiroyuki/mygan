@@ -156,7 +156,8 @@
                   "has_rolled_dice": { "type": "boolean" },
                   "is_card_drawn": { "type": "boolean" },
                   "is_action_completed": { "type": "boolean" },
-                  "is_calculating": { "type": "boolean" }
+                  "is_calculating": { "type": "boolean" },
+                  "is_negative_cash_flow": { "type": "boolean", "description": "マイナスキャッシュフローの未処理状態を示すフラグ" }
                 }
               },
               "financials": {
