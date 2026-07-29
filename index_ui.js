@@ -46,7 +46,7 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
     
     // 子供の数の描画
     document.getElementById(SEL_G.STATUS.CHILDREN_COUNT).textContent = state.children_count || 0;
-    // ★追加: 1人あたりの養育費の描画
+    // 1人あたりの養育費の描画
     document.getElementById(SEL_G.STATUS.PER_CHILD_EXPENSE).textContent = toCurrency(financials.per_child_expense);
 
     // 2. 盤面描画
@@ -142,7 +142,9 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
                 if (statusMessage) statusMessage.textContent = "サイコロを振って移動してください。";
             }
             setButtonActive(SEL_G.CONTROLS.BTN_ESCAPE_RAT_RACE, false);
-            setButtonActive(SEL_G.FINANCIALS.BTN_CHECK_CALCULATIONS, false);
+            
+            // ★修正: 計算フェーズ（is_calculating が true）のときのみ計算チェックボタンを有効化する
+            setButtonActive(SEL_G.FINANCIALS.BTN_CHECK_CALCULATIONS, !!flags.is_calculating);
         } else {
             diceStatusArea.textContent = `[${turnUserName}] がプレイ中`;
             disableAllActionButtons();
