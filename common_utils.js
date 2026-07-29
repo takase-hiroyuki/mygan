@@ -3,6 +3,33 @@
 // index.js と host.js の両方から参照される関数群
 
 /**
+ * SupabaseのRPC関数を安全に呼び出し、入出力をデバッグするためのラッパー関数。
+ * データベースの不整合や予期せぬ引数のエラーを即座に検知する。
+ */
+export async function callRpcWithDebug(supabaseClient, rpcName, params = {}) {
+    console.log(`[RPC DEBUG: START] ${rpcName}`);
+    console.log(`[RPC DEBUG: PARAMS]`, JSON.stringify(params, null, 2));
+    
+    const startTime = performance.now();
+    
+    const { data, error } = await supabaseClient.rpc(rpcName, params);
+    
+    const endTime = performance.now();
+    const executionTime = (endTime - startTime).toFixed(2);
+
+    if (error) {
+        console.error(`[RPC DEBUG: ERROR] ${rpcName} failed after ${executionTime}ms.`);
+        console.error(`[RPC DEBUG: ERROR DETAILS]`, error);
+        throw error;
+    }
+
+    console.log(`[RPC DEBUG: SUCCESS] ${rpcName} completed in ${executionTime}ms.`);
+    console.log(`[RPC DEBUG: RESPONSE]`, data !== null ? JSON.stringify(data, null, 2) : 'No returning data (void)');
+
+    return data;
+}
+
+/**
  * 単一のボタンの有効/無効とテキストプレフィックス(O/X)を同期する
  */
 export function setButtonActive(id, isActive) {
@@ -69,20 +96,21 @@ export function getInitialRegistrationState(username) {
         game_phase: "rat_race",
         position: 0,
         last_dice: 0,
-        is_calculating: false,
         calculation_phase: "none",
         children_count: 0,
-        charity_turns_left: 0,
-        downsized_turns_left: 0,
+        // ★修正: 最新のスキーマ（整数値フラグへの統合）に合わせる
         flags: {
             has_rolled_dice: false,
             is_card_drawn: false,
             is_action_completed: false,
             is_calculating: false,
-            is_negative_cash_flow: false
+            is_negative_cash_flow: false,
+            charity_turns_left: 0,
+            downsized_turns_left: 0,
+            pending_paydays: 0
         },
         financials: {
-            cash: 0, total_income: 0, total_expenses: 0, passive_income: 0, net_cash_flow: 0,
+            cash: 0, total_income: 0, total_expenses: 0, passive_income: 0, net_cash_flow: 0, per_child_expense: 0,
             expenses: { taxes: 0, mortgage_payment: 0, car_loan_payment: 0, loan_interest: 0, child_expense: 0, other: 0 },
             assets: { stocks: {}, real_estate: [] },
             liabilities: { mortgage: 0, car_loan: 0, retail_debt: 0, bank_loan: 0 }
