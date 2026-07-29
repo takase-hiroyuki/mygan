@@ -59,6 +59,9 @@ export async function actionRollDice(supabase, currentUserId) {
         return;
     }
 
+    // ★追加: サイコロを振る前の状態をログ出力
+    console.log(`[DEBUG-ACTION] サイコロ実行前 - 現在位置: ${state.position}`);
+
     // RPC呼び出し（フラグの更新はRPC内で行われます）
     const { error } = await supabase.rpc('roll_dice_and_move', { 
         p_room_id: roomId, 
@@ -68,8 +71,19 @@ export async function actionRollDice(supabase, currentUserId) {
     if (error) {
         console.error("サイコロ処理エラー:", error);
         alert(`処理エラー: ${error.message}`);
+        return; // エラーが発生した場合はここで中断
     }
-    // 【修正】ここにあった updatePlayerFlag('has_rolled_dice') を削除（RPCと競合するため）
+
+    // ★追加: サイコロ実行後の最新状態を取得して評価するデバッグ
+    const newState = await getCurrentPlayerState(supabase, currentUserId);
+    if (newState) {
+        console.log(`[DEBUG-ACTION] サイコロ実行後 - 新しい位置: ${newState.position}`);
+        
+        // 09番マス (子供) に止まったかどうかの判定テスト
+        if (newState.position === 9) {
+            console.log("[DEBUG-ACTION] ★09番マス (子供) への停止を検知しました！ (ここで action_land_on_baby を呼ぶ予定です)");
+        }
+    }
 }
 
 /**
@@ -94,7 +108,6 @@ export async function actionClaimPaycheck(supabase, currentUserId) {
         // エラー時はボタンを復旧
         if (claimButton) claimButton.disabled = false;
     }
-    // 【修正】ここにあった updatePlayerFlag('is_paycheck_claimed') を削除（RPCと競合するため）
 }
 
 /**
@@ -134,7 +147,6 @@ export async function actionEndTurn(supabase, currentUserId) {
         console.error("手番終了エラー:", error);
         alert(`エラー: ${error.message}`);
     }
-    // 【修正】ここにあった JS側からの newState.flags リセット上書き処理を完全に削除（RPCと競合するため）
 }
 
 console.log("【デバッグ】index_actions.js が読み込まれました。");
