@@ -12,6 +12,7 @@ const SEL_G = DOM_SELECTORS.GUEST;
 const inputUsername = document.getElementById(SEL_G.LOGIN.INPUT_USERNAME);
 const btnLogin = document.getElementById(SEL_G.LOGIN.BTN_LOGIN);
 const btnRollDice = document.getElementById(SEL_G.CONTROLS.BTN_ROLL_DICE);
+const btnRollDice2 = document.getElementById(SEL_G.CONTROLS.BTN_ROLL_DICE_2); // ★追加: サイコロ2個用ボタン
 const btnClaimPaycheck = document.getElementById(SEL_G.CONTROLS.BTN_CLAIM_PAYCHECK);
 const btnEndTurn = document.getElementById(SEL_G.CONTROLS.BTN_END_TURN);
 const btnCheckCalculations = document.getElementById(SEL_G.FINANCIALS.BTN_CHECK_CALCULATIONS);
@@ -59,16 +60,21 @@ btnLogin.addEventListener('click', async () => {
 });
 
 // イベントリスナーは actions へ処理を委譲するのみ
-btnRollDice.addEventListener(
-    'click', () => actionRollDice(supabase, currentUserId)
+// ★修正: アクション関数にサイコロの数 (1 または 2) を引数として渡す
+btnRollDice?.addEventListener(
+    'click', () => actionRollDice(supabase, currentUserId, 1)
 );
-btnClaimPaycheck.addEventListener(
+btnRollDice2?.addEventListener(
+    'click', () => actionRollDice(supabase, currentUserId, 2)
+);
+
+btnClaimPaycheck?.addEventListener(
     'click', () => actionClaimPaycheck(supabase, currentUserId)
 );
-btnEndTurn.addEventListener(
+btnEndTurn?.addEventListener(
     'click', () => actionEndTurn(supabase, currentUserId)
 );
-btnCheckCalculations.addEventListener(
+btnCheckCalculations?.addEventListener(
     'click', () => actionCheckCalculations(supabase, currentUserId)
 );
 
