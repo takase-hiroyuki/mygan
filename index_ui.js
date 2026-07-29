@@ -21,7 +21,7 @@ export function toggleScreen(isLoggedIn) {
  * 通貨フォーマット用ヘルパー関数
  */
 function toCurrency(value) {
-    return `$${Number(value || 0).toLocaleString()}`;
+    return Number(value || 0).toLocaleString();
 }
 
 /**
