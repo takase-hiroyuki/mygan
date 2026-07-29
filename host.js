@@ -132,7 +132,7 @@ function drawHostScreen() {
         const position = pState.position ?? 0;
         const flags = pState.flags || {}; 
 
-        // ★修正: 名前の先頭に「★」を付けるだけにする（手番プレイヤー判定）
+        // 名前の先頭に「★」を付けるだけにする（手番プレイヤー判定）
         const isCurrentTurn = (p.user_id === currentTurnUserId);
         const displayName = (isCurrentTurn ? '★' : '') + (pState.name || '不明');
 
@@ -213,6 +213,43 @@ btnInitialShuffleStart?.addEventListener('click', async (event) => {
     }
 
     console.log("【デバッグ3】", debugFunctionName);
+});
+
+// ==========================================
+// 退室処理ボタン (追加実装)
+// ==========================================
+btnKickParticipant?.addEventListener('click', async () => {
+    if (!supabase) return;
+    const orderInput = inputKickOrder.value.trim();
+    const orderIdx = parseInt(orderInput, 10) - 1;
+    
+    console.log(`[DEBUG] 退室処理実行: 入力値=${orderInput}, 対象インデックス=${orderIdx}`);
+
+    if (isNaN(orderIdx) || orderIdx < 0 || orderIdx >= currentParticipants.length) {
+        alert("有効な退室者の番号（入室順）を入力してください。");
+        return;
+    }
+
+    const targetUser = currentParticipants[orderIdx];
+    const targetName = targetUser.state?.name || '不明';
+
+    if (!confirm(`${targetName} (入室順: ${orderIdx + 1}) を退室させますか？\n※現在手番のプレイヤーを退室させた場合、手番は次の人に移ります。`)) {
+        return;
+    }
+
+    try {
+        // データ整合性を保つため、削除と手番移行を同時に行うRPCを使用
+        await callRpcWithDebug(supabase, 'kick_participant', { 
+            p_room_id: roomId, 
+            p_target_user_id: targetUser.user_id 
+        });
+        console.log(`[DEBUG] ${targetName} の退室処理が完了しました。`);
+        inputKickOrder.value = '';
+        await syncAndFetchRoom();
+    } catch (error) {
+        console.error("[DEBUG] 退室処理エラー:", error);
+        alert(`[エラー] 退室処理失敗\n詳細: ${error.message}\n※データベース側に kick_participant 関数を作成する必要があります。`);
+    }
 });
 
 // ==========================================
