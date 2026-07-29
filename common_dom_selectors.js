@@ -30,7 +30,8 @@ export const DOM_SELECTORS = {
             NAME: 'guest-name',
             DISPLAY_CURRENT_CASH: 'display-current-cash', 
             ROLE: 'guest-role',
-            PROFESSION: 'guest-profession'
+            PROFESSION: 'guest-profession',
+            CHILDREN_COUNT: 'guest-children-count' // ★追加済み
         },
 
         // 手番・サイコロ制御エリア
@@ -90,10 +91,11 @@ export const DOM_SELECTORS = {
             LIABILITY_CAR_LOAN: 'display-liability-carloan',
             LIABILITY_RETAIL: 'display-liability-retail',
             LOAN_CONTROL_CONTAINER: 'bank-loan-control',  
-            BTN_BORROW_LOAN: 'btn-borrow-loan',           
-            BTN_PAYBACK_LOAN: 'btn-payback-loan',         
+            BTN_BORROW_LOAN: 'btn-borrow-loan',            
+            BTN_PAYBACK_LOAN: 'btn-payback-loan',          
             DISPLAY_LIABILITY_BANKLOAN: 'display-liability-bankloan',    
-            DISPLAY_EXPENSE_LOANINTEREST: 'display-expense-loaninterest' 
+            DISPLAY_EXPENSE_LOANINTEREST: 'display-expense-loaninterest',
+            DISPLAY_EXPENSE_CHILD: 'display-expense-child' // ★これを追加
         },
 
         // ゲスト用すごろく盤面モニターID生成用のプレフィックス
