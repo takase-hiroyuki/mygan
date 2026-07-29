@@ -145,15 +145,15 @@
               "game_phase": { "type": "string", "enum": ["rat_race", "fast_track"] },
               "position": { "type": "number" },
               "last_dice": { "type": "number" },
-              "calculation_phase": { "type": "string", "enum": ["income_tax", "payday", "deal", "none"] },
+              "calculation_phase": { "type": "string", "enum": ["income_tax", "deal", "none"] },
               "children_count": { "type": "number" },
-              "charity_turns_left": { "type": "number" },
-              "downsized_turns_left": { "type": "number" },
               "flags": {
                 "type": "object",
                 "properties": {
+                  "charity_turns_left": { "type": "integer", "description": "サイコロ2個振れる残り回数 (0, 1, 2, 3)" },
+                  "downsized_turns_left": { "type": "integer", "description": "リストラによる休み残り回数 (0, 1, 2)" },
+                  "pending_paydays": { "type": "integer", "description": "未受け取りの給料回数 (0, 1, 2)" },
                   "has_rolled_dice": { "type": "boolean" },
-                  "is_paycheck_claimed": { "type": "boolean" },
                   "is_card_drawn": { "type": "boolean" },
                   "is_action_completed": { "type": "boolean" },
                   "is_calculating": { "type": "boolean" }
