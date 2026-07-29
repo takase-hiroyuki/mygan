@@ -61,7 +61,7 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
         }
     });
 
-    // 3. 財務諸表・資産負債状況の描画更新（★追加部分）
+    // 3. 財務諸表・資産負債状況の描画更新
     if (Object.keys(financials).length > 0) {
         const safeUpdate = (selectorId, text) => {
             if (selectorId) {
@@ -75,23 +75,23 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
 
         // ステータスメッセージの更新（「データを読み込み中...」を上書き）
         const calcPhaseMsg = flags.is_calculating ? "財務計算入力（筆算フェーズ）" : "待機中";
-        safeUpdate(SEL_G.FINANCIALS?.STATUS_MESSAGE, `現在の状態: ${calcPhaseMsg}`);
+        safeUpdate(SEL_G.FINANCIALS.CALC_LOCK_STATUS, `現在の状態: ${calcPhaseMsg}`);
 
         // 財務諸表 (Income & Expenses)
-        safeUpdate(SEL_G.FINANCIALS?.DISPLAY_SALARY, toCurrency(financials.salary));
-        safeUpdate(SEL_G.FINANCIALS?.DISPLAY_PASSIVE_INCOME, toCurrency(financials.passive_income));
-        safeUpdate(SEL_G.FINANCIALS?.DISPLAY_TOTAL_INCOME, toCurrency(financials.total_income));
-        safeUpdate(SEL_G.FINANCIALS?.DISPLAY_TOTAL_EXPENSES, toCurrency(financials.total_expenses));
-        safeUpdate(SEL_G.FINANCIALS?.DISPLAY_PAYDAY, toCurrency(financials.net_cash_flow));
+        safeUpdate(SEL_G.FINANCIALS.DISPLAY_SALARY, toCurrency(financials.salary));
+        safeUpdate(SEL_G.FINANCIALS.DISPLAY_PASSIVE_INCOME, toCurrency(financials.passive_income));
+        safeUpdate(SEL_G.FINANCIALS.DISPLAY_TOTAL_INCOME, toCurrency(financials.total_income));
+        safeUpdate(SEL_G.FINANCIALS.DISPLAY_TOTAL_EXPENSES, toCurrency(financials.total_expenses));
+        safeUpdate(SEL_G.FINANCIALS.DISPLAY_MONTHLY_CASHFLOW, toCurrency(financials.net_cash_flow));
 
         // 負債状況 (Liabilities)
-        safeUpdate(SEL_G.PORTFOLIO?.DISPLAY_MORTGAGE, toCurrency(liab.mortgage));
-        safeUpdate(SEL_G.PORTFOLIO?.DISPLAY_CAR_LOAN, toCurrency(liab.car_loan));
-        safeUpdate(SEL_G.PORTFOLIO?.DISPLAY_RETAIL_DEBT, toCurrency(liab.retail_debt));
-        safeUpdate(SEL_G.PORTFOLIO?.DISPLAY_BANK_LOAN, toCurrency(liab.bank_loan));
+        safeUpdate(SEL_G.PORTFOLIO.LIABILITY_MORTGAGE, toCurrency(liab.mortgage));
+        safeUpdate(SEL_G.PORTFOLIO.LIABILITY_CAR_LOAN, toCurrency(liab.car_loan));
+        safeUpdate(SEL_G.PORTFOLIO.LIABILITY_RETAIL, toCurrency(liab.retail_debt));
+        safeUpdate(SEL_G.PORTFOLIO.DISPLAY_LIABILITY_BANKLOAN, toCurrency(liab.bank_loan));
         
         // ローン利息支出
-        safeUpdate(SEL_G.PORTFOLIO?.DISPLAY_BANK_LOAN_PAYMENT, toCurrency(exp.bank_loan_payment));
+        safeUpdate(SEL_G.PORTFOLIO.DISPLAY_EXPENSE_LOANINTEREST, toCurrency(exp.bank_loan_payment));
     }
 
     // 4. ボタン・ステータス制御
