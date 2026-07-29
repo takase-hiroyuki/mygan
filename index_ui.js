@@ -73,7 +73,7 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
         const liab = financials.liabilities || {};
         const exp = financials.expenses || {};
 
-        const calcPhaseMsg = flags.is_calculating ? "財務諸表を計算せよ" : "待機中";
+        const calcPhaseMsg = flags.is_calculating ? "計算せよ" : "計算済み";
         safeUpdate(SEL_G.FINANCIALS.CALC_LOCK_STATUS, calcPhaseMsg);
 
         // 財務諸表 (Income & Expenses)
