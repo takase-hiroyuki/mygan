@@ -150,4 +150,48 @@ export async function actionEndTurn(supabase, currentUserId) {
     }
 }
 
+/**
+ * 【追加】手入力した計算結果を検証し、正しければ計算フェーズを解除する
+ */
+export async function actionCheckCalculations(supabase, currentUserId) {
+    if (!supabase || !currentUserId) return;
+
+    // UI上の手入力フィールドから値を取得
+    const inputIncomeEl = document.getElementById(DOM_SELECTORS.GUEST.FINANCIALS.INPUT_TOTAL_INCOME);
+    const inputCashflowEl = document.getElementById(DOM_SELECTORS.GUEST.FINANCIALS.INPUT_MONTHLY_CASHFLOW);
+
+    const userInputIncome = inputIncomeEl ? parseInt(inputIncomeEl.value.trim(), 10) : NaN;
+    const userInputCashflow = inputCashflowEl ? parseInt(inputCashflowEl.value.trim(), 10) : NaN;
+
+    if (isNaN(userInputIncome) || isNaN(userInputCashflow)) {
+        alert('総収入と毎月のキャッシュフローの双方に数値を正しく入力してください。');
+        return;
+    }
+
+    // RPC関数の呼び出し
+    const { data, error } = await supabase.rpc('action_check_calculations', {
+        p_room_id: roomId,
+        p_user_id: currentUserId,
+        p_input_income: userInputIncome,
+        p_input_cashflow: userInputCashflow
+    });
+
+    if (error) {
+        console.error("計算チェックRPCエラー:", error);
+        alert('エラーが発生しました: ' + error.message);
+        return;
+    }
+
+    // RPCから返却された JSONB の status を判定
+    if (data.status === 'error') {
+        alert(data.message); // 「計算結果が正しくありません」などを表示
+    } else {
+        alert(data.message); // 成功メッセージを表示
+        
+        // 成功後、入力フィールドをクリアする（任意）
+        if (inputIncomeEl) inputIncomeEl.value = '';
+        if (inputCashflowEl) inputCashflowEl.value = '';
+    }
+}
+
 console.log("【デバッグ】index_actions.js が読み込まれました。");
