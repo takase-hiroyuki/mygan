@@ -18,6 +18,13 @@ export function toggleScreen(isLoggedIn) {
 }
 
 /**
+ * 通貨フォーマット用ヘルパー関数
+ */
+function toCurrency(value) {
+    return `$${Number(value || 0).toLocaleString()}`;
+}
+
+/**
  * ゲスト画面全体の描画更新（純粋なView関数）
  */
 export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
@@ -31,13 +38,13 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
     const isMyTurn = (turnUserId === currentUserId);
     const isPlaying = cachedRoom?.game_state?.status === 'playing';
 
-    // プレイヤー情報の表示
+    // 1. プレイヤー情報の表示
     document.getElementById(SEL_G.STATUS.NAME).textContent = state.name || "";
-    document.getElementById(SEL_G.STATUS.DISPLAY_CURRENT_CASH).textContent = (financials.cash ?? 0).toLocaleString();
+    document.getElementById(SEL_G.STATUS.DISPLAY_CURRENT_CASH).textContent = toCurrency(financials.cash);
     document.getElementById(SEL_G.STATUS.PROFESSION).textContent = state.profession || "未定";
     document.getElementById(SEL_G.STATUS.ROLE).textContent = state.role || "general";
 
-    // 盤面描画
+    // 2. 盤面描画
     for (let i = 0; i < 24; i++) {
         const cell = document.getElementById(`${SEL_G.BOARD.RAT_PREFIX}${i}`);
         if (cell) cell.innerHTML = "";
@@ -54,7 +61,40 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
         }
     });
 
-    // ボタン・ステータス制御
+    // 3. 財務諸表・資産負債状況の描画更新（★追加部分）
+    if (Object.keys(financials).length > 0) {
+        const safeUpdate = (selectorId, text) => {
+            if (selectorId) {
+                const el = document.getElementById(selectorId);
+                if (el) el.textContent = text;
+            }
+        };
+
+        const liab = financials.liabilities || {};
+        const exp = financials.expenses || {};
+
+        // ステータスメッセージの更新（「データを読み込み中...」を上書き）
+        const calcPhaseMsg = flags.is_calculating ? "財務計算入力（筆算フェーズ）" : "待機中";
+        safeUpdate(SEL_G.FINANCIALS?.STATUS_MESSAGE, `現在の状態: ${calcPhaseMsg}`);
+
+        // 財務諸表 (Income & Expenses)
+        safeUpdate(SEL_G.FINANCIALS?.DISPLAY_SALARY, toCurrency(financials.salary));
+        safeUpdate(SEL_G.FINANCIALS?.DISPLAY_PASSIVE_INCOME, toCurrency(financials.passive_income));
+        safeUpdate(SEL_G.FINANCIALS?.DISPLAY_TOTAL_INCOME, toCurrency(financials.total_income));
+        safeUpdate(SEL_G.FINANCIALS?.DISPLAY_TOTAL_EXPENSES, toCurrency(financials.total_expenses));
+        safeUpdate(SEL_G.FINANCIALS?.DISPLAY_PAYDAY, toCurrency(financials.net_cash_flow));
+
+        // 負債状況 (Liabilities)
+        safeUpdate(SEL_G.PORTFOLIO?.DISPLAY_MORTGAGE, toCurrency(liab.mortgage));
+        safeUpdate(SEL_G.PORTFOLIO?.DISPLAY_CAR_LOAN, toCurrency(liab.car_loan));
+        safeUpdate(SEL_G.PORTFOLIO?.DISPLAY_RETAIL_DEBT, toCurrency(liab.retail_debt));
+        safeUpdate(SEL_G.PORTFOLIO?.DISPLAY_BANK_LOAN, toCurrency(liab.bank_loan));
+        
+        // ローン利息支出
+        safeUpdate(SEL_G.PORTFOLIO?.DISPLAY_BANK_LOAN_PAYMENT, toCurrency(exp.bank_loan_payment));
+    }
+
+    // 4. ボタン・ステータス制御
     if (!isPlaying) {
         diceStatusArea.textContent = "ホストがゲームを開始するまでお待ちください。";
         disableAllActionButtons();
@@ -83,7 +123,7 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
                 setButtonActive(SEL_G.CONTROLS.BTN_CLAIM_PAYCHECK, false);
                 setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, false);
                 
-                // 手番開始時にローン操作を可能にする（UIテスト用）
+                // 手番開始時にローン操作を可能にする
                 setButtonActive(SEL_G.PORTFOLIO.BTN_BORROW_LOAN, true);
                 setButtonActive(SEL_G.PORTFOLIO.BTN_PAYBACK_LOAN, true);
                 
@@ -101,7 +141,7 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
             diceStatusArea.textContent = `[${turnUserName}] がプレイ中`;
             disableAllActionButtons();
             
-            // ★追加: 自分の手番ではない場合、カード状況テキストをリセットする
+            // 自分の手番ではない場合、カード状況テキストをリセットする
             const statusMessage = document.getElementById(SEL_G.CARD.STATUS_MESSAGE);
             if (statusMessage) {
                 statusMessage.textContent = "他のプレイヤーの行動を待っています。";
@@ -109,7 +149,7 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
         }
     }
 
-    // 現在位置の表示更新
+    // 5. 現在位置の表示更新
     if (guestDiceResult && state.position !== undefined) {
         const posNum = state.position;
         const posStr = String(posNum).padStart(2, '0');
