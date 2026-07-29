@@ -1,7 +1,7 @@
 // index_state.js
 import { renderGuestUI } from './index_ui.js';
 import { DOM_SELECTORS } from './common_dom_selectors.js';
-import { setButtonActive } from './common_utils.js';       
+import { setButtonActive } from './common_utils.js';        
 
 let cachedParticipants = [];
 let cachedRoom = null;
@@ -12,22 +12,36 @@ let cachedRoom = null;
 function updateActionButtonsState(playerState, isMyTurn) {
     const flags = playerState.flags || {};
     
-    // 必要なフラグの取得
+    // 必要なフラグの取得 (最新の整数値スキーマに対応)
     const hasRolledDice = !!flags.has_rolled_dice;
     const isCalculating = !!flags.is_calculating;
     const isNegativeCashFlow = !!flags.is_negative_cash_flow;
+    const charityTurnsLeft = parseInt(flags.charity_turns_left || 0, 10);
+    const pendingPaydays = parseInt(flags.pending_paydays || 0, 10);
 
     const SEL = DOM_SELECTORS.GUEST.CONTROLS;
 
-    // 1. サイコロを振るボタンの制御
+    // 1. サイコロ1個を振るボタンの制御
     // 条件: 自分のターン && まだサイコロを振っていない && 計算中ではない
-    const canRollDice = isMyTurn && !hasRolledDice && !isCalculating;
-    setButtonActive(SEL.BTN_ROLL_DICE, canRollDice);
+    const canRollDice1 = isMyTurn && !hasRolledDice && !isCalculating;
+    setButtonActive(SEL.BTN_ROLL_DICE, canRollDice1);
 
-    // 2. ターン終了ボタンの制御
+    // 2. ★追加: サイコロ2個を振るボタンの制御
+    // 条件: サイコロ1個が振れる状態 && 寄付の権利 (charity_turns_left) が 1 以上あること
+    const canRollDice2 = canRollDice1 && (charityTurnsLeft > 0);
+    setButtonActive(SEL.BTN_ROLL_DICE_2, canRollDice2);
+
+    // 3. ★追加: 給料を受け取るボタンの制御
+    // 条件: 自分のターン && 未受け取りの給料 (pending_paydays) が 1 以上あること
+    const canClaimPaycheck = isMyTurn && (pendingPaydays > 0);
+    setButtonActive(SEL.BTN_CLAIM_PAYCHECK, canClaimPaycheck);
+
+    // 4. ターン終了ボタンの制御
     // 条件: 自分のターン && サイコロを振った && 計算中ではない && マイナスキャッシュフローではない
     const canEndTurn = isMyTurn && hasRolledDice && !isCalculating && !isNegativeCashFlow;
     setButtonActive(SEL.BTN_END_TURN, canEndTurn);
+    
+    console.log(`[DEBUG-STATE] Buttons Update: isMyTurn=${isMyTurn}, Roll1=${canRollDice1}, Roll2=${canRollDice2}, Paycheck=${canClaimPaycheck}, End=${canEndTurn}`);
 }
 
 /**
@@ -74,7 +88,7 @@ export async function fetchAndRender(supabase, roomId, currentUserId) {
     
     const myParticipantRecord = cachedParticipants.find(p => p.user_id === currentUserId);
     
-    // ★追加デバッグ: 描画関数へ渡す直前の自プレイヤーの財務データをコンソールに出力
+    // UI描画直前の自プレイヤーの財務データをコンソールに出力
     if (myParticipantRecord) {
         console.log("【デバッグ】UI描画直前: state.financialsの中身:", JSON.stringify(myParticipantRecord.state?.financials, null, 2));
     }
