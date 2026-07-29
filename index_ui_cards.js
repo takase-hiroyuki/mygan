@@ -1,7 +1,7 @@
 // index_ui_cards.js
 import { roomId } from './common_config.js'; // 追加: RPCの呼び出しに必要
 import { DOM_SELECTORS } from './common_dom_selectors.js';
-import { setButtonActive, setMultipleButtonsActive } from './common_utils.js';
+import { setButtonActive, setMultipleButtonsActive, callRpcWithDebug } from './common_utils.js'; // ★ callRpcWithDebug を追加
 
 const SEL_G = DOM_SELECTORS.GUEST;
 
@@ -116,12 +116,13 @@ export function updateCardPhaseUI(position, flags = {}) {
 export function initCardEventListeners(supabase, currentUserId) {
     console.log("【デバッグ】initCardEventListeners");
     const drawCardRpc = async () => {
-        const { error } = await supabase.rpc('draw_card', {
-            p_room_id: roomId,
-            p_user_id: currentUserId
-        });
-        if (error) {
-            console.error("カードドローエラー:", error);
+        try {
+            // ★修正: callRpcWithDebug ラッパーを使用
+            await callRpcWithDebug(supabase, 'draw_card', {
+                p_room_id: roomId,
+                p_user_id: currentUserId
+            });
+        } catch (error) {
             alert(`エラー: ${error.message}`);
         }
     };
