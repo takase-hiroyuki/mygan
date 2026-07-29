@@ -156,9 +156,9 @@ export async function actionEndTurn(supabase, currentUserId) {
 export async function actionCheckCalculations(supabase, currentUserId) {
     if (!supabase || !currentUserId) return;
 
-    // UI上の手入力フィールドから値を取得
+    // ★修正: DOM_SELECTORS.GUEST.FINANCIALS.INPUT_NET_CASHFLOW を参照するように変更
     const inputIncomeEl = document.getElementById(DOM_SELECTORS.GUEST.FINANCIALS.INPUT_TOTAL_INCOME);
-    const inputCashflowEl = document.getElementById(DOM_SELECTORS.GUEST.FINANCIALS.INPUT_MONTHLY_CASHFLOW);
+    const inputCashflowEl = document.getElementById(DOM_SELECTORS.GUEST.FINANCIALS.INPUT_NET_CASHFLOW);
 
     // ★ デバッグログの追加：要素が正しく取得できているか確認
     console.log("[DEBUG] Income Element:", inputIncomeEl);
