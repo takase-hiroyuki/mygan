@@ -160,8 +160,18 @@ export async function actionCheckCalculations(supabase, currentUserId) {
     const inputIncomeEl = document.getElementById(DOM_SELECTORS.GUEST.FINANCIALS.INPUT_TOTAL_INCOME);
     const inputCashflowEl = document.getElementById(DOM_SELECTORS.GUEST.FINANCIALS.INPUT_MONTHLY_CASHFLOW);
 
-    const userInputIncome = inputIncomeEl ? parseInt(inputIncomeEl.value.trim(), 10) : NaN;
-    const userInputCashflow = inputCashflowEl ? parseInt(inputCashflowEl.value.trim(), 10) : NaN;
+    // ★ デバッグログの追加：要素が正しく取得できているか確認
+    console.log("[DEBUG] Income Element:", inputIncomeEl);
+    console.log("[DEBUG] Cashflow Element:", inputCashflowEl);
+    if (inputIncomeEl) console.log("[DEBUG] Income Value:", inputIncomeEl.value);
+    if (inputCashflowEl) console.log("[DEBUG] Cashflow Value:", inputCashflowEl.value);
+
+    // 空文字の場合はNaNになるように処理を修正（カンマを取り除く処理も追加）
+    const rawIncome = inputIncomeEl ? inputIncomeEl.value.replace(/,/g, '').trim() : "";
+    const rawCashflow = inputCashflowEl ? inputCashflowEl.value.replace(/,/g, '').trim() : "";
+
+    const userInputIncome = rawIncome === "" ? NaN : parseInt(rawIncome, 10);
+    const userInputCashflow = rawCashflow === "" ? NaN : parseInt(rawCashflow, 10);
 
     if (isNaN(userInputIncome) || isNaN(userInputCashflow)) {
         alert('総収入と毎月のキャッシュフローの双方に数値を正しく入力してください。');
