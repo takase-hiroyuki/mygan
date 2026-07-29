@@ -155,7 +155,8 @@ function drawHostScreen() {
             tdNode.setAttribute('bgcolor', '#00bcd4');
             tdNode.setAttribute('align', 'center');
             const fontNode = document.createElement('font');
-            fontNode.setAttribute('color', 'white');
+            const fontNodeColor = 'white';
+            fontNode.setAttribute('color', fontNodeColor);
             fontNode.setAttribute('size', '2');
             fontNode.textContent = pState.name || '不明';
             
@@ -168,6 +169,28 @@ function drawHostScreen() {
     });
 }
 
+// 【デバッグ用】ゲーム開始RPC呼び出し関数
+async function debugStartGameWithProfessions(targetRoomId) {
+    console.log("[DEBUG-JS] RPC: start_game_with_professions 呼び出し開始", { p_room_id: targetRoomId });
+    
+    try {
+        const { data, error } = await supabase.rpc('start_game_with_professions', { p_room_id: targetRoomId });
+        
+        if (error) {
+            console.error("[FATAL ERROR] RPC実行失敗:", error);
+            alert(`[エラー] ゲーム開始失敗\nコード: ${error.code}\n詳細: ${error.message}\nヒント: ${error.hint}\n※コンソールを確認せよ`);
+            return false;
+        }
+        
+        console.log("[DEBUG-JS] RPC: 完了。データ:", data);
+        return true;
+    } catch (err) {
+        console.error("[FATAL ERROR] ネットワークまたは予期せぬエラー:", err);
+        alert(`[致命的エラー] ネットワークまたは予期せぬエラー\n詳細: ${err.message}`);
+        return false;
+    }
+}
+
 btnInitialShuffleStart?.addEventListener('click', async (event) => {
     if (!supabase) return;
     const debugFunctionName = event.currentTarget.id;
@@ -176,14 +199,11 @@ btnInitialShuffleStart?.addEventListener('click', async (event) => {
     if (!confirm("職業割り当てとキャッシュフローを含めてゲームを開始しますか？")) return;
     setButtonActive(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE, false);
 
-    const { error } = await supabase.rpc('start_game_with_professions', {
-        p_room_id: roomId
-    });
+    const success = await debugStartGameWithProfessions(roomId);
 
-    console.log("【デバッグ2】", debugFunctionName);
+    console.log("【デバッグ2】", debugFunctionName, "success:", success);
 
-    if (error) {
-        alert("ゲーム開始処理に失敗しました: " + error.message);
+    if (!success) {
         setButtonActive(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE, true);
     } else {
         await syncAndFetchRoom();
