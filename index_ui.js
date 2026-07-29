@@ -73,9 +73,8 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
         const liab = financials.liabilities || {};
         const exp = financials.expenses || {};
 
-        // ステータスメッセージの更新（「データを読み込み中...」を上書き）
-        const calcPhaseMsg = flags.is_calculating ? "財務計算入力（筆算フェーズ）" : "待機中";
-        safeUpdate(SEL_G.FINANCIALS.CALC_LOCK_STATUS, `現在の状態: ${calcPhaseMsg}`);
+        const calcPhaseMsg = flags.is_calculating ? "財務諸表を計算せよ" : "待機中";
+        safeUpdate(SEL_G.FINANCIALS.CALC_LOCK_STATUS, calcPhaseMsg);
 
         // 財務諸表 (Income & Expenses)
         safeUpdate(SEL_G.FINANCIALS.DISPLAY_SALARY, toCurrency(financials.salary));
