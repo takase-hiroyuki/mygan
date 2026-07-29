@@ -48,18 +48,35 @@ let activeRoomRecord = null;
 
 async function syncAndFetchRoom() {
     if (!supabase) return;
-    console.log("【デバッグ】syncAndFetchRoom");
+    console.log("【デバッグ】syncAndFetchRoom 実行");
 
     const [resPart, resRoom] = await Promise.all([
         supabase.from('participants').select('*').eq('room_id', roomId).order('id', { ascending: true }),
         supabase.from('rooms').select('*').eq('id', roomId).maybeSingle()
     ]);
 
-    if (resPart.data) currentParticipants = resPart.data;
+    if (resPart.data) {
+        currentParticipants = resPart.data;
+        console.log("[DEBUG-DB] 取得した participants データ一覧:");
+        currentParticipants.forEach(p => {
+            const state = p.state || {};
+            const financials = state.financials || {};
+            const expenses = financials.expenses || {};
+            console.log(`  - プレイヤー名: ${state.name} (ID: ${p.user_id})`);
+            console.log(`    職業: ${state.profession}`);
+            console.log(`    子供の数 (children_count): ${state.children_count}`);
+            console.log(`    1人あたりの養育費 (per_child_expense): ${financials.per_child_expense}`);
+            console.log(`    現在の総養育費 (child_expense): ${expenses.child_expense}`);
+        });
+    }
+
     if (resRoom.data) {
         activeRoomRecord = resRoom.data;
         const state = activeRoomRecord.game_state || {};
         const isPlaying = state.status === 'playing';
+
+        console.log("[DEBUG-DB] 取得した rooms.game_state:", state);
+        console.log("[DEBUG-DB] isPlaying 判定:", isPlaying);
 
         if (displayRoomStatus) displayRoomStatus.textContent = isPlaying ? 'playing (ゲーム進行中)' : 'waiting (準備中)';
         
