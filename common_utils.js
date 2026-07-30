@@ -7,10 +7,9 @@
  * データベースの不整合や予期せぬ引数のエラーを即座に検知する。
  */
 export async function callRpcWithDebug(supabaseClient, rpcName, params = {}) {
-    console.log(`[RPC DEBUG: START] ${rpcName}`);
-    console.log(`[RPC DEBUG: PARAMS]`, JSON.stringify(params, null, 2));
-    
     const startTime = performance.now();
+    console.log(`[RPC_CALL_START] ${rpcName}`);
+    console.log(`[RPC_PARAMS]`, JSON.stringify(params, null, 2));
     
     const { data, error } = await supabaseClient.rpc(rpcName, params);
     
@@ -18,13 +17,18 @@ export async function callRpcWithDebug(supabaseClient, rpcName, params = {}) {
     const executionTime = (endTime - startTime).toFixed(2);
 
     if (error) {
-        console.error(`[RPC DEBUG: ERROR] ${rpcName} failed after ${executionTime}ms.`);
-        console.error(`[RPC DEBUG: ERROR DETAILS]`, error);
-        throw error;
+        console.error(`[RPC_CALL_FAILED] ${rpcName} (${executionTime}ms)`);
+        console.error(`[RPC_ERROR_DETAILS]`, error);
+        throw new Error(`RPC実行エラー: ${error.message}`);
     }
 
-    console.log(`[RPC DEBUG: SUCCESS] ${rpcName} completed in ${executionTime}ms.`);
-    console.log(`[RPC DEBUG: RESPONSE]`, data !== null ? JSON.stringify(data, null, 2) : 'No returning data (void)');
+    console.log(`[RPC_CALL_SUCCESS] ${rpcName} (${executionTime}ms)`);
+    console.log(`[RPC_RETURN_VALUE]`, data !== null ? JSON.stringify(data, null, 2) : 'No returning data (void)');
+
+    // 整合性監視: RPC関数側で定義された論理エラー（JSONBのstatus: 'error'）の検知
+    if (data && typeof data === 'object' && data.status === 'error') {
+        console.warn(`[RPC_LOGICAL_WARNING] ${rpcName} はエラー状態を返却しました。Message: ${data.message}`);
+    }
 
     return data;
 }
@@ -111,9 +115,27 @@ export function getInitialRegistrationState(username) {
         },
         financials: {
             cash: 0, total_income: 0, total_expenses: 0, passive_income: 0, net_cash_flow: 0, per_child_expense: 0,
-            expenses: { taxes: 0, mortgage_payment: 0, car_loan_payment: 0, loan_interest: 0, child_expense: 0, other: 0 },
+            // ★修正: 最新のJSONスキーマに合わせてキー名を修正・補完
+            expenses: { 
+                taxes: 0, 
+                mortgage_payment: 0, 
+                school_loan_payment: 0,
+                car_loan_payment: 0, 
+                credit_card_payment: 0,
+                retail_payment: 0,
+                bank_loan_payment: 0,
+                other_expenses: 0,
+                child_expense: 0 
+            },
             assets: { stocks: {}, real_estate: [] },
-            liabilities: { mortgage: 0, car_loan: 0, retail_debt: 0, bank_loan: 0 }
+            liabilities: { 
+                mortgage: 0, 
+                school_loans: 0,
+                car_loans: 0, 
+                credit_card_debt: 0,
+                retail_debt: 0, 
+                bank_loan: 0 
+            }
         }
     };
 }
