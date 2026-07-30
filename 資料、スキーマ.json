@@ -16,7 +16,7 @@
             "type": "object",
             "properties": {
               "taxes": { "type": "integer" },
-              "home_mortgage_payment": { "type": "integer" },
+              "mortgage_payment": { "type": "integer" },
               "school_loan_payment": { "type": "integer" },
               "car_loan_payment": { "type": "integer" },
               "credit_card_payment": { "type": "integer" },
@@ -29,11 +29,12 @@
           "liabilities": {
             "type": "object",
             "properties": {
-              "home_mortgage": { "type": "integer" },
+              "mortgage": { "type": "integer" },
               "school_loans": { "type": "integer" },
               "car_loans": { "type": "integer" },
               "credit_card_debt": { "type": "integer" },
-              "retail_debt": { "type": "integer" }
+              "retail_debt": { "type": "integer" },
+              "bank_loan": { "type": "integer" }
             }
           }
         }
@@ -174,10 +175,13 @@
                     "properties": {
                       "taxes": { "type": "number" },
                       "mortgage_payment": { "type": "number" },
+                      "school_loan_payment": { "type": "number" },
                       "car_loan_payment": { "type": "number" },
-                      "loan_interest": { "type": "number" },
-                      "child_expense": { "type": "number" },
-                      "other": { "type": "number" }
+                      "credit_card_payment": { "type": "number" },
+                      "retail_payment": { "type": "number" },
+                      "bank_loan_payment": { "type": "number" },
+                      "other_expenses": { "type": "number" },
+                      "child_expense": { "type": "number" }
                     }
                   },
                   "assets": {
@@ -191,7 +195,9 @@
                     "type": "object",
                     "properties": {
                       "mortgage": { "type": "number" },
-                      "car_loan": { "type": "number" },
+                      "school_loans": { "type": "number" },
+                      "car_loans": { "type": "number" },
+                      "credit_card_debt": { "type": "number" },
                       "retail_debt": { "type": "number" },
                       "bank_loan": { "type": "number" }
                     }
