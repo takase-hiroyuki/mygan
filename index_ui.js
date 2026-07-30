@@ -109,8 +109,8 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
         const turnUserName = turnUser ? turnUser.state.name : "他のプレイヤー";
 
         if (isMyTurn) {
-            // ※ メインのアクションボタンの有効/無効化は index_state.js の updateActionButtonsState に移譲されているため、
-            // ここではテキストメッセージの更新と、それに付随する補助ボタンのみを制御する。
+            // ※ メインのアクションボタンの有効/無効化は index_state.js の updateActionButtonsState に移譲されているが、
+            // 追加の UI (カード表示や一部ボタン) はここで制御する。
             if (state.last_dice > 0) {
                 updateCardPhaseUI(state.position, flags);
                 
@@ -124,10 +124,6 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
             } else {
                 diceStatusArea.textContent = "あなたの手番";
                 
-                // 手番開始時にローン操作を可能にする
-                setButtonActive(SEL_G.PORTFOLIO.BTN_BORROW_LOAN, true);
-                setButtonActive(SEL_G.PORTFOLIO.BTN_PAYBACK_LOAN, true);
-                
                 // サイコロを振る前はカードボタンを無効化
                 setMultipleButtonsActive([
                     SEL_G.CARD.BTN_DRAW_SMALL_DEAL, SEL_G.CARD.BTN_DRAW_BIG_DEAL,
@@ -140,6 +136,15 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
             // 常に無効化しておくボタン等
             setButtonActive(SEL_G.CONTROLS.BTN_ESCAPE_RAT_RACE, false);
             setButtonActive(SEL_G.FINANCIALS.BTN_CHECK_CALCULATIONS, !!flags.is_calculating);
+
+            // ★追加修正: 銀行ローンボタンは、自分の手番であれば進行状態に関わらず常に制御する
+            // 借入は自分のターンなら常に可能
+            setButtonActive(SEL_G.PORTFOLIO.BTN_BORROW_LOAN, true);
+            // 返済は現金が$1000以上、かつローン残高が$1000以上ある場合のみ可能
+            const currentCash = parseInt(financials.cash || 0, 10);
+            const currentBankLoan = parseInt(financials.liabilities?.bank_loan || 0, 10);
+            const canRepay = (currentCash >= 1000) && (currentBankLoan >= 1000);
+            setButtonActive(SEL_G.PORTFOLIO.BTN_PAYBACK_LOAN, canRepay);
             
         } else {
             diceStatusArea.textContent = `[${turnUserName}] がプレイ中`;
@@ -168,12 +173,11 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
 export function disableAllActionButtons() {
     const { CONTROLS, CARD, PORTFOLIO, FINANCIALS } = DOM_SELECTORS.GUEST;
     const actionButtonIds = [
-        // ★追加: BTN_ROLL_DICE_2 を無効化リストに含める
         CONTROLS.BTN_ROLL_DICE, CONTROLS.BTN_ROLL_DICE_2, CONTROLS.BTN_CLAIM_PAYCHECK, 
         CONTROLS.BTN_END_TURN, CONTROLS.BTN_ESCAPE_RAT_RACE,
         CARD.BTN_DRAW_SMALL_DEAL, CARD.BTN_DRAW_BIG_DEAL, CARD.BTN_DRAW_MARKET, CARD.BTN_DRAW_DOODAD,
         CARD.BTN_BUY_REALESTATE, CARD.BTN_BUY_STOCK, CARD.BTN_SELL_STOCK, CARD.BTN_PAY_DOODAD, CARD.BTN_PASS,
-        PORTFOLIO.BTN_BORROW_LOAN, PORTFOLIO.BTN_PAYBACK_LOAN,
+        PORTFOLIO.BTN_BORROW_LOAN, PORTFOLIO.BTN_PAYBACK_LOAN, // ※他プレイヤー手番時は一括無効化される
         FINANCIALS.BTN_CHECK_CALCULATIONS
     ];
     setMultipleButtonsActive(actionButtonIds, false);
