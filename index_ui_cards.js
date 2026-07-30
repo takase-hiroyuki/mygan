@@ -58,7 +58,6 @@ export function updateCardPhaseUI(position, flags = {}) {
     // 状態1: 既にアクションを完了している場合
     // ==========================================
     if (flags.is_action_completed) {
-        setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, true);
         if (statusMessage) statusMessage.textContent = "カードアクション完了。ローン操作を行うか、手番を終了してください。";
         return; // ここで処理を終了
     }
@@ -67,8 +66,6 @@ export function updateCardPhaseUI(position, flags = {}) {
     // 状態2: カードを引いた後（アクション選択中）の場合
     // ==========================================
     if (flags.is_card_drawn) {
-        setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, false); // アクション完了まで手番終了をロック
-
         if (CELLS_OPPORTUNITY.includes(position)) {
             setButtonActive(SEL_G.CARD.BTN_BUY_STOCK, true);
             setButtonActive(SEL_G.CARD.BTN_BUY_REALESTATE, true);
@@ -102,9 +99,7 @@ export function updateCardPhaseUI(position, flags = {}) {
         requireCardAction = true;
     }
 
-    // アクション必須マスに止まった場合は手番終了をロック
     if (requireCardAction) {
-        setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, false);
         if (statusMessage) statusMessage.textContent = "カードを引いてください。アクション必須です。";
     } else {
         if (statusMessage) statusMessage.textContent = "現在場に出ているカードはありません。";
