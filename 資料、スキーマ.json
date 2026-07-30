@@ -143,10 +143,11 @@
               "name": { "type": "string" },
               "role": { "type": "string", "enum": ["general", "host"] },
               "profession": { "type": "string" },
+              "profession_id": { "type": "string" },
               "game_phase": { "type": "string", "enum": ["rat_race", "fast_track"] },
               "position": { "type": "number" },
               "last_dice": { "type": "number" },
-              "calculation_phase": { "type": "string", "enum": ["income_tax", "deal", "none"] },
+              "calculation_phase": { "type": "string", "enum": ["income_tax", "deal", "none", "payday"] },
               "children_count": { "type": "number" },
               "flags": {
                 "type": "object",
@@ -165,6 +166,7 @@
                 "type": "object",
                 "properties": {
                   "cash": { "type": "number" },
+                  "salary": { "type": "number" },
                   "total_income": { "type": "number" },
                   "total_expenses": { "type": "number" },
                   "passive_income": { "type": "number" },
