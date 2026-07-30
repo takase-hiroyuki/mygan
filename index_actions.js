@@ -116,6 +116,27 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
             } catch (error) {
                 alert(`解雇マス処理エラー: ${error.message}`);
             }
+        } else if (newState.position === 3 || newState.position === 16) { // 寄付マス (3, 16)
+            console.log("[DEBUG-ACTION] 寄付マスに停止。");
+            const totalIncome = parseInt(newState.financials?.total_income || 0, 10);
+            const donationAmount = Math.floor(totalIncome / 10);
+            
+            if (confirm(`寄付マスに止まりました。総収入の10%（$${donationAmount}）を寄付しますか？\n寄付すると、向こう3ターンサイコロを2個振ることができます。`)) {
+                try {
+                    const charityData = await callRpcWithDebug(supabase, 'action_donate_charity', {
+                        p_room_id: roomId,
+                        p_user_id: currentUserId
+                    });
+                    
+                    if (charityData && charityData.message) {
+                        alert(charityData.message);
+                    }
+                } catch (error) {
+                    alert(`寄付処理エラー: ${error.message}`);
+                }
+            } else {
+                console.log("[DEBUG-ACTION] 寄付を見送りました。");
+            }
         }
     }
 }
