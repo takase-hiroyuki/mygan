@@ -61,14 +61,19 @@ async function getCurrentPlayerState(supabase, userId) {
 export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
     if (!supabase || !currentUserId) return;
     
+    console.log(`[DEBUG-ACTION] actionRollDice 開始: ユーザーID=${currentUserId}, サイコロ数=${diceCount}`);
+
     const state = await getCurrentPlayerState(supabase, currentUserId);
-    if (!state) return;
+    if (!state) {
+        console.error("[CRITICAL_ERROR] プレイヤー状態が取得できません。");
+        return;
+    }
     const flags = state.flags || {};
     const downsizedTurnsLeft = parseInt(flags.downsized_turns_left || 0, 10);
     
     // ガード条件: ロール済み、計算中、またはリストラ（休み）中
     if (flags.has_rolled_dice || flags.is_calculating || downsizedTurnsLeft > 0) {
-        console.warn("【ガード】既にサイコロを振ったか、計算中、またはリストラ休み中のためサイコロを振れません。");
+        console.warn(`[ガード] ロール不可: has_rolled_dice=${flags.has_rolled_dice}, is_calculating=${flags.is_calculating}, downsized_turns_left=${downsizedTurnsLeft}`);
         if (downsizedTurnsLeft > 0) {
             alert("リストラ（解雇）による休み期間中です。サイコロは振れず、そのまま手番を終了する必要があります。");
         }
@@ -76,11 +81,13 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
     }
 
     try {
+        console.log("[DEBUG-ACTION] roll_dice_and_move 実行前");
         await callRpcWithDebug(supabase, 'roll_dice_and_move', { 
             p_room_id: roomId, 
             p_user_id: currentUserId,
             p_dice_count: diceCount
         });
+        console.log("[DEBUG-ACTION] roll_dice_and_move 実行完了");
     } catch (error) {
         alert(`処理エラー: ${error.message}`);
         return;
@@ -88,6 +95,8 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
 
     const newState = await getCurrentPlayerState(supabase, currentUserId);
     if (newState) {
+        console.log(`[DEBUG-ACTION] サイコロ移動後の現在地: position=${newState.position}`);
+        
         if (newState.position === 9) { // 子供マス (9)
             console.log("[DEBUG-ACTION] 子供マスに停止。action_land_on_baby を呼び出します。");
             try {
@@ -117,26 +126,33 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
                 alert(`解雇マス処理エラー: ${error.message}`);
             }
         } else if (newState.position === 3 || newState.position === 16) { // 寄付マス (3, 16)
-            console.log("[DEBUG-ACTION] 寄付マスに停止。");
+            console.log("[DEBUG-ACTION] 寄付マスに停止。確認ダイアログを表示します。");
             const totalIncome = parseInt(newState.financials?.total_income || 0, 10);
             const donationAmount = Math.floor(totalIncome / 10);
             
             if (confirm(`寄付マスに止まりました。総収入の10%（$${donationAmount}）を寄付しますか？\n寄付すると、向こう3ターンサイコロを2個振ることができます。`)) {
                 try {
+                    console.log("[DEBUG-ACTION] action_donate_charity 実行前");
                     const charityData = await callRpcWithDebug(supabase, 'action_donate_charity', {
                         p_room_id: roomId,
                         p_user_id: currentUserId
                     });
                     
+                    const verifyState = await getCurrentPlayerState(supabase, currentUserId);
+                    console.log("[DEBUG-DATA-CONSISTENCY] 寄付後のDB flags状態:", JSON.stringify(verifyState.flags));
+                    
                     if (charityData && charityData.message) {
                         alert(charityData.message);
                     }
                 } catch (error) {
+                    console.error("[CRITICAL-ERROR] 寄付処理に失敗:", error);
                     alert(`寄付処理エラー: ${error.message}`);
                 }
             } else {
                 console.log("[DEBUG-ACTION] 寄付を見送りました。");
             }
+        } else {
+            console.log("[DEBUG-ACTION] 特殊マス（子供、解雇、寄付）以外に停止。");
         }
     }
 }
