@@ -64,9 +64,14 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
     const state = await getCurrentPlayerState(supabase, currentUserId);
     if (!state) return;
     const flags = state.flags || {};
+    const downsizedTurnsLeft = parseInt(flags.downsized_turns_left || 0, 10);
     
-    if (flags.has_rolled_dice || flags.is_calculating) {
-        console.warn("【ガード】既にサイコロを振ったか、計算中のためサイコロを振れません。");
+    // ガード条件: ロール済み、計算中、またはリストラ（休み）中
+    if (flags.has_rolled_dice || flags.is_calculating || downsizedTurnsLeft > 0) {
+        console.warn("【ガード】既にサイコロを振ったか、計算中、またはリストラ休み中のためサイコロを振れません。");
+        if (downsizedTurnsLeft > 0) {
+            alert("リストラ（解雇）による休み期間中です。サイコロは振れず、そのまま手番を終了する必要があります。");
+        }
         return;
     }
 
@@ -97,7 +102,7 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
             } catch (babyError) {
                 alert(`子供マス処理エラー: ${babyError.message}`);
             }
-        } else if (newState.position === 20) { // ★追加: 解雇マス (20)
+        } else if (newState.position === 20) { // 解雇マス (20)
             console.log("[DEBUG-ACTION] 解雇マスに停止。action_land_on_downsized を呼び出します。");
             try {
                 const downsizedData = await callRpcWithDebug(supabase, 'action_land_on_downsized', {
@@ -154,6 +159,7 @@ export async function actionEndTurn(supabase, currentUserId) {
     
     const flags = state.flags || {};
     const position = state.position || 0;
+    const financials = state.financials || {};
     
     const hasRolledDice = !!flags.has_rolled_dice;
     const isCalculating = !!flags.is_calculating;
@@ -162,11 +168,34 @@ export async function actionEndTurn(supabase, currentUserId) {
     const downsizedTurnsLeft = parseInt(flags.downsized_turns_left || 0, 10);
     const pendingPaydays = parseInt(flags.pending_paydays || 0, 10);
     const isDownsized = downsizedTurnsLeft > 0;
+    const cash = parseInt(financials.cash || 0, 10);
 
     const isCardCell = OPPORTUNITY_CELLS.includes(position) || DOODAD_CELLS.includes(position) || MARKET_CELLS.includes(position);
     const hasMandatoryPaycheck = (pendingPaydays > 0) && isNegativeCashFlow;
 
-    // ガード条件: index_state.js の UI制御ロジックと完全に一致させる
+    disableAllActionButtons();
+
+    // ★ガード条件1: 手持ち現金がマイナス時は破産（ゲームオーバー）処理
+    if (cash < 0) {
+        alert("現金がなくなったので、破産しました。ゲームオーバーです");
+        try {
+            // ステータスをゲームオーバーに更新
+            await callRpcWithDebug(supabase, 'declare_game_over', { 
+                p_room_id: roomId, 
+                p_user_id: currentUserId 
+            });
+            // 手番を強制的に次の人へ回す
+            await callRpcWithDebug(supabase, 'pass_and_end_turn', { 
+                p_room_id: roomId, 
+                p_user_id: currentUserId 
+            });
+        } catch (error) {
+            alert(`処理エラー: ${error.message}`);
+        }
+        return;
+    }
+
+    // ガード条件2: 従来のアクション未了や必須イベントのブロック
     if (
         (!hasRolledDice && !isDownsized) || 
         isCalculating || 
@@ -174,11 +203,8 @@ export async function actionEndTurn(supabase, currentUserId) {
         hasMandatoryPaycheck
     ) {
         console.warn("【ガード】ターン終了の条件を満たしていません。");
-        console.warn(`[DEBUG_GUARD] hasRolled=${hasRolledDice}, isDownsized=${isDownsized}, isCalc=${isCalculating}, isCardCell=${isCardCell}, isActionCompleted=${isActionCompleted}, hasMandatoryPaycheck=${hasMandatoryPaycheck}`);
         return;
     }
-
-    disableAllActionButtons();
     
     try {
         await callRpcWithDebug(supabase, 'pass_and_end_turn', { 
