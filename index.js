@@ -5,17 +5,28 @@ import { toggleScreen } from './index_ui.js';
 import { initCardEventListeners } from './index_ui_cards.js'; 
 import { initSupabaseClient, checkExistingLogin, loginUser } from './index_auth.js';
 import { startSubscriptions } from './index_state.js';
-import { actionRollDice, actionEndTurn, actionClaimPaycheck, actionCheckCalculations } from './index_actions.js';
+import { 
+    actionRollDice, 
+    actionEndTurn, 
+    actionClaimPaycheck, 
+    actionCheckCalculations,
+    actionBorrowBankLoan, // ★追加: 借入用関数
+    actionRepayBankLoan   // ★追加: 返済用関数
+} from './index_actions.js';
 
 let supabase = null;
 const SEL_G = DOM_SELECTORS.GUEST;
 const inputUsername = document.getElementById(SEL_G.LOGIN.INPUT_USERNAME);
 const btnLogin = document.getElementById(SEL_G.LOGIN.BTN_LOGIN);
 const btnRollDice = document.getElementById(SEL_G.CONTROLS.BTN_ROLL_DICE);
-const btnRollDice2 = document.getElementById(SEL_G.CONTROLS.BTN_ROLL_DICE_2); // ★追加: サイコロ2個用ボタン
+const btnRollDice2 = document.getElementById(SEL_G.CONTROLS.BTN_ROLL_DICE_2); 
 const btnClaimPaycheck = document.getElementById(SEL_G.CONTROLS.BTN_CLAIM_PAYCHECK);
 const btnEndTurn = document.getElementById(SEL_G.CONTROLS.BTN_END_TURN);
 const btnCheckCalculations = document.getElementById(SEL_G.FINANCIALS.BTN_CHECK_CALCULATIONS);
+
+// ★追加: 銀行ローン操作用ボタンの取得
+const btnBorrowLoan = document.getElementById(SEL_G.PORTFOLIO.BTN_BORROW_LOAN);
+const btnPaybackLoan = document.getElementById(SEL_G.PORTFOLIO.BTN_PAYBACK_LOAN);
 
 let currentUserId = null;
 let isCardListenersReady = false; // イベントリスナーの重複登録を防止するフラグ
@@ -60,7 +71,6 @@ btnLogin.addEventListener('click', async () => {
 });
 
 // イベントリスナーは actions へ処理を委譲するのみ
-// ★修正: アクション関数にサイコロの数 (1 または 2) を引数として渡す
 btnRollDice?.addEventListener(
     'click', () => actionRollDice(supabase, currentUserId, 1)
 );
@@ -76,6 +86,14 @@ btnEndTurn?.addEventListener(
 );
 btnCheckCalculations?.addEventListener(
     'click', () => actionCheckCalculations(supabase, currentUserId)
+);
+
+// ★追加: 銀行ローンのイベントリスナー
+btnBorrowLoan?.addEventListener(
+    'click', () => actionBorrowBankLoan(supabase, currentUserId)
+);
+btnPaybackLoan?.addEventListener(
+    'click', () => actionRepayBankLoan(supabase, currentUserId)
 );
 
 console.log("【デバッグ】index.js が読み込まれました。");
