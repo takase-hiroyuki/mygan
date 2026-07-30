@@ -41,7 +41,7 @@ export const DOM_SELECTORS = {
             DICE_RESULT: 'guest-dice-result',
             MANUAL_ACTION_AREA: 'manual-action-area',
             BTN_ROLL_DICE: 'btn-roll-dice',
-            BTN_ROLL_DICE_2: 'btn-roll-dice-2', // ★サイコロ2個用を追加
+            BTN_ROLL_DICE_2: 'btn-roll-dice-2',
             BTN_CLAIM_PAYCHECK: 'btn-claim-paycheck', 
             BTN_END_TURN: 'btn-end-turn',            
             BTN_ESCAPE_RAT_RACE: 'btn-escape-rat-race' 
@@ -89,15 +89,30 @@ export const DOM_SELECTORS = {
             CONTAINER: 'portfolio-container',
             STOCKS: 'display-portfolio-stocks',
             REAL_ESTATE: 'display-portfolio-realestate',
+            
+            // 負債の表示ID
             LIABILITY_MORTGAGE: 'display-liability-mortgage',
+            LIABILITY_SCHOOL_LOAN: 'display-liability-school-loan', // ★追加
             LIABILITY_CAR_LOAN: 'display-liability-carloan',
+            LIABILITY_CREDIT_CARD: 'display-liability-credit-card', // ★追加
             LIABILITY_RETAIL: 'display-liability-retail',
+            DISPLAY_LIABILITY_BANKLOAN: 'display-liability-bankloan',    
+            
+            // 銀行ローン操作
             LOAN_CONTROL_CONTAINER: 'bank-loan-control',  
             BTN_BORROW_LOAN: 'btn-borrow-loan',            
             BTN_PAYBACK_LOAN: 'btn-payback-loan',          
-            DISPLAY_LIABILITY_BANKLOAN: 'display-liability-bankloan',    
-            DISPLAY_EXPENSE_LOANINTEREST: 'display-expense-loaninterest',
-            DISPLAY_EXPENSE_CHILD: 'display-expense-child'
+            
+            // 各種支出の表示ID
+            DISPLAY_EXPENSE_TAXES: 'display-expense-taxes', // ★追加
+            DISPLAY_EXPENSE_MORTGAGE: 'display-expense-mortgage', // ★追加
+            DISPLAY_EXPENSE_SCHOOL: 'display-expense-school', // ★追加
+            DISPLAY_EXPENSE_CAR: 'display-expense-car', // ★追加
+            DISPLAY_EXPENSE_CREDIT: 'display-expense-credit', // ★追加
+            DISPLAY_EXPENSE_RETAIL: 'display-expense-retail', // ★追加
+            DISPLAY_EXPENSE_OTHER: 'display-expense-other', // ★追加
+            DISPLAY_EXPENSE_CHILD: 'display-expense-child',
+            DISPLAY_EXPENSE_LOANINTEREST: 'display-expense-loaninterest'
         },
 
         // ゲスト用すごろく盤面モニターID生成用のプレフィックス
