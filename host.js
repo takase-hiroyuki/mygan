@@ -1,7 +1,7 @@
 // host.js
 import { roomId, SUPABASE_URL, SUPABASE_KEY } from './common_config.js';
 import { DOM_SELECTORS } from './common_dom_selectors.js';
-import { setButtonActive, BOARD_CELL_NAMES, waitForSupabase, callRpcWithDebug } from './common_utils.js'; // ★ callRpcWithDebug をインポート
+import { setButtonActive, BOARD_CELL_NAMES, waitForSupabase, callRpcWithDebug } from './common_utils.js'; 
 
 let supabase = null;
 const HOST_ADMIN_ID = 'host-admin-01';
@@ -57,26 +57,12 @@ async function syncAndFetchRoom() {
 
     if (resPart.data) {
         currentParticipants = resPart.data;
-        console.log("[DEBUG-DB] 取得した participants データ一覧:");
-        currentParticipants.forEach(p => {
-            const state = p.state || {};
-            const financials = state.financials || {};
-            const expenses = financials.expenses || {};
-            console.log(`  - プレイヤー名: ${state.name} (ID: ${p.user_id})`);
-            console.log(`    職業: ${state.profession}`);
-            console.log(`    子供の数 (children_count): ${state.children_count}`);
-            console.log(`    1人あたりの養育費 (per_child_expense): ${financials.per_child_expense}`);
-            console.log(`    現在の総養育費 (child_expense): ${expenses.child_expense}`);
-        });
     }
 
     if (resRoom.data) {
         activeRoomRecord = resRoom.data;
         const state = activeRoomRecord.game_state || {};
         const isPlaying = state.status === 'playing';
-
-        console.log("[DEBUG-DB] 取得した rooms.game_state:", state);
-        console.log("[DEBUG-DB] isPlaying 判定:", isPlaying);
 
         if (displayRoomStatus) displayRoomStatus.textContent = isPlaying ? 'playing (ゲーム進行中)' : 'waiting (準備中)';
         
@@ -88,8 +74,6 @@ async function syncAndFetchRoom() {
 }
 
 function drawHostScreen() {
-    console.log("【デバッグ】drawHostScreen");
-
     const state = activeRoomRecord?.game_state || {};
     const decks = state.decks || {};
     const currentTurnUserId = activeRoomRecord ? activeRoomRecord.current_turn_user_id : null;
@@ -132,11 +116,13 @@ function drawHostScreen() {
         const position = pState.position ?? 0;
         const flags = pState.flags || {}; 
 
-        // 名前の先頭に「★」を付けるだけにする（手番プレイヤー判定）
+        // 【デバッグ監視】UI描画時に各プレイヤーのフラグ状態を強制出力
+        console.log(`[DEBUG-HOST-UI] ${pState.name || p.user_id} の flags:`, JSON.stringify(flags));
+
         const isCurrentTurn = (p.user_id === currentTurnUserId);
         const displayName = (isCurrentTurn ? '★' : '') + (pState.name || '不明');
 
-        // 1. 参加者名簿テーブルの行生成 (列数: 6)
+        // 1. 参加者名簿テーブルの行生成
         const tr = document.createElement('tr');
         tr.classList.add(itemSEL.ROW_CLASS);
         tr.innerHTML = `
@@ -149,8 +135,12 @@ function drawHostScreen() {
         `;
         if (listBody) listBody.appendChild(tr);
 
-        // 2. フラグ監視テーブルの行生成 (列数: 9)
+        // 2. フラグ監視テーブルの行生成
         if (flagsListBody) {
+            // 文字列として保存されてしまった場合を考慮し、明示的に数値へ変換
+            const charityLeft = parseInt(flags.charity_turns_left || 0, 10);
+            const downsizedLeft = parseInt(flags.downsized_turns_left || 0, 10);
+
             const trFlags = document.createElement('tr');
             trFlags.innerHTML = `
                 <td>${displayName}</td>
@@ -159,8 +149,8 @@ function drawHostScreen() {
                 <td>${!!flags.is_card_drawn}</td>
                 <td>${!!flags.is_action_completed}</td>
                 <td>${!!flags.is_calculating}</td>
-                <td>${flags.charity_turns_left || 0}</td>
-                <td>${flags.downsized_turns_left || 0}</td>
+                <td style="font-weight: bold; color: ${charityLeft > 0 ? '#4caf50' : 'inherit'};">${charityLeft}</td>
+                <td style="font-weight: bold; color: ${downsizedLeft > 0 ? '#f44336' : 'inherit'};">${downsizedLeft}</td>
                 <td>${!!flags.is_negative_cash_flow}</td>
             `;
             flagsListBody.appendChild(trFlags);
@@ -182,13 +172,12 @@ function drawHostScreen() {
             const fontNodeColor = 'white';
             fontNode.setAttribute('color', fontNodeColor);
             fontNode.setAttribute('size', '2');
-            // 盤面のコマの名前にも★を反映する
             fontNode.textContent = displayName;
             
             tdNode.appendChild(fontNode);
             trNode.appendChild(tdNode);
             table.appendChild(trNode);
-            targetCell.appendChild(targetCell.firstChild ? document.createElement('br') : document.createDocumentFragment()); // 重なり防止
+            targetCell.appendChild(targetCell.firstChild ? document.createElement('br') : document.createDocumentFragment());
             targetCell.appendChild(table);
         }
     });
@@ -197,34 +186,24 @@ function drawHostScreen() {
 btnInitialShuffleStart?.addEventListener('click', async (event) => {
     if (!supabase) return;
     const debugFunctionName = event.currentTarget.id;
-    console.log("【デバッグ1】", debugFunctionName);
-
+    
     if (!confirm("職業割り当てとキャッシュフローを含めてゲームを開始しますか？")) return;
     setButtonActive(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE, false);
 
     try {
-        // 共通ラッパー関数 (callRpcWithDebug) に置き換え
         await callRpcWithDebug(supabase, 'start_game_with_professions', { p_room_id: roomId });
-        console.log("【デバッグ2】", debugFunctionName, "success");
         await syncAndFetchRoom();
     } catch (error) {
         alert(`[エラー] ゲーム開始失敗\n詳細: ${error.message}\n※コンソールを確認してください`);
         setButtonActive(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE, true);
     }
-
-    console.log("【デバッグ3】", debugFunctionName);
 });
 
-// ==========================================
-// 退室処理ボタン
-// ==========================================
 btnKickParticipant?.addEventListener('click', async () => {
     if (!supabase) return;
     const orderInput = inputKickOrder.value.trim();
     const orderIdx = parseInt(orderInput, 10) - 1;
     
-    console.log(`[DEBUG] 退室処理実行: 入力値=${orderInput}, 対象インデックス=${orderIdx}`);
-
     if (isNaN(orderIdx) || orderIdx < 0 || orderIdx >= currentParticipants.length) {
         alert("有効な退室者の番号（入室順）を入力してください。");
         return;
@@ -233,28 +212,20 @@ btnKickParticipant?.addEventListener('click', async () => {
     const targetUser = currentParticipants[orderIdx];
     const targetName = targetUser.state?.name || '不明';
 
-    if (!confirm(`${targetName} (入室順: ${orderIdx + 1}) を退室させますか？\n※現在手番のプレイヤーを退室させた場合、手番は次の人に移ります。`)) {
-        return;
-    }
+    if (!confirm(`${targetName} (入室順: ${orderIdx + 1}) を退室させますか？\n※現在手番のプレイヤーを退室させた場合、手番は次の人に移ります。`)) return;
 
     try {
-        // データ整合性を保つため、削除と手番移行を同時に行うRPCを使用
         await callRpcWithDebug(supabase, 'kick_participant', { 
             p_room_id: roomId, 
             p_target_user_id: targetUser.user_id 
         });
-        console.log(`[DEBUG] ${targetName} の退室処理が完了しました。`);
         inputKickOrder.value = '';
         await syncAndFetchRoom();
     } catch (error) {
-        console.error("[DEBUG] 退室処理エラー:", error);
-        alert(`[エラー] 退室処理失敗\n詳細: ${error.message}\n※データベース側に kick_participant 関数を作成する必要があります。`);
+        alert(`[エラー] 退室処理失敗\n詳細: ${error.message}`);
     }
 });
 
-// ==========================================
-// 手番プレイヤー手動制御ボタン (追加実装)
-// ==========================================
 btnSetTurn?.addEventListener('click', async () => {
     if (!supabase) return;
     const orderInput = inputNextTurnOrder.value.trim();
@@ -268,36 +239,25 @@ btnSetTurn?.addEventListener('click', async () => {
     const targetUser = currentParticipants[orderIdx];
     const targetName = targetUser.state?.name || '不明';
 
-    if (!confirm(`手番を ${targetName} (入室順: ${orderIdx + 1}) に強制的に移動させますか？`)) {
-        return;
-    }
+    if (!confirm(`手番を ${targetName} (入室順: ${orderIdx + 1}) に強制的に移動させますか？`)) return;
 
     try {
-        // データ整合性を保つため、RPCを呼び出して手番を更新する
         await callRpcWithDebug(supabase, 'force_set_turn', { 
             p_room_id: roomId, 
             p_target_user_id: targetUser.user_id 
         });
-        console.log(`[DEBUG] 手番を ${targetName} に強制移動しました。`);
         inputNextTurnOrder.value = '';
         await syncAndFetchRoom();
     } catch (error) {
-        console.error("[DEBUG] 手番変更エラー:", error);
         alert(`[エラー] 手番変更失敗\n詳細: ${error.message}`);
     }
 });
 
-// ==========================================
-// 全員強制退室＆ゲーム終了ボタン
-// ==========================================
 btnForceGameEnd?.addEventListener('click', async () => {
     if (!supabase) return;
     if (!confirm("全員を退室させゲームを強制終了しますか？")) return;
     
-    const { error: deleteError } = await supabase
-        .from('participants')
-        .delete()
-        .eq('room_id', roomId);
+    const { error: deleteError } = await supabase.from('participants').delete().eq('room_id', roomId);
         
     if (!deleteError) {
         const { error: updateError } = await supabase
