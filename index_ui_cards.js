@@ -1,7 +1,7 @@
 // index_ui_cards.js
-import { roomId } from './common_config.js'; // 追加: RPCの呼び出しに必要
+import { roomId } from './common_config.js';
 import { DOM_SELECTORS } from './common_dom_selectors.js';
-import { setButtonActive, setMultipleButtonsActive, callRpcWithDebug } from './common_utils.js'; // ★ callRpcWithDebug を追加
+import { setButtonActive, setMultipleButtonsActive, callRpcWithDebug } from './common_utils.js';
 
 const SEL_G = DOM_SELECTORS.GUEST;
 
@@ -33,6 +33,7 @@ async function updateCardFlag(supabase, userId, flagName, value) {
  */
 export function updateCardPhaseUI(position, flags = {}) {
     console.log("【デバッグ】updateCardPhaseUI", flags);
+    
     const drawButtons = [
         SEL_G.CARD.BTN_DRAW_SMALL_DEAL,
         SEL_G.CARD.BTN_DRAW_BIG_DEAL,
@@ -59,14 +60,14 @@ export function updateCardPhaseUI(position, flags = {}) {
     if (flags.is_action_completed) {
         setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, true);
         if (statusMessage) statusMessage.textContent = "カードアクション完了。ローン操作を行うか、手番を終了してください。";
-        return; // ここで処理を終了し、これ以上ボタンを触らない
+        return; // ここで処理を終了
     }
 
     // ==========================================
     // 状態2: カードを引いた後（アクション選択中）の場合
     // ==========================================
     if (flags.is_card_drawn) {
-        setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, false); // アクションが完了するまで手番終了はロック
+        setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, false); // アクション完了まで手番終了をロック
 
         if (CELLS_OPPORTUNITY.includes(position)) {
             setButtonActive(SEL_G.CARD.BTN_BUY_STOCK, true);
@@ -104,7 +105,7 @@ export function updateCardPhaseUI(position, flags = {}) {
     // アクション必須マスに止まった場合は手番終了をロック
     if (requireCardAction) {
         setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, false);
-        if (statusMessage) statusMessage.textContent = "カードを引いてください。アクション必須";
+        if (statusMessage) statusMessage.textContent = "カードを引いてください。アクション必須です。";
     } else {
         if (statusMessage) statusMessage.textContent = "現在場に出ているカードはありません。";
     }
@@ -115,15 +116,20 @@ export function updateCardPhaseUI(position, flags = {}) {
  */
 export function initCardEventListeners(supabase, currentUserId) {
     console.log("【デバッグ】initCardEventListeners");
-    const drawCardRpc = async () => {
+    
+    // カードを引く処理（二重送信防止UIロックを追加）
+    const drawCardRpc = async (event) => {
+        const btn = event.currentTarget;
+        if (btn) btn.disabled = true;
+        
         try {
-            // ★修正: callRpcWithDebug ラッパーを使用
             await callRpcWithDebug(supabase, 'draw_card', {
                 p_room_id: roomId,
                 p_user_id: currentUserId
             });
         } catch (error) {
             alert(`エラー: ${error.message}`);
+            if (btn) btn.disabled = false; // エラー時はロック解除
         }
     };
 
@@ -132,8 +138,11 @@ export function initCardEventListeners(supabase, currentUserId) {
     document.getElementById(SEL_G.CARD.BTN_DRAW_MARKET)?.addEventListener('click', drawCardRpc);
     document.getElementById(SEL_G.CARD.BTN_DRAW_DOODAD)?.addEventListener('click', drawCardRpc);
 
-    // --- 【維持】アクションの完了（購入、支払い、パスなど） ---
-    const resetCardUI = async () => {
+    // アクションの完了処理（二重送信防止UIロックを追加）
+    const resetCardUI = async (event) => {
+        const btn = event.currentTarget;
+        if (btn) btn.disabled = true;
+        
         await updateCardFlag(supabase, currentUserId, 'is_action_completed', true);
     };
 
