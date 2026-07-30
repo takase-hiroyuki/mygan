@@ -2,12 +2,14 @@
 import { roomId } from './common_config.js';
 import { DOM_SELECTORS } from './common_dom_selectors.js';
 import { disableAllActionButtons } from './index_ui.js';
-import { callRpcWithDebug } from './common_utils.js'; // ★共通ラッパー関数のインポート
+import { callRpcWithDebug } from './common_utils.js'; 
 
 /**
  * プレイヤーの状態(state)内のflagsの一部を直接更新するヘルパー関数
+ * 【警告】この関数は将来的に非推奨とし、状態変更はすべてRPCを経由するべきです。
  */
 async function updatePlayerFlag(supabase, userId, flagName, value) {
+    console.log(`[DEBUG_ACTION] updatePlayerFlag: flag=${flagName}, value=${value}`);
     const { data, error: fetchError } = await supabase
         .from('participants')
         .select('state')
@@ -15,7 +17,7 @@ async function updatePlayerFlag(supabase, userId, flagName, value) {
         .single();
         
     if (fetchError || !data) {
-        console.error("フラグ更新時のデータ取得エラー:", fetchError);
+        console.error("[CRITICAL_ERROR] フラグ更新時のデータ取得エラー:", fetchError);
         return;
     }
 
@@ -23,10 +25,14 @@ async function updatePlayerFlag(supabase, userId, flagName, value) {
     newState.flags = newState.flags || {};
     newState.flags[flagName] = value;
 
-    await supabase
+    const { error: updateError } = await supabase
         .from('participants')
         .update({ state: newState })
         .eq('user_id', userId);
+        
+    if (updateError) {
+        console.error("[CRITICAL_ERROR] フラグ直接更新に失敗:", updateError);
+    }
 }
 
 /**
@@ -39,7 +45,10 @@ async function getCurrentPlayerState(supabase, userId) {
         .eq('user_id', userId)
         .single();
     
-    if (error || !data) return null;
+    if (error || !data) {
+        console.error("[CRITICAL_ERROR] プレイヤー状態の取得に失敗:", error);
+        return null;
+    }
     return data.state || {};
 }
 
@@ -55,6 +64,7 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
     const state = await getCurrentPlayerState(supabase, currentUserId);
     if (!state) return;
     const flags = state.flags || {};
+    
     if (flags.has_rolled_dice || flags.is_calculating) {
         console.warn("【ガード】既にサイコロを振ったか、計算中のためサイコロを振れません。");
         return;
@@ -73,7 +83,7 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
 
     const newState = await getCurrentPlayerState(supabase, currentUserId);
     if (newState) {
-        if (newState.position === 9) {
+        if (newState.position === 9) { // 子供マス (9)
             console.log("[DEBUG-ACTION] 子供マスに停止。action_land_on_baby を呼び出します。");
             try {
                 const babyData = await callRpcWithDebug(supabase, 'action_land_on_baby', {
@@ -81,7 +91,6 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
                     p_user_id: currentUserId
                 });
                 
-                console.log("[DEBUG-ACTION] 子供マス処理成功:", babyData);
                 if (babyData && babyData.message) {
                     alert(babyData.message);
                 }
@@ -156,21 +165,17 @@ export async function actionCheckCalculations(supabase, currentUserId) {
     const inputIncomeEl = document.getElementById(DOM_SELECTORS.GUEST.FINANCIALS.INPUT_TOTAL_INCOME);
     const inputCashflowEl = document.getElementById(DOM_SELECTORS.GUEST.FINANCIALS.INPUT_NET_CASHFLOW);
 
-    console.log("[DEBUG] Income Element:", inputIncomeEl);
-    console.log("[DEBUG] Cashflow Element:", inputCashflowEl);
-    if (inputIncomeEl) console.log("[DEBUG] Income Value:", inputIncomeEl.value);
-    if (inputCashflowEl) console.log("[DEBUG] Cashflow Value:", inputCashflowEl.value);
-
     const rawIncome = inputIncomeEl ? inputIncomeEl.value.replace(/,/g, '').trim() : "";
     const rawCashflow = inputCashflowEl ? inputCashflowEl.value.replace(/,/g, '').trim() : "";
 
-    const userInputIncome = rawIncome === "" ? NaN : parseInt(rawIncome, 10);
-    const userInputCashflow = rawCashflow === "" ? NaN : parseInt(rawCashflow, 10);
-
-    if (isNaN(userInputIncome) || isNaN(userInputCashflow)) {
-        alert('総収入と毎月のキャッシュフローの双方に数値を正しく入力してください。');
+    // 数値以外の文字が含まれているか厳密にチェック（マイナス記号は先頭のみ許可）
+    if (!/^-?\d+$/.test(rawIncome) || !/^-?\d+$/.test(rawCashflow)) {
+        alert('総収入と毎月のキャッシュフローの双方に【半角数字のみ】を正しく入力してください。');
         return;
     }
+
+    const userInputIncome = parseInt(rawIncome, 10);
+    const userInputCashflow = parseInt(rawCashflow, 10);
 
     try {
         const data = await callRpcWithDebug(supabase, 'action_check_calculations', {
@@ -184,7 +189,6 @@ export async function actionCheckCalculations(supabase, currentUserId) {
             alert(data.message);
         } else {
             alert(data.message); 
-            
             if (inputIncomeEl) inputIncomeEl.value = '';
             if (inputCashflowEl) inputCashflowEl.value = '';
         }
@@ -193,12 +197,14 @@ export async function actionCheckCalculations(supabase, currentUserId) {
     }
 }
 
-// ★追加: 銀行ローンを$1,000借り入れる
+/**
+ * 銀行ローンを$1,000借り入れる
+ */
 export async function actionBorrowBankLoan(supabaseClient, userId) {
     if (!supabaseClient || !userId) return;
     const amount = 1000;
     
-    if (!confirm(`銀行から $${amount} を借入しますか？\n（借入額の10%が毎月の支払いに加算されます）`)) return;
+    if (!confirm(`銀行から $${amount} を借入しますか？\n（借入額の10%が毎月の支払いに加算され、計算チェックが必要になります）`)) return;
 
     try {
         const result = await callRpcWithDebug(supabaseClient, 'borrow_bank_loan', {
@@ -209,19 +215,22 @@ export async function actionBorrowBankLoan(supabaseClient, userId) {
         
         if (result && result.status === 'error') {
             alert(`[エラー] ${result.message}`);
+        } else if (result && result.status === 'success') {
+            alert(result.message);
         }
     } catch (error) {
-        console.error("[DEBUG] actionBorrowBankLoan 実行エラー:", error);
         alert(`[システムエラー] 借入処理に失敗しました。\n詳細: ${error.message}`);
     }
 }
 
-// ★追加: 銀行ローンを$1,000返済する
+/**
+ * 銀行ローンを$1,000返済する
+ */
 export async function actionRepayBankLoan(supabaseClient, userId) {
     if (!supabaseClient || !userId) return;
     const amount = 1000;
     
-    if (!confirm(`銀行ローンを $${amount} 返済しますか？`)) return;
+    if (!confirm(`銀行ローンを $${amount} 返済しますか？\n（計算チェックが必要になります）`)) return;
 
     try {
         const result = await callRpcWithDebug(supabaseClient, 'repay_bank_loan', {
@@ -232,9 +241,10 @@ export async function actionRepayBankLoan(supabaseClient, userId) {
         
         if (result && result.status === 'error') {
             alert(`[エラー] ${result.message}`);
+        } else if (result && result.status === 'success') {
+            alert(result.message);
         }
     } catch (error) {
-        console.error("[DEBUG] actionRepayBankLoan 実行エラー:", error);
         alert(`[システムエラー] 返済処理に失敗しました。\n詳細: ${error.message}`);
     }
 }
