@@ -90,14 +90,27 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
 
         // 負債状況 (Liabilities)
         safeUpdate(SEL_G.PORTFOLIO.LIABILITY_MORTGAGE, toCurrency(liab.mortgage));
-        safeUpdate(SEL_G.PORTFOLIO.LIABILITY_CAR_LOAN, toCurrency(liab.car_loan));
-        safeUpdate(SEL_G.PORTFOLIO.LIABILITY_RETAIL, toCurrency(liab.retail_debt));
+        // ★修正: 新しいスキーマのキー名に合わせて変更
+        safeUpdate(SEL_G.PORTFOLIO.LIABILITY_CAR_LOAN, toCurrency(liab.car_loans)); 
+        safeUpdate(SEL_G.PORTFOLIO.LIABILITY_RETAIL, toCurrency(liab.retail_debt)); 
         safeUpdate(SEL_G.PORTFOLIO.DISPLAY_LIABILITY_BANKLOAN, toCurrency(liab.bank_loan));
         
-        // ローン利息支出
+        // ★追加: その他の負債（DOMに定義があれば描画される）
+        safeUpdate(SEL_G.PORTFOLIO.LIABILITY_SCHOOL_LOAN, toCurrency(liab.school_loans));
+        safeUpdate(SEL_G.PORTFOLIO.LIABILITY_CREDIT_CARD, toCurrency(liab.credit_card_debt));
+        
+        // 支出 (Expenses)
         safeUpdate(SEL_G.PORTFOLIO.DISPLAY_EXPENSE_LOANINTEREST, toCurrency(exp.bank_loan_payment));
-        // 子供の総養育費
         safeUpdate(SEL_G.PORTFOLIO.DISPLAY_EXPENSE_CHILD, toCurrency(exp.child_expense));
+        
+        // ★追加: その他の各種支出（DOMに定義があれば描画される）
+        safeUpdate(SEL_G.PORTFOLIO.DISPLAY_EXPENSE_TAXES, toCurrency(exp.taxes));
+        safeUpdate(SEL_G.PORTFOLIO.DISPLAY_EXPENSE_MORTGAGE, toCurrency(exp.mortgage_payment));
+        safeUpdate(SEL_G.PORTFOLIO.DISPLAY_EXPENSE_SCHOOL, toCurrency(exp.school_loan_payment));
+        safeUpdate(SEL_G.PORTFOLIO.DISPLAY_EXPENSE_CAR, toCurrency(exp.car_loan_payment));
+        safeUpdate(SEL_G.PORTFOLIO.DISPLAY_EXPENSE_CREDIT, toCurrency(exp.credit_card_payment));
+        safeUpdate(SEL_G.PORTFOLIO.DISPLAY_EXPENSE_RETAIL, toCurrency(exp.retail_payment));
+        safeUpdate(SEL_G.PORTFOLIO.DISPLAY_EXPENSE_OTHER, toCurrency(exp.other_expenses));
     }
 
     // 4. ステータスメッセージ・個別ボタン制御
@@ -109,12 +122,9 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
         const turnUserName = turnUser ? turnUser.state.name : "他のプレイヤー";
 
         if (isMyTurn) {
-            // ※ メインのアクションボタンの有効/無効化は index_state.js の updateActionButtonsState に移譲されているが、
-            // 追加の UI (カード表示や一部ボタン) はここで制御する。
             if (state.last_dice > 0) {
                 updateCardPhaseUI(state.position, flags);
                 
-                // pending_paydays（給料）の状態を判定してメッセージを切り替え
                 const pendingPaydays = parseInt(flags.pending_paydays || 0, 10);
                 if (pendingPaydays > 0) {
                     diceStatusArea.textContent = `結果:【${state.last_dice}】 Paycheck請求可能（${pendingPaydays}回分）`;
@@ -124,7 +134,6 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
             } else {
                 diceStatusArea.textContent = "あなたの手番";
                 
-                // サイコロを振る前はカードボタンを無効化
                 setMultipleButtonsActive([
                     SEL_G.CARD.BTN_DRAW_SMALL_DEAL, SEL_G.CARD.BTN_DRAW_BIG_DEAL,
                     SEL_G.CARD.BTN_DRAW_MARKET, SEL_G.CARD.BTN_DRAW_DOODAD
@@ -133,14 +142,10 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
                 if (statusMessage) statusMessage.textContent = "サイコロを振って移動してください。";
             }
             
-            // 常に無効化しておくボタン等
             setButtonActive(SEL_G.CONTROLS.BTN_ESCAPE_RAT_RACE, false);
             setButtonActive(SEL_G.FINANCIALS.BTN_CHECK_CALCULATIONS, !!flags.is_calculating);
 
-            // ★追加修正: 銀行ローンボタンは、自分の手番であれば進行状態に関わらず常に制御する
-            // 借入は自分のターンなら常に可能
             setButtonActive(SEL_G.PORTFOLIO.BTN_BORROW_LOAN, true);
-            // 返済は現金が$1000以上、かつローン残高が$1000以上ある場合のみ可能
             const currentCash = parseInt(financials.cash || 0, 10);
             const currentBankLoan = parseInt(financials.liabilities?.bank_loan || 0, 10);
             const canRepay = (currentCash >= 1000) && (currentBankLoan >= 1000);
@@ -150,7 +155,6 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
             diceStatusArea.textContent = `[${turnUserName}] がプレイ中`;
             disableAllActionButtons();
             
-            // 自分の手番ではない場合、カード状況テキストをリセットする
             const statusMessage = document.getElementById(SEL_G.CARD.STATUS_MESSAGE);
             if (statusMessage) {
                 statusMessage.textContent = "他のプレイヤーの行動を待っています。";
@@ -177,7 +181,7 @@ export function disableAllActionButtons() {
         CONTROLS.BTN_END_TURN, CONTROLS.BTN_ESCAPE_RAT_RACE,
         CARD.BTN_DRAW_SMALL_DEAL, CARD.BTN_DRAW_BIG_DEAL, CARD.BTN_DRAW_MARKET, CARD.BTN_DRAW_DOODAD,
         CARD.BTN_BUY_REALESTATE, CARD.BTN_BUY_STOCK, CARD.BTN_SELL_STOCK, CARD.BTN_PAY_DOODAD, CARD.BTN_PASS,
-        PORTFOLIO.BTN_BORROW_LOAN, PORTFOLIO.BTN_PAYBACK_LOAN, // ※他プレイヤー手番時は一括無効化される
+        PORTFOLIO.BTN_BORROW_LOAN, PORTFOLIO.BTN_PAYBACK_LOAN, 
         FINANCIALS.BTN_CHECK_CALCULATIONS
     ];
     setMultipleButtonsActive(actionButtonIds, false);
