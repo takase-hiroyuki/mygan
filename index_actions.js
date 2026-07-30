@@ -49,7 +49,7 @@ async function getCurrentPlayerState(supabase, userId) {
  * @param {string} currentUserId - 現在のユーザーID
  * @param {number} diceCount - 振るサイコロの数（デフォルト 1）
  */
-export async function actionRollDice(supabase, currentUserId, diceCount = 1) { // ★修正: 引数にdiceCountを追加
+export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
     if (!supabase || !currentUserId) return;
     
     const state = await getCurrentPlayerState(supabase, currentUserId);
@@ -60,7 +60,6 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) { /
         return;
     }
 
-    // 1. サイコロを振るRPCを実行 (★修正: callRpcWithDebugを使用し、diceCountを渡す)
     try {
         await callRpcWithDebug(supabase, 'roll_dice_and_move', { 
             p_room_id: roomId, 
@@ -72,14 +71,11 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) { /
         return;
     }
 
-    // 2. 移動後の位置を取得
     const newState = await getCurrentPlayerState(supabase, currentUserId);
     if (newState) {
-        // 09番マス (子供) に止まった場合のRPC呼び出し処理を追加
         if (newState.position === 9) {
             console.log("[DEBUG-ACTION] 子供マスに停止。action_land_on_baby を呼び出します。");
             try {
-                // ★修正: callRpcWithDebug を使用
                 const babyData = await callRpcWithDebug(supabase, 'action_land_on_baby', {
                     p_room_id: roomId,
                     p_user_id: currentUserId
@@ -106,7 +102,6 @@ export async function actionClaimPaycheck(supabase, currentUserId) {
     if (claimButton) claimButton.disabled = true;
 
     try {
-        // ★修正: callRpcWithDebug を使用
         await callRpcWithDebug(supabase, 'claim_paycheck', { 
             p_room_id: roomId, 
             p_user_id: currentUserId 
@@ -143,7 +138,6 @@ export async function actionEndTurn(supabase, currentUserId) {
     disableAllActionButtons();
     
     try {
-        // ★修正: callRpcWithDebug を使用
         await callRpcWithDebug(supabase, 'pass_and_end_turn', { 
             p_room_id: roomId, 
             p_user_id: currentUserId 
@@ -167,7 +161,6 @@ export async function actionCheckCalculations(supabase, currentUserId) {
     if (inputIncomeEl) console.log("[DEBUG] Income Value:", inputIncomeEl.value);
     if (inputCashflowEl) console.log("[DEBUG] Cashflow Value:", inputCashflowEl.value);
 
-    // 空文字の場合はNaNになるように処理
     const rawIncome = inputIncomeEl ? inputIncomeEl.value.replace(/,/g, '').trim() : "";
     const rawCashflow = inputCashflowEl ? inputCashflowEl.value.replace(/,/g, '').trim() : "";
 
@@ -180,7 +173,6 @@ export async function actionCheckCalculations(supabase, currentUserId) {
     }
 
     try {
-        // ★修正: callRpcWithDebug を使用
         const data = await callRpcWithDebug(supabase, 'action_check_calculations', {
             p_room_id: roomId,
             p_user_id: currentUserId,
@@ -188,18 +180,62 @@ export async function actionCheckCalculations(supabase, currentUserId) {
             p_input_cashflow: userInputCashflow
         });
 
-        // RPCから返却された JSONB の status を判定
         if (data.status === 'error') {
-            alert(data.message); // 「計算結果が正しくありません」などを表示
+            alert(data.message);
         } else {
-            alert(data.message); // 成功メッセージを表示
+            alert(data.message); 
             
-            // 成功後、入力フィールドをクリアする
             if (inputIncomeEl) inputIncomeEl.value = '';
             if (inputCashflowEl) inputCashflowEl.value = '';
         }
     } catch (error) {
         alert('エラーが発生しました: ' + error.message);
+    }
+}
+
+// ★追加: 銀行ローンを$1,000借り入れる
+export async function actionBorrowBankLoan(supabaseClient, userId) {
+    if (!supabaseClient || !userId) return;
+    const amount = 1000;
+    
+    if (!confirm(`銀行から $${amount} を借入しますか？\n（借入額の10%が毎月の支払いに加算されます）`)) return;
+
+    try {
+        const result = await callRpcWithDebug(supabaseClient, 'borrow_bank_loan', {
+            p_room_id: roomId,
+            p_user_id: userId,
+            p_amount: amount
+        });
+        
+        if (result && result.status === 'error') {
+            alert(`[エラー] ${result.message}`);
+        }
+    } catch (error) {
+        console.error("[DEBUG] actionBorrowBankLoan 実行エラー:", error);
+        alert(`[システムエラー] 借入処理に失敗しました。\n詳細: ${error.message}`);
+    }
+}
+
+// ★追加: 銀行ローンを$1,000返済する
+export async function actionRepayBankLoan(supabaseClient, userId) {
+    if (!supabaseClient || !userId) return;
+    const amount = 1000;
+    
+    if (!confirm(`銀行ローンを $${amount} 返済しますか？`)) return;
+
+    try {
+        const result = await callRpcWithDebug(supabaseClient, 'repay_bank_loan', {
+            p_room_id: roomId,
+            p_user_id: userId,
+            p_amount: amount
+        });
+        
+        if (result && result.status === 'error') {
+            alert(`[エラー] ${result.message}`);
+        }
+    } catch (error) {
+        console.error("[DEBUG] actionRepayBankLoan 実行エラー:", error);
+        alert(`[システムエラー] 返済処理に失敗しました。\n詳細: ${error.message}`);
     }
 }
 
