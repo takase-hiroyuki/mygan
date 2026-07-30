@@ -17,31 +17,33 @@ function updateActionButtonsState(playerState, isMyTurn) {
     const isCalculating = !!flags.is_calculating;
     const isNegativeCashFlow = !!flags.is_negative_cash_flow;
     const charityTurnsLeft = parseInt(flags.charity_turns_left || 0, 10);
+    const downsizedTurnsLeft = parseInt(flags.downsized_turns_left || 0, 10);
     const pendingPaydays = parseInt(flags.pending_paydays || 0, 10);
 
+    const isDownsized = downsizedTurnsLeft > 0;
     const SEL = DOM_SELECTORS.GUEST.CONTROLS;
 
     // 1. サイコロ1個を振るボタンの制御
-    // 条件: 自分のターン && まだサイコロを振っていない && 計算中ではない
-    const canRollDice1 = isMyTurn && !hasRolledDice && !isCalculating;
+    // 条件: 自分のターン && まだサイコロを振っていない && 計算中ではない && ★リストラ(休み)中ではない
+    const canRollDice1 = isMyTurn && !hasRolledDice && !isCalculating && !isDownsized;
     setButtonActive(SEL.BTN_ROLL_DICE, canRollDice1);
 
-    // 2. ★追加: サイコロ2個を振るボタンの制御
+    // 2. サイコロ2個を振るボタンの制御
     // 条件: サイコロ1個が振れる状態 && 寄付の権利 (charity_turns_left) が 1 以上あること
     const canRollDice2 = canRollDice1 && (charityTurnsLeft > 0);
     setButtonActive(SEL.BTN_ROLL_DICE_2, canRollDice2);
 
-    // 3. ★追加: 給料を受け取るボタンの制御
+    // 3. 給料を受け取るボタンの制御
     // 条件: 自分のターン && 未受け取りの給料 (pending_paydays) が 1 以上あること
     const canClaimPaycheck = isMyTurn && (pendingPaydays > 0);
     setButtonActive(SEL.BTN_CLAIM_PAYCHECK, canClaimPaycheck);
 
     // 4. ターン終了ボタンの制御
-    // 条件: 自分のターン && サイコロを振った && 計算中ではない && マイナスキャッシュフローではない
-    const canEndTurn = isMyTurn && hasRolledDice && !isCalculating && !isNegativeCashFlow;
+    // 条件: 自分のターン && (サイコロを振った OR ★リストラ中である) && 計算中ではない && マイナスキャッシュフローではない
+    const canEndTurn = isMyTurn && (hasRolledDice || isDownsized) && !isCalculating && !isNegativeCashFlow;
     setButtonActive(SEL.BTN_END_TURN, canEndTurn);
     
-    console.log(`[DEBUG-STATE] Buttons Update: isMyTurn=${isMyTurn}, Roll1=${canRollDice1}, Roll2=${canRollDice2}, Paycheck=${canClaimPaycheck}, End=${canEndTurn}`);
+    console.log(`[DEBUG_STATE] Buttons Update: isMyTurn=${isMyTurn}, Roll1=${canRollDice1}, Roll2=${canRollDice2}, Paycheck=${canClaimPaycheck}, End=${canEndTurn}, Downsized=${isDownsized}`);
 }
 
 /**
@@ -53,10 +55,21 @@ export function startSubscriptions(supabase, roomId, currentUserId) {
     supabase.channel('public:participants').on('postgres_changes', {
         event: '*', schema: 'public', table: 'participants' 
     }, async (payload) => {
-        if (payload.eventType === 'DELETE') {
+        // ★修正: 対象ユーザーが削除（キック）された場合、自身であれば即座に強制ログアウトする
+        if (payload.eventType === 'DELETE' && payload.old) {
+            if (payload.old.user_id === currentUserId) {
+                console.warn("[CRITICAL_WARNING] 自身のアカウントが部屋から削除されました。強制ログアウトします。");
+                localStorage.removeItem('user_id');
+                localStorage.removeItem('player_name');
+                window.location.reload();
+                return;
+            }
+            
+            // 部屋の参加者が0になった場合の処理
             const { data } = await supabase.from('participants').select('id').eq('room_id', roomId);
             if (!data || data.length === 0) {
-                localStorage.clear();
+                localStorage.removeItem('user_id');
+                localStorage.removeItem('player_name');
                 window.location.reload();
                 return;
             }
@@ -78,10 +91,20 @@ export function startSubscriptions(supabase, roomId, currentUserId) {
  */
 export async function fetchAndRender(supabase, roomId, currentUserId) {
     if (!supabase) return;
+    
     const [resPart, resRoom] = await Promise.all([
         supabase.from('participants').select('*').eq('room_id', roomId).order('id', { ascending: true }),
         supabase.from('rooms').select('*').eq('id', roomId).maybeSingle()
     ]);
+    
+    if (resPart.error) {
+        console.error("[CRITICAL_ERROR] 参加者データのフェッチに失敗しました:", resPart.error);
+        return;
+    }
+    if (resRoom.error) {
+        console.error("[CRITICAL_ERROR] 部屋データのフェッチに失敗しました:", resRoom.error);
+        return;
+    }
     
     if (resPart.data) cachedParticipants = resPart.data;
     if (resRoom.data) cachedRoom = resRoom.data;
@@ -90,7 +113,7 @@ export async function fetchAndRender(supabase, roomId, currentUserId) {
     
     // UI描画直前の自プレイヤーの財務データをコンソールに出力
     if (myParticipantRecord) {
-        console.log("【デバッグ】UI描画直前: state.financialsの中身:", JSON.stringify(myParticipantRecord.state?.financials, null, 2));
+        console.log("[DEBUG_STATE] UI描画直前: state.financials:", JSON.stringify(myParticipantRecord.state?.financials, null, 2));
     }
 
     // 描画関数を呼び出し、最新のキャッシュを渡す
