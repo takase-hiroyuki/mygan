@@ -2,7 +2,7 @@
 import { roomId } from './common_config.js';
 import { DOM_SELECTORS } from './common_dom_selectors.js';
 import { disableAllActionButtons } from './index_ui.js';
-import { callRpcWithDebug } from './common_utils.js'; 
+import { callRpcWithDebug, OPPORTUNITY_CELLS, DOODAD_CELLS, MARKET_CELLS } from './common_utils.js'; 
 
 /**
  * プレイヤーの状態(state)内のflagsの一部を直接更新するヘルパー関数
@@ -137,10 +137,30 @@ export async function actionEndTurn(supabase, currentUserId) {
 
     const state = await getCurrentPlayerState(supabase, currentUserId);
     if (!state) return;
-    const flags = state.flags || {};
     
-    if (!flags.has_rolled_dice || flags.is_calculating || flags.is_negative_cash_flow) {
-        console.warn("【ガード】ターン終了の条件を満たしていません（未ロール、計算中、またはマイナスキャッシュフロー）。");
+    const flags = state.flags || {};
+    const position = state.position || 0;
+    
+    const hasRolledDice = !!flags.has_rolled_dice;
+    const isCalculating = !!flags.is_calculating;
+    const isActionCompleted = !!flags.is_action_completed;
+    const isNegativeCashFlow = !!flags.is_negative_cash_flow;
+    const downsizedTurnsLeft = parseInt(flags.downsized_turns_left || 0, 10);
+    const pendingPaydays = parseInt(flags.pending_paydays || 0, 10);
+    const isDownsized = downsizedTurnsLeft > 0;
+
+    const isCardCell = OPPORTUNITY_CELLS.includes(position) || DOODAD_CELLS.includes(position) || MARKET_CELLS.includes(position);
+    const hasMandatoryPaycheck = (pendingPaydays > 0) && isNegativeCashFlow;
+
+    // ガード条件: index_state.js の UI制御ロジックと完全に一致させる
+    if (
+        (!hasRolledDice && !isDownsized) || 
+        isCalculating || 
+        (isCardCell && !isActionCompleted) || 
+        hasMandatoryPaycheck
+    ) {
+        console.warn("【ガード】ターン終了の条件を満たしていません。");
+        console.warn(`[DEBUG_GUARD] hasRolled=${hasRolledDice}, isDownsized=${isDownsized}, isCalc=${isCalculating}, isCardCell=${isCardCell}, isActionCompleted=${isActionCompleted}, hasMandatoryPaycheck=${hasMandatoryPaycheck}`);
         return;
     }
 
