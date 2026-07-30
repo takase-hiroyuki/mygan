@@ -97,6 +97,20 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
             } catch (babyError) {
                 alert(`子供マス処理エラー: ${babyError.message}`);
             }
+        } else if (newState.position === 20) { // ★追加: 解雇マス (20)
+            console.log("[DEBUG-ACTION] 解雇マスに停止。action_land_on_downsized を呼び出します。");
+            try {
+                const downsizedData = await callRpcWithDebug(supabase, 'action_land_on_downsized', {
+                    p_room_id: roomId,
+                    p_user_id: currentUserId
+                });
+                
+                if (downsizedData && downsizedData.message) {
+                    alert(downsizedData.message);
+                }
+            } catch (error) {
+                alert(`解雇マス処理エラー: ${error.message}`);
+            }
         }
     }
 }
