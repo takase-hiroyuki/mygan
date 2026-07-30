@@ -1,7 +1,6 @@
 // index_state.js
 import { renderGuestUI } from './index_ui.js';
 import { DOM_SELECTORS } from './common_dom_selectors.js';
-// ★修正: どこのマスに止まっているか判定するための定数を追加でインポート
 import { setButtonActive, OPPORTUNITY_CELLS, DOODAD_CELLS, MARKET_CELLS } from './common_utils.js';        
 
 let cachedParticipants = [];
@@ -12,13 +11,13 @@ let cachedRoom = null;
  */
 function updateActionButtonsState(playerState, isMyTurn) {
     const flags = playerState.flags || {};
-    const position = playerState.position || 0; // ★追加: 現在位置の取得
+    const position = playerState.position || 0; // 現在位置の取得
     
     // 必要なフラグの取得 (最新の整数値スキーマに対応)
     const hasRolledDice = !!flags.has_rolled_dice;
     const isCalculating = !!flags.is_calculating;
     const isNegativeCashFlow = !!flags.is_negative_cash_flow;
-    const isActionCompleted = !!flags.is_action_completed; // ★追加: カードアクションが完了したか
+    const isActionCompleted = !!flags.is_action_completed; // カードアクションが完了したか
     const charityTurnsLeft = parseInt(flags.charity_turns_left || 0, 10);
     const downsizedTurnsLeft = parseInt(flags.downsized_turns_left || 0, 10);
     const pendingPaydays = parseInt(flags.pending_paydays || 0, 10);
@@ -26,11 +25,11 @@ function updateActionButtonsState(playerState, isMyTurn) {
     const isDownsized = downsizedTurnsLeft > 0;
     const SEL = DOM_SELECTORS.GUEST.CONTROLS;
 
-    // ★追加: 現在位置が「カードを引くアクションが必須のマス」かを判定
+    // 現在位置が「カードを引くアクションが必須のマス」かを判定
     const isCardCell = OPPORTUNITY_CELLS.includes(position) || DOODAD_CELLS.includes(position) || MARKET_CELLS.includes(position);
 
     // 1. サイコロ1個を振るボタンの制御
-    // 条件: 自分のターン && まだサイコロを振っていない && 計算中ではない && ★リストラ(休み)中ではない
+    // 条件: 自分のターン && まだサイコロを振っていない && 計算中ではない && リストラ(休み)中ではない
     const canRollDice1 = isMyTurn && !hasRolledDice && !isCalculating && !isDownsized;
     setButtonActive(SEL.BTN_ROLL_DICE, canRollDice1);
 
@@ -39,23 +38,28 @@ function updateActionButtonsState(playerState, isMyTurn) {
     const canRollDice2 = canRollDice1 && (charityTurnsLeft > 0);
     setButtonActive(SEL.BTN_ROLL_DICE_2, canRollDice2);
 
-    // 3. 給料を受け取るボタンの制御
-    // 条件: 自分のターン && 未受け取りの給料 (pending_paydays) が 1 以上あること
+    // 3. 給料を受け取る（または支払う）ボタンの制御
+    // 条件: 自分のターン && 未処理のPaydayが 1 以上あること
     const canClaimPaycheck = isMyTurn && (pendingPaydays > 0);
     setButtonActive(SEL.BTN_CLAIM_PAYCHECK, canClaimPaycheck);
 
-    // 4. ターン終了ボタンの制御（極限まで条件を厳格化・集約）
-    // 条件: 自分のターン && (サイコロを振った OR 休み中) && 計算中ではない && キャッシュフローがマイナスではない
+    // ★追加: マイナスキャッシュフロー時の支払い義務判定
+    // 未処理のPaydayがあり、かつキャッシュフローがマイナスの場合は「義務」となる
+    const hasMandatoryPaycheck = (pendingPaydays > 0) && isNegativeCashFlow;
+
+    // 4. ターン終了ボタンの制御
+    // 条件: 自分のターン && (サイコロを振った OR 休み中) && 計算中ではない
     //       && (カードマスではない OR アクションが完了している)
+    //       && ★義務としてのPaycheck申請が残っていないこと
     const canEndTurn = isMyTurn && 
                        (hasRolledDice || isDownsized) && 
                        !isCalculating && 
-                       !isNegativeCashFlow &&
-                       (!isCardCell || isActionCompleted); // ★追加: カードマスの場合は完了が必須
+                       (!isCardCell || isActionCompleted) &&
+                       !hasMandatoryPaycheck; // 支払い義務がある場合は終了不可
                        
     setButtonActive(SEL.BTN_END_TURN, canEndTurn);
     
-    console.log(`[DEBUG_STATE] Buttons Update: isMyTurn=${isMyTurn}, Roll1=${canRollDice1}, Roll2=${canRollDice2}, Paycheck=${canClaimPaycheck}, End=${canEndTurn}, Downsized=${isDownsized}, isCardCell=${isCardCell}, isActionCompleted=${isActionCompleted}`);
+    console.log(`[DEBUG_STATE] Buttons Update: isMyTurn=${isMyTurn}, Roll1=${canRollDice1}, Roll2=${canRollDice2}, Paycheck=${canClaimPaycheck}, End=${canEndTurn}, Downsized=${isDownsized}, isCardCell=${isCardCell}, isActionCompleted=${isActionCompleted}, hasMandatoryPaycheck=${hasMandatoryPaycheck}`);
 }
 
 /**
