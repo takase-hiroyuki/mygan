@@ -175,24 +175,25 @@ export async function actionEndTurn(supabase, currentUserId) {
 
     disableAllActionButtons();
 
-    // ★ガード条件1: 手持ち現金がマイナス時は破産（ゲームオーバー）処理
+    // ★ガード条件1: 手持ち現金がマイナス時は破産（ゲームオーバー・完全削除）処理
     if (cash < 0) {
         alert("現金がなくなったので、破産しました。ゲームオーバーです");
         try {
-            // ステータスをゲームオーバーに更新
-            await callRpcWithDebug(supabase, 'declare_game_over', { 
+            // 破産と削除を同時に行うRPCを呼び出す
+            await callRpcWithDebug(supabase, 'action_bankrupt_and_remove', { 
                 p_room_id: roomId, 
                 p_user_id: currentUserId 
             });
-            // 手番を強制的に次の人へ回す
-            await callRpcWithDebug(supabase, 'pass_and_end_turn', { 
-                p_room_id: roomId, 
-                p_user_id: currentUserId 
-            });
+            
+            // ローカルの認証情報をクリアして画面をリロードし、ログイン画面に戻す
+            localStorage.removeItem('cashflow_user_id');
+            localStorage.removeItem('cashflow_user_name');
+            window.location.reload();
+            return;
         } catch (error) {
             alert(`処理エラー: ${error.message}`);
+            return;
         }
-        return;
     }
 
     // ガード条件2: 従来のアクション未了や必須イベントのブロック
