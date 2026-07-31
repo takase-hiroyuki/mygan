@@ -23,6 +23,12 @@ export const DOM_SELECTORS = {
             BTN_LOGIN: 'btn-login'
         },
 
+        // システムメッセージ表示エリア
+        MESSAGE: {
+            TITLE: 'system-message-title',
+            BODY: 'system-message-body'
+        },
+
         // あなたのステータス表示エリア
         STATUS: {
             SECTION: 'section-guest',
