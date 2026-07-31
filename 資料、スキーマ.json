@@ -121,7 +121,9 @@
                   "card_id": { "type": "number" },
                   "deck_type": { "type": "string", "enum": ["small_deal", "big_deal", "market", "doodad"] },
                   "title": { "type": "string" },
-                  "description": { "type": "string" }
+                  "description": { "type": "string" },
+                  "cost": { "type": ["number", "null"] },
+                  "down_payment": { "type": ["number", "null"] }
                 }
               }
             }
