@@ -21,20 +21,16 @@
 
     <div id="section-guest">
         <fieldset>
-            <legend>あなたのステータス</legend>
-            部屋: <span id="guest-room-id">未定</span><br />
-            名前: <span id="guest-name">未定</span><br />
-            現金: $<span id="display-current-cash">0</span><br />
-            職業: <span id="guest-profession">確認中</span><br />
-            役割: <span id="guest-role">確認中</span><br />
-            子供: <span id="guest-children-count">0</span>人 / 1人につき $<span id="guest-per-child-expense">0</span>
+            <legend><span id="">◯◯へのメッセージ</span></legend>
+            <span id="">メッセージ</span>
         </fieldset>
 
         <br>
 
         <!-- サイコロ・手番制御エリア -->
         <fieldset>
-            <legend>手番・サイコロ制御</legend>
+            <legend>名前: <span id="guest-name">未定</span>　手番・サイコロ制御</legend>
+            現金: $<span id="display-current-cash">0</span> / 
             <span id="guest-dice-result">現在地</span> / 
             <span id="dice-status-area">手番</span>
             <p id="manual-action-area">
@@ -246,10 +242,14 @@
 
     <br>
 
+    部屋: <span id="guest-room-id">未定</span><br />
+    職業: <span id="guest-profession">確認中</span><br />
+    役割: <span id="guest-role">確認中</span><br />
+    子供: <span id="guest-children-count">0</span>人 / 1人につき $<span id="guest-per-child-expense">0</span><br />
+
     <fieldset id="storage-debug-info">
-        <legend>ブラウザの記憶状態</legend>
-        <p>記憶されているID: <span id="debug-storage-id">確認中...</span></p>
-        <p>記憶されている名前: <span id="debug-storage-name">確認中...</span></p>
+        記憶されているID: <span id="debug-storage-id">確認中...</span><br />
+        記憶されている名前: <span id="debug-storage-name">確認中...</span>
     </fieldset>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
