@@ -43,14 +43,14 @@ RPC関数にデバッグ機能を持たせよ。
 
 フロントエンドからSupabaseのRPCを呼び出す際、引数と返り値、実行時間をコンソールに出力し、データ整合性を強制的に監視するラッパー関数
 export async function callRpcWithDebug(supabaseClient, rpcName, params = {})
-を使用せよ。なお、この関数は、すでに common_config.js に定義済みである。
+を使用せよ。なお、この関数は、すでに common_utils.js に定義済みである。
 
 プログラムを組むときに、アラートは禁止する。
 ＷＥＢ画面に「◯◯へのメッセージ」という表示を出すこと。
 export function displaySystemMessage(target, title, body) {
 という関数を用いて、誰に対するメッセージなにか明記すること。
 この表示は、他のメンバーもみることができるようにすること。
-なお、この関数は、すでに common_config.js に定義済みである。
+なお、この関数は、すでに common_utils.js に定義済みである。
 
 直近のことだけでなく、全体を俯瞰して考えること
 最重要課題は、データベースのデータに整合性をもたせること。
