@@ -13,8 +13,8 @@ const guestDiceResult = document.getElementById(SEL_G.CONTROLS.DICE_RESULT);
  * ログイン画面とゲスト画面の切り替え
  */
 export function toggleScreen(isLoggedIn) {
-    sectionLogin.hidden = isLoggedIn;
-    sectionGuest.hidden = !isLoggedIn;
+    if (sectionLogin) sectionLogin.hidden = isLoggedIn;
+    if (sectionGuest) sectionGuest.hidden = !isLoggedIn;
 }
 
 /**
@@ -39,15 +39,22 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
     const isPlaying = cachedRoom?.game_state?.status === 'playing';
 
     // 1. プレイヤー情報の表示
-    document.getElementById(SEL_G.STATUS.NAME).textContent = state.name || "";
-    document.getElementById(SEL_G.STATUS.DISPLAY_CURRENT_CASH).textContent = toCurrency(financials.cash);
-    document.getElementById(SEL_G.STATUS.PROFESSION).textContent = state.profession || "未定";
-    document.getElementById(SEL_G.STATUS.ROLE).textContent = state.role || "general";
+    const safeUpdate = (selectorId, text) => {
+        if (selectorId) {
+            const el = document.getElementById(selectorId);
+            if (el) el.textContent = text;
+        }
+    };
+
+    safeUpdate(SEL_G.STATUS.NAME, state.name || "");
+    safeUpdate(SEL_G.STATUS.DISPLAY_CURRENT_CASH, toCurrency(financials.cash));
+    safeUpdate(SEL_G.STATUS.PROFESSION, state.profession || "未定");
+    safeUpdate(SEL_G.STATUS.ROLE, state.role || "general");
     
     // 子供の数の描画
-    document.getElementById(SEL_G.STATUS.CHILDREN_COUNT).textContent = state.children_count || 0;
+    safeUpdate(SEL_G.STATUS.CHILDREN_COUNT, state.children_count || 0);
     // 1人あたりの養育費の描画
-    document.getElementById(SEL_G.STATUS.PER_CHILD_EXPENSE).textContent = toCurrency(financials.per_child_expense);
+    safeUpdate(SEL_G.STATUS.PER_CHILD_EXPENSE, toCurrency(financials.per_child_expense));
 
     // 2. 盤面描画
     for (let i = 0; i < 24; i++) {
@@ -68,13 +75,6 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
 
     // 3. 財務諸表・資産負債状況の描画更新
     if (Object.keys(financials).length > 0) {
-        const safeUpdate = (selectorId, text) => {
-            if (selectorId) {
-                const el = document.getElementById(selectorId);
-                if (el) el.textContent = text;
-            }
-        };
-
         const liab = financials.liabilities || {};
         const exp = financials.expenses || {};
 
@@ -114,28 +114,30 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
 
     // 4. ステータスメッセージ・個別ボタン制御
     if (!isPlaying) {
-        diceStatusArea.textContent = "ホストがゲームを開始するまでお待ちください。";
+        if (diceStatusArea) diceStatusArea.textContent = "ホストがゲームを開始するまでお待ちください。";
         disableAllActionButtons();
     } else {
         const turnUser = cachedParticipants.find(p => p.user_id === turnUserId);
         const turnUserName = turnUser ? turnUser.state.name : "他のプレイヤー";
         
-        // ★追加: データベース(room)から現在引かれているカードの情報を取得
+        // データベース(room)から現在引かれているカードの情報を取得
         const currentCard = cachedRoom?.game_state?.current_card || null;
 
         if (isMyTurn) {
             if (state.last_dice > 0) {
-                // ★修正: currentCard と turnUserName を UI更新関数へ渡す
+                // currentCard と turnUserName を UI更新関数へ渡す
                 updateCardPhaseUI(state.position, flags, currentCard, turnUserName);
                 
                 const pendingPaydays = parseInt(flags.pending_paydays || 0, 10);
-                if (pendingPaydays > 0) {
-                    diceStatusArea.textContent = `結果:【${state.last_dice}】 Paycheck請求可能（${pendingPaydays}回分）`;
-                } else {
-                    diceStatusArea.textContent = `結果:【${state.last_dice}】`;
+                if (diceStatusArea) {
+                    if (pendingPaydays > 0) {
+                        diceStatusArea.textContent = `結果:【${state.last_dice}】 Paycheck請求可能（${pendingPaydays}回分）`;
+                    } else {
+                        diceStatusArea.textContent = `結果:【${state.last_dice}】`;
+                    }
                 }
             } else {
-                diceStatusArea.textContent = "あなたの手番";
+                if (diceStatusArea) diceStatusArea.textContent = "あなたの手番";
                 
                 setMultipleButtonsActive([
                     SEL_G.CARD.BTN_DRAW_SMALL_DEAL, SEL_G.CARD.BTN_DRAW_BIG_DEAL,
@@ -155,12 +157,12 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
             setButtonActive(SEL_G.PORTFOLIO.BTN_PAYBACK_LOAN, canRepay);
             
         } else {
-            diceStatusArea.textContent = `[${turnUserName}] がプレイ中`;
+            if (diceStatusArea) diceStatusArea.textContent = `[${turnUserName}] がプレイ中`;
             disableAllActionButtons();
             
             const statusMessage = document.getElementById(SEL_G.CARD.STATUS_MESSAGE);
             if (statusMessage) {
-                // ★修正: 他のプレイヤーがカードを引いている場合、その内容を待機画面にも表示する
+                // 他のプレイヤーがカードを引いている場合、その内容を待機画面にも表示する
                 if (currentCard) {
                     const costText = currentCard.cost ? `費用: $${currentCard.cost}` : (currentCard.down_payment ? `頭金: $${currentCard.down_payment}` : "価格情報なし");
                     statusMessage.textContent = `【${turnUserName} が引いたカード】 ${currentCard.title} - ${currentCard.description || ''} (${costText})`;
