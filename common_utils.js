@@ -1,6 +1,23 @@
 // common_utils.js
 
+import { DOM_SELECTORS } from './common_dom_selectors.js';
+
 // index.js と host.js の両方から参照される関数群
+
+/**
+ * 画面上のシステムメッセージ領域にタイトルと本文を表示する
+ * @param {string} title - メッセージのタイトル
+ * @param {string} body - メッセージの本文
+ */
+export function displaySystemMessage(title, body) {
+    const titleEl = document.getElementById(DOM_SELECTORS.GUEST.MESSAGE.TITLE);
+    const bodyEl = document.getElementById(DOM_SELECTORS.GUEST.MESSAGE.BODY);
+    
+    if (titleEl) titleEl.textContent = title;
+    if (bodyEl) bodyEl.textContent = body;
+    
+    console.log(`[SYSTEM_MESSAGE] ${title}: ${body}`);
+}
 
 /**
  * SupabaseのRPC関数を安全に呼び出し、入出力をデバッグするためのラッパー関数。
@@ -102,7 +119,7 @@ export function getInitialRegistrationState(username) {
         last_dice: 0,
         calculation_phase: "none",
         children_count: 0,
-        // ★修正: 最新のスキーマ（整数値フラグへの統合）に合わせる
+        // 最新のスキーマ（整数値フラグへの統合）に合わせる
         flags: {
             has_rolled_dice: false,
             is_card_drawn: false,
@@ -115,7 +132,7 @@ export function getInitialRegistrationState(username) {
         },
         financials: {
             cash: 0, total_income: 0, total_expenses: 0, passive_income: 0, net_cash_flow: 0, per_child_expense: 0,
-            // ★修正: 最新のJSONスキーマに合わせてキー名を修正・補完
+            // 最新のJSONスキーマに合わせてキー名を修正・補完
             expenses: { 
                 taxes: 0, 
                 mortgage_payment: 0, 
