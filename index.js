@@ -61,8 +61,13 @@ function setupCardListeners() {
     }
 })();
 
+// ==========================================
+// イベントリスナーの登録
+// ==========================================
+
 // ログインボタンのイベントリスナー
 btnLogin?.addEventListener('click', async () => {
+    console.log("[DEBUG-UI] 「ログイン」ボタンが押下されました");
     if (!supabase) return;
     const username = inputUsername?.value.trim();
     if (!username) { alert('名前を入力してください！'); return; }
@@ -81,14 +86,40 @@ btnLogin?.addEventListener('click', async () => {
 });
 
 // アクション実行のイベントリスナー
-btnRollDice?.addEventListener('click', () => actionRollDice(supabase, currentUserId, 1));
-btnRollDice2?.addEventListener('click', () => actionRollDice(supabase, currentUserId, 2));
-btnClaimPaycheck?.addEventListener('click', () => actionClaimPaycheck(supabase, currentUserId));
-btnEndTurn?.addEventListener('click', () => actionEndTurn(supabase, currentUserId));
-btnCheckCalculations?.addEventListener('click', () => actionCheckCalculations(supabase, currentUserId));
+btnRollDice?.addEventListener('click', () => {
+    console.log("[DEBUG-UI] 「サイコロ１個」ボタンが押下されました");
+    actionRollDice(supabase, currentUserId, 1);
+});
+
+btnRollDice2?.addEventListener('click', () => {
+    console.log("[DEBUG-UI] 「サイコロ２個」ボタンが押下されました");
+    actionRollDice(supabase, currentUserId, 2);
+});
+
+btnClaimPaycheck?.addEventListener('click', () => {
+    console.log("[DEBUG-UI] 「Paycheck請求」ボタンが押下されました");
+    actionClaimPaycheck(supabase, currentUserId);
+});
+
+btnEndTurn?.addEventListener('click', () => {
+    console.log("[DEBUG-UI] 「手番終了」ボタンが押下されました");
+    actionEndTurn(supabase, currentUserId);
+});
+
+btnCheckCalculations?.addEventListener('click', () => {
+    console.log("[DEBUG-UI] 「計算チェック」ボタンが押下されました");
+    actionCheckCalculations(supabase, currentUserId);
+});
 
 // 銀行ローン操作のイベントリスナー
-btnBorrowLoan?.addEventListener('click', () => actionBorrowBankLoan(supabase, currentUserId));
-btnPaybackLoan?.addEventListener('click', () => actionRepayBankLoan(supabase, currentUserId));
+btnBorrowLoan?.addEventListener('click', () => {
+    console.log("[DEBUG-UI] 「銀行ローンを借り入れる」ボタンが押下されました");
+    actionBorrowBankLoan(supabase, currentUserId);
+});
+
+btnPaybackLoan?.addEventListener('click', () => {
+    console.log("[DEBUG-UI] 「銀行ローンを返済する」ボタンが押下されました");
+    actionRepayBankLoan(supabase, currentUserId);
+});
 
 console.log("[DEBUG] index.js が正常にロードされました。");
