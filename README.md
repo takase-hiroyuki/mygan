@@ -47,6 +47,7 @@ export async function callRpcWithDebug(supabaseClient, rpcName, params = {})
 
 プログラムを組むときに、アラートは禁止する。
 ＷＥＢ画面に「◯◯へのメッセージ」という表示を出すこと。
+system-message-title　に指示を出すゲスト名を含ませて、誰に対するメッセージなにか明記すること。
 この表示は、他のメンバーもみることができるようにすること。
 
 直近のことだけでなく、全体を俯瞰して考えること
