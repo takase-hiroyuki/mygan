@@ -151,7 +151,7 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
             } else {
                 console.log("[DEBUG-ACTION] 寄付を見送りました。");
             }
-        } else if (DOODAD_CELLS.includes(newState.position)) { // ★追加: Doodad（無駄遣い）マス
+        } else if (DOODAD_CELLS.includes(newState.position)) { // Doodadマス
             console.log("[DEBUG-ACTION] Doodadマスに停止。カード情報を取得します。");
             try {
                 const doodadData = await callRpcWithDebug(supabase, 'action_draw_doodad', {
@@ -161,18 +161,27 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
                 
                 if (doodadData) {
                     if (doodadData.status === 'error') {
-                        // 山札が空などのエラーメッセージを表示
                         console.warn(`[DEBUG-ACTION] Doodadカード取得失敗: ${doodadData.message}`);
                         alert(`[エラー] ${doodadData.message}`);
                     } else {
-                        // 正常にカードが引けた場合の表示
+                        // アラートを廃止し、ローカルのDOMを操作して情報を表示する
                         const cardText = doodadData.description || doodadData.title || "内容不明";
                         const cardCost = doodadData.cost || 0;
+                        const playerName = newState.name || "現在のプレイヤー";
                         
-                        // コンソールに詳細を記録
                         console.log(`[DEBUG-ACTION] Doodadカード取得成功: id=${doodadData.id}, title="${doodadData.title}", cost=$${cardCost}`);
                         
-                        alert(`【Doodad（無駄遣い）】\n${cardText}\nコスト: $${cardCost}`);
+                        const statusMessage = document.getElementById(DOM_SELECTORS.GUEST.CARD.STATUS_MESSAGE);
+                        if (statusMessage) {
+                            statusMessage.textContent = `【${playerName} が引いたカード】 Doodad: ${doodadData.title} - ${cardText} (費用: $${cardCost})`;
+                        }
+
+                        // 手番終了ボタンを非アクティブにする（UI上での即時ブロック）
+                        const btnEndTurn = document.getElementById(DOM_SELECTORS.GUEST.CONTROLS.BTN_END_TURN);
+                        if (btnEndTurn) {
+                            btnEndTurn.disabled = true;
+                            btnEndTurn.innerText = 'X ' + btnEndTurn.innerText.replace(/^[OX]\s/, '');
+                        }
                     }
                 }
             } catch (error) {
@@ -240,17 +249,15 @@ export async function actionEndTurn(supabase, currentUserId) {
 
     disableAllActionButtons();
 
-    // ★ガード条件1: 手持ち現金がマイナス時は破産（ゲームオーバー・完全削除）処理
+    // ガード条件1: 手持ち現金がマイナス時は破産（ゲームオーバー・完全削除）処理
     if (cash < 0) {
         alert("現金がなくなったので、破産しました。ゲームオーバーです");
         try {
-            // 破産と削除を同時に行うRPCを呼び出す
             await callRpcWithDebug(supabase, 'action_bankrupt_and_remove', { 
                 p_room_id: roomId, 
                 p_user_id: currentUserId 
             });
             
-            // ローカルの認証情報をクリアして画面をリロードし、ログイン画面に戻す
             localStorage.removeItem('cashflow_user_id');
             localStorage.removeItem('cashflow_user_name');
             window.location.reload();
