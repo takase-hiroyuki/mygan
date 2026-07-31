@@ -5,20 +5,23 @@ import { DOM_SELECTORS } from './common_dom_selectors.js';
 // index.js と host.js の両方から参照される関数群
 
 /**
- * 画面上のシステムメッセージ領域にタイトルと本文を表示する
- * @param {string} title - メッセージのタイトル
+ * 画面上のシステムメッセージ領域に宛先とタイトル、本文を表示する
+ * @param {string} target - メッセージの宛先（例: "全員", "プレイヤー名"）
+ * @param {string} title - メッセージの概要・タイトル
  * @param {string} body - メッセージの本文
  */
-export function displaySystemMessage(title, body) {
+export function displaySystemMessage(target, title, body) {
     const titleEl = document.getElementById(DOM_SELECTORS.GUEST.MESSAGE.TITLE);
     const bodyEl = document.getElementById(DOM_SELECTORS.GUEST.MESSAGE.BODY);
     
-    if (titleEl) titleEl.textContent = title;
+    // 宛先を組み込んだタイトル文字列を生成
+    const formattedTitle = `${target}へのメッセージ：${title}`;
+    
+    if (titleEl) titleEl.textContent = formattedTitle;
     if (bodyEl) bodyEl.textContent = body;
     
-    console.log(`[SYSTEM_MESSAGE] ${title}: ${body}`);
+    console.log(`[SYSTEM_MESSAGE] ${formattedTitle} / ${body}`);
 }
-
 /**
  * SupabaseのRPC関数を安全に呼び出し、入出力をデバッグするためのラッパー関数。
  * データベースの不整合や予期せぬ引数のエラーを即座に検知する。
