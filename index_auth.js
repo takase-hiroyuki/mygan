@@ -1,6 +1,6 @@
 // index_auth.js
 import { roomId, SUPABASE_URL, SUPABASE_KEY } from './common_config.js';
-import { waitForSupabase, getInitialRegistrationState } from './common_utils.js';
+import { waitForSupabase, getInitialRegistrationState, displaySystemMessage } from './common_utils.js';
 
 /**
  * Supabaseクライアントの初期化
@@ -73,18 +73,18 @@ export async function loginUser(supabase, username) {
         
     if (roomError) {
         console.error("[CRITICAL_ERROR] 部屋状態の取得に失敗しました:", roomError);
-        alert(`システムエラー: 部屋情報の取得に失敗しました。`);
+        displaySystemMessage(username, "システムエラー", "部屋情報の取得に失敗しました。");
         return null;
     }
 
     if (!roomCheck) {
-        alert('指定された部屋が存在しません。');
+        displaySystemMessage(username, "入室エラー", "指定された部屋が存在しません。");
         return null;
     }
 
     if (roomCheck.game_state?.status !== 'waiting') {
         console.warn(`[DEBUG_AUTH] 入室拒否: 部屋のステータスが '${roomCheck.game_state.status}' です。`);
-        alert('ゲームが既に開始されているか終了しているため、入室できません。');
+        displaySystemMessage(username, "入室拒否", "ゲームが既に開始されているか終了しているため、入室できません。");
         return null;
     }
 
@@ -107,7 +107,7 @@ export async function loginUser(supabase, username) {
     
     if (insertError) {
         console.error("[CRITICAL_ERROR] ユーザー登録(INSERT)に失敗しました:", insertError);
-        alert(`システムエラー: 参加登録に失敗しました。`);
+        displaySystemMessage(username, "システムエラー", "参加登録に失敗しました。");
         localStorage.removeItem('user_id');
         localStorage.removeItem('player_name');
         return null;
