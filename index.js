@@ -1,7 +1,7 @@
 // index.js
 import { roomId } from './common_config.js';
 import { DOM_SELECTORS } from './common_dom_selectors.js';
-import { displaySystemMessage } from './common_utils.js'; // ★追加
+import { displaySystemMessage } from './common_utils.js';
 import { toggleScreen } from './index_ui.js';
 import { initCardEventListeners } from './index_ui_cards.js'; 
 import { initSupabaseClient, checkExistingLogin, loginUser } from './index_auth.js';
@@ -60,6 +60,10 @@ function setupCardListeners() {
         setupCardListeners();
         toggleScreen(true);
         startSubscriptions(supabase, roomId, currentUserId);
+        
+        // 既存セッション復元時の初期メッセージ表示
+        const storedName = localStorage.getItem('player_name') || "ゲスト";
+        displaySystemMessage(storedName, `${storedName}へのメッセージ`, `ここに ${storedName} へのメッセージが表示されます。`);
     } else {
         console.log("[DEBUG] ログインセッションは見つかりませんでした。ログイン画面を表示します。");
         toggleScreen(false);
@@ -76,7 +80,6 @@ btnLogin?.addEventListener('click', async () => {
     if (!supabase) return;
     const username = inputUsername?.value.trim();
     if (!username) { 
-        // ★修正: alertを廃止し、displaySystemMessageを使用
         displaySystemMessage("ゲスト", "ログインエラー", "名前を入力してください。");
         return; 
     }
@@ -89,6 +92,9 @@ btnLogin?.addEventListener('click', async () => {
         setupCardListeners();
         toggleScreen(true);
         startSubscriptions(supabase, roomId, currentUserId);
+        
+        // 新規ログイン時の初期メッセージ表示
+        displaySystemMessage(username, `${username}へのメッセージ`, `ここに ${username} へのメッセージが表示されます。`);
     } else {
         btnLogin.disabled = false;
     }
