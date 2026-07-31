@@ -47,8 +47,10 @@ export async function callRpcWithDebug(supabaseClient, rpcName, params = {})
 
 プログラムを組むときに、アラートは禁止する。
 ＷＥＢ画面に「◯◯へのメッセージ」という表示を出すこと。
-system-message-title　に指示を出すゲスト名を含ませて、誰に対するメッセージなにか明記すること。
+export function displaySystemMessage(target, title, body) {
+という関数を用いて、誰に対するメッセージなにか明記すること。
 この表示は、他のメンバーもみることができるようにすること。
+なお、この関数は、すでに common_config.js に定義済みである。
 
 直近のことだけでなく、全体を俯瞰して考えること
 最重要課題は、データベースのデータに整合性をもたせること。
