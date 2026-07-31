@@ -151,8 +151,36 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
             } else {
                 console.log("[DEBUG-ACTION] 寄付を見送りました。");
             }
+        } else if (DOODAD_CELLS.includes(newState.position)) { // ★追加: Doodad（無駄遣い）マス
+            console.log("[DEBUG-ACTION] Doodadマスに停止。カード情報を取得します。");
+            try {
+                const doodadData = await callRpcWithDebug(supabase, 'action_draw_doodad', {
+                    p_room_id: roomId,
+                    p_user_id: currentUserId
+                });
+                
+                if (doodadData) {
+                    if (doodadData.status === 'error') {
+                        // 山札が空などのエラーメッセージを表示
+                        console.warn(`[DEBUG-ACTION] Doodadカード取得失敗: ${doodadData.message}`);
+                        alert(`[エラー] ${doodadData.message}`);
+                    } else {
+                        // 正常にカードが引けた場合の表示
+                        const cardText = doodadData.description || doodadData.title || "内容不明";
+                        const cardCost = doodadData.cost || 0;
+                        
+                        // コンソールに詳細を記録
+                        console.log(`[DEBUG-ACTION] Doodadカード取得成功: id=${doodadData.id}, title="${doodadData.title}", cost=$${cardCost}`);
+                        
+                        alert(`【Doodad（無駄遣い）】\n${cardText}\nコスト: $${cardCost}`);
+                    }
+                }
+            } catch (error) {
+                console.error("[CRITICAL-ERROR] Doodad処理エラー:", error);
+                alert(`Doodadカード取得エラー: ${error.message}`);
+            }
         } else {
-            console.log("[DEBUG-ACTION] 特殊マス（子供、解雇、寄付）以外に停止。");
+            console.log("[DEBUG-ACTION] 特殊マス（子供、解雇、寄付、Doodad）以外に停止。");
         }
     }
 }
