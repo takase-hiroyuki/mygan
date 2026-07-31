@@ -60,10 +60,6 @@ function setupCardListeners() {
         setupCardListeners();
         toggleScreen(true);
         startSubscriptions(supabase, roomId, currentUserId);
-        
-        // 既存セッション復元時の初期メッセージ表示
-        const storedName = localStorage.getItem('player_name') || "ゲスト";
-        displaySystemMessage(storedName, `${storedName}へのメッセージ`, `ここに ${storedName} へのメッセージが表示されます。`);
     } else {
         console.log("[DEBUG] ログインセッションは見つかりませんでした。ログイン画面を表示します。");
         toggleScreen(false);
@@ -92,9 +88,6 @@ btnLogin?.addEventListener('click', async () => {
         setupCardListeners();
         toggleScreen(true);
         startSubscriptions(supabase, roomId, currentUserId);
-        
-        // 新規ログイン時の初期メッセージ表示
-        displaySystemMessage(username, `${username}へのメッセージ`, `ここに ${username} へのメッセージが表示されます。`);
     } else {
         btnLogin.disabled = false;
     }
