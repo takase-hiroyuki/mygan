@@ -48,6 +48,10 @@ function setupCardListeners() {
 (async function init() {
     console.log("[DEBUG] アプリケーションの初期化を開始します...");
     supabase = await initSupabaseClient();
+    
+    // ネットワーク接続・データ整合性確認用デバッグ関数を実行
+    await debugSupabaseConnection(supabase);
+
     currentUserId = await checkExistingLogin(supabase, SEL_G);
 
     if (currentUserId) {
@@ -123,3 +127,29 @@ btnPaybackLoan?.addEventListener('click', () => {
 });
 
 console.log("[DEBUG] index.js が正常にロードされました。");
+
+
+// ==========================================
+// デバッグ機能
+// ==========================================
+
+/**
+ * Supabaseネットワーク疎通確認用デバッグ関数
+ * @param {Object} supabaseClient 
+ */
+async function debugSupabaseConnection(supabaseClient) {
+    console.log("[DEBUG-NETWORK] 接続テストを開始します。");
+    try {
+        const startTime = performance.now();
+        const { data, error } = await supabaseClient.from('cards').select('id').limit(1);
+        const endTime = performance.now();
+
+        if (error) {
+            console.error(`[DEBUG-NETWORK] 応答エラー (${(endTime - startTime).toFixed(2)}ms):`, error);
+        } else {
+            console.log(`[DEBUG-NETWORK] 接続成功 (${(endTime - startTime).toFixed(2)}ms):`, data);
+        }
+    } catch (err) {
+        console.error("[DEBUG-NETWORK] fetch例外発生:", err.name, err.message, err);
+    }
+}
