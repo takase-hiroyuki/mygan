@@ -11,13 +11,13 @@ let cachedRoom = null;
  */
 function updateActionButtonsState(playerState, isMyTurn) {
     const flags = playerState.flags || {};
-    const position = playerState.position || 0; // 現在位置の取得
+    const position = playerState.position || 0;
     
     // 必要なフラグの取得 (最新の整数値スキーマに対応)
     const hasRolledDice = !!flags.has_rolled_dice;
     const isCalculating = !!flags.is_calculating;
     const isNegativeCashFlow = !!flags.is_negative_cash_flow;
-    const isActionCompleted = !!flags.is_action_completed; // カードアクションが完了したか
+    const isActionCompleted = !!flags.is_action_completed;
     const charityTurnsLeft = parseInt(flags.charity_turns_left || 0, 10);
     const downsizedTurnsLeft = parseInt(flags.downsized_turns_left || 0, 10);
     const pendingPaydays = parseInt(flags.pending_paydays || 0, 10);
@@ -25,37 +25,30 @@ function updateActionButtonsState(playerState, isMyTurn) {
     const isDownsized = downsizedTurnsLeft > 0;
     const SEL = DOM_SELECTORS.GUEST.CONTROLS;
 
-    // 現在位置が「カードを引くアクションが必須のマス」かを判定
     const isCardCell = OPPORTUNITY_CELLS.includes(position) || DOODAD_CELLS.includes(position) || MARKET_CELLS.includes(position);
 
     // 1. サイコロ1個を振るボタンの制御
-    // 条件: 自分のターン && まだサイコロを振っていない && 計算中ではない && リストラ(休み)中ではない
     const canRollDice1 = isMyTurn && !hasRolledDice && !isCalculating && !isDownsized;
     setButtonActive(SEL.BTN_ROLL_DICE, canRollDice1);
 
     // 2. サイコロ2個を振るボタンの制御
-    // 条件: サイコロ1個が振れる状態 && 寄付の権利 (charity_turns_left) が 1 以上あること
     const canRollDice2 = canRollDice1 && (charityTurnsLeft > 0);
     setButtonActive(SEL.BTN_ROLL_DICE_2, canRollDice2);
 
     // 3. 給料を受け取る（または支払う）ボタンの制御
-    // 条件: 自分のターン && 未処理のPaydayが 1 以上あること
     const canClaimPaycheck = isMyTurn && (pendingPaydays > 0);
     setButtonActive(SEL.BTN_CLAIM_PAYCHECK, canClaimPaycheck);
 
-    // ★追加: マイナスキャッシュフロー時の支払い義務判定
-    // 未処理のPaydayがあり、かつキャッシュフローがマイナスの場合は「義務」となる
+    // マイナスキャッシュフロー時の支払い義務判定
     const hasMandatoryPaycheck = (pendingPaydays > 0) && isNegativeCashFlow;
 
     // 4. ターン終了ボタンの制御
-    // 条件: 自分のターン && (サイコロを振った OR 休み中) && 計算中ではない
-    //       && (カードマスではない OR アクションが完了している)
-    //       && ★義務としてのPaycheck申請が残っていないこと
+    // 支払い義務（hasMandatoryPaycheck）がある場合、またはアクション未完了時は終了不可
     const canEndTurn = isMyTurn && 
                        (hasRolledDice || isDownsized) && 
                        !isCalculating && 
                        (!isCardCell || isActionCompleted) &&
-                       !hasMandatoryPaycheck; // 支払い義務がある場合は終了不可
+                       !hasMandatoryPaycheck;
                        
     setButtonActive(SEL.BTN_END_TURN, canEndTurn);
     
@@ -127,12 +120,11 @@ export async function fetchAndRender(supabase, roomId, currentUserId) {
     
     const myParticipantRecord = cachedParticipants.find(p => p.user_id === currentUserId);
     
-    // UI描画直前の自プレイヤーの財務データをコンソールに出力
     if (myParticipantRecord) {
         console.log("[DEBUG_STATE] UI描画直前: state.financials:", JSON.stringify(myParticipantRecord.state?.financials, null, 2));
     }
 
-    // 描画関数を呼び出し、最新のキャッシュを渡す
+    // UI描画関数を呼び出し、最新のキャッシュを渡す
     renderGuestUI(currentUserId, cachedParticipants, cachedRoom);
 
     // 描画後にボタンの厳格な状態制御を実行
