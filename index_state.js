@@ -1,10 +1,18 @@
 // index_state.js
 import { renderGuestUI } from './index_ui.js';
 import { DOM_SELECTORS } from './common_dom_selectors.js';
-import { setButtonActive, OPPORTUNITY_CELLS, DOODAD_CELLS, MARKET_CELLS } from './common_utils.js';        
+import { setButtonActive, OPPORTUNITY_CELLS, DOODAD_CELLS, MARKET_CELLS, displaySystemMessage } from './common_utils.js';        
 
 let cachedParticipants = [];
 let cachedRoom = null;
+
+/**
+ * 画面（DOM）から現在のプレイヤー名を取得するヘルパー関数
+ */
+function getLocalPlayerName() {
+    const nameEl = document.getElementById(DOM_SELECTORS.GUEST.STATUS.NAME);
+    return (nameEl && nameEl.textContent !== '未定') ? nameEl.textContent : 'プレイヤー';
+}
 
 /**
  * プレイヤーの状態（フラグなど）に基づいて、アクションボタンの有効/無効を厳格に一元管理する
@@ -64,22 +72,34 @@ export function startSubscriptions(supabase, roomId, currentUserId) {
     supabase.channel('public:participants').on('postgres_changes', {
         event: '*', schema: 'public', table: 'participants' 
     }, async (payload) => {
-        // 対象ユーザーが削除（キック）された場合、自身であれば即座に強制ログアウトする
+        // 対象ユーザーが削除（キック）された場合、自身であれば強制ログアウトする
         if (payload.eventType === 'DELETE' && payload.old) {
             if (payload.old.user_id === currentUserId) {
+                const playerName = getLocalPlayerName();
                 console.warn("[CRITICAL_WARNING] 自身のアカウントが部屋から削除されました。強制ログアウトします。");
+                displaySystemMessage(playerName, "強制退出", "部屋から削除されました。3秒後に画面を再読み込みします。");
+                
                 localStorage.removeItem('user_id');
                 localStorage.removeItem('player_name');
-                window.location.reload();
+                
+                setTimeout(() => {
+                    window.location.reload();
+                }, 10000);
                 return;
             }
             
             // 部屋の参加者が0になった場合の処理
             const { data } = await supabase.from('participants').select('id').eq('room_id', roomId);
             if (!data || data.length === 0) {
+                const playerName = getLocalPlayerName();
+                displaySystemMessage(playerName, "部屋解散", "部屋の参加者が0になったため退出処理を行います。");
+                
                 localStorage.removeItem('user_id');
                 localStorage.removeItem('player_name');
-                window.location.reload();
+                
+                setTimeout(() => {
+                    window.location.reload();
+                }, 10000);
                 return;
             }
         }
@@ -108,10 +128,14 @@ export async function fetchAndRender(supabase, roomId, currentUserId) {
     
     if (resPart.error) {
         console.error("[CRITICAL_ERROR] 参加者データのフェッチに失敗しました:", resPart.error);
+        const playerName = getLocalPlayerName();
+        displaySystemMessage(playerName, "通信エラー", "参加者データの同期に失敗しました。");
         return;
     }
     if (resRoom.error) {
         console.error("[CRITICAL_ERROR] 部屋データのフェッチに失敗しました:", resRoom.error);
+        const playerName = getLocalPlayerName();
+        displaySystemMessage(playerName, "通信エラー", "部屋データの同期に失敗しました。");
         return;
     }
     
