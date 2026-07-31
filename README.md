@@ -49,7 +49,7 @@ export async function callRpcWithDebug(supabaseClient, rpcName, params = {})
 ＷＥＢ画面に「◯◯へのメッセージ」という表示を出すこと。
 export function displaySystemMessage(target, title, body) {
 を用いて、ゲストの固有名を target に格納し、誰に対するメッセージなにか明記すること。
-この表示は、他のメンバーもみることができるようにすること。
+この表示は、条件分岐せず、つねに他のメンバーもみることができるようにすること。
 なお、この関数は、すでに common_utils.js に定義済みである。
 
 直近のことだけでなく、全体を俯瞰して考えること
