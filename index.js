@@ -1,6 +1,7 @@
 // index.js
 import { roomId } from './common_config.js';
 import { DOM_SELECTORS } from './common_dom_selectors.js';
+import { displaySystemMessage } from './common_utils.js'; // ★追加
 import { toggleScreen } from './index_ui.js';
 import { initCardEventListeners } from './index_ui_cards.js'; 
 import { initSupabaseClient, checkExistingLogin, loginUser } from './index_auth.js';
@@ -74,7 +75,11 @@ btnLogin?.addEventListener('click', async () => {
     console.log("[DEBUG-UI] 「ログイン」ボタンが押下されました");
     if (!supabase) return;
     const username = inputUsername?.value.trim();
-    if (!username) { alert('名前を入力してください！'); return; }
+    if (!username) { 
+        // ★修正: alertを廃止し、displaySystemMessageを使用
+        displaySystemMessage("ゲスト", "ログインエラー", "名前を入力してください。");
+        return; 
+    }
 
     btnLogin.disabled = true;
     const newUserId = await loginUser(supabase, username);
