@@ -1,6 +1,6 @@
 // index_ui.js
 import { DOM_SELECTORS } from './common_dom_selectors.js';
-import { setButtonActive, setMultipleButtonsActive, BOARD_CELL_NAMES } from './common_utils.js';
+import { setButtonActive, setMultipleButtonsActive, BOARD_CELL_NAMES, displaySystemMessage } from './common_utils.js';
 import { updateCardPhaseUI } from './index_ui_cards.js'; 
 
 const SEL_G = DOM_SELECTORS.GUEST;
@@ -8,6 +8,9 @@ const sectionLogin = document.getElementById(SEL_G.LOGIN.SECTION);
 const sectionGuest = document.getElementById(SEL_G.STATUS.SECTION);
 const diceStatusArea = document.getElementById(SEL_G.CONTROLS.STATUS_AREA);
 const guestDiceResult = document.getElementById(SEL_G.CONTROLS.DICE_RESULT);
+
+// 直前の手番ユーザーIDを保持し、通知の連続発出を防止する
+let previousTurnUserId = null;
 
 /**
  * ログイン画面とゲスト画面の切り替え
@@ -37,6 +40,15 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
     const turnUserId = cachedRoom ? cachedRoom.current_turn_user_id : null;
     const isMyTurn = (turnUserId === currentUserId);
     const isPlaying = cachedRoom?.game_state?.status === 'playing';
+
+    // ターンが切り替わった瞬間、すべてのクライアントでシステムメッセージを発出
+    if (isPlaying && turnUserId !== previousTurnUserId) {
+        const currentTurnUser = cachedParticipants.find(p => p.user_id === turnUserId);
+        const targetName = currentTurnUser?.state?.name || "プレイヤー";
+        
+        displaySystemMessage(targetName, "システム通知", `${targetName} の手番です。サイコロを振ってください`);
+        previousTurnUserId = turnUserId;
+    }
 
     // 1. プレイヤー情報の表示
     const safeUpdate = (selectorId, text) => {
