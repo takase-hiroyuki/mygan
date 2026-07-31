@@ -13,21 +13,6 @@ const CELLS_DOODAD = [1, 7, 14];
 const CELLS_MARKET = [12, 22];
 
 /**
- * フラグをデータベースに直接保存するローカルヘルパー関数
- * ※ 次のステップでアクション完了処理をRPC化するまで、一時的に維持します。
- */
-async function updateCardFlag(supabase, userId, flagName, value) {
-    if (!supabase || !userId) return;
-    const { data, error } = await supabase.from('participants').select('state').eq('user_id', userId).single();
-    if (error || !data) return;
-    
-    const newState = { ...data.state };
-    newState.flags = newState.flags || {};
-    newState.flags[flagName] = value;
-    await supabase.from('participants').update({ state: newState }).eq('user_id', userId);
-}
-
-/**
  * 現在地とフラグ状態に応じてカードフェーズのUIを切り替える
  * ※ index_ui.js から盤面移動直後や同期時に呼び出される
  */
@@ -128,24 +113,57 @@ export function initCardEventListeners(supabase, currentUserId) {
         }
     };
 
+    // Doodadの費用を支払う処理（新規追加・RPC経由）
+    const payDoodadRpc = async (event) => {
+        const btn = event.currentTarget;
+        if (btn) btn.disabled = true;
+        
+        try {
+            const result = await callRpcWithDebug(supabase, 'action_pay_doodad', {
+                p_room_id: roomId,
+                p_user_id: currentUserId
+            });
+            // 現金不足等の論理エラーを検知して通知
+            if (result && result.status === 'error') {
+                alert(result.message);
+                if (btn) btn.disabled = false;
+            }
+        } catch (error) {
+            alert(`エラー: ${error.message}`);
+            if (btn) btn.disabled = false;
+        }
+    };
+
+    // アクションの完了処理（RPC経由）
+    const completeActionRpc = async (event) => {
+        const btn = event.currentTarget;
+        if (btn) btn.disabled = true;
+        
+        try {
+            await callRpcWithDebug(supabase, 'complete_card_action', {
+                p_room_id: roomId,
+                p_user_id: currentUserId
+            });
+        } catch (error) {
+            alert(`エラー: ${error.message}`);
+            if (btn) btn.disabled = false;
+        }
+    };
+
+    // リスナーの登録: カードを引く
     document.getElementById(SEL_G.CARD.BTN_DRAW_SMALL_DEAL)?.addEventListener('click', drawCardRpc);
     document.getElementById(SEL_G.CARD.BTN_DRAW_BIG_DEAL)?.addEventListener('click', drawCardRpc);
     document.getElementById(SEL_G.CARD.BTN_DRAW_MARKET)?.addEventListener('click', drawCardRpc);
     document.getElementById(SEL_G.CARD.BTN_DRAW_DOODAD)?.addEventListener('click', drawCardRpc);
 
-    // アクションの完了処理（二重送信防止UIロックを追加）
-    const resetCardUI = async (event) => {
-        const btn = event.currentTarget;
-        if (btn) btn.disabled = true;
-        
-        await updateCardFlag(supabase, currentUserId, 'is_action_completed', true);
-    };
+    // リスナーの登録: 支払いアクション
+    document.getElementById(SEL_G.CARD.BTN_PAY_DOODAD)?.addEventListener('click', payDoodadRpc);
 
-    document.getElementById(SEL_G.CARD.BTN_PASS)?.addEventListener('click', resetCardUI);
-    document.getElementById(SEL_G.CARD.BTN_BUY_STOCK)?.addEventListener('click', resetCardUI);
-    document.getElementById(SEL_G.CARD.BTN_BUY_REALESTATE)?.addEventListener('click', resetCardUI);
-    document.getElementById(SEL_G.CARD.BTN_SELL_STOCK)?.addEventListener('click', resetCardUI);
-    document.getElementById(SEL_G.CARD.BTN_PAY_DOODAD)?.addEventListener('click', resetCardUI);
+    // リスナーの登録: アクション完了（パス等）
+    document.getElementById(SEL_G.CARD.BTN_PASS)?.addEventListener('click', completeActionRpc);
+    document.getElementById(SEL_G.CARD.BTN_BUY_STOCK)?.addEventListener('click', completeActionRpc);
+    document.getElementById(SEL_G.CARD.BTN_BUY_REALESTATE)?.addEventListener('click', completeActionRpc);
+    document.getElementById(SEL_G.CARD.BTN_SELL_STOCK)?.addEventListener('click', completeActionRpc);
 }
 
 console.log("【デバッグ】index_ui_cards.js が読み込まれました。");
