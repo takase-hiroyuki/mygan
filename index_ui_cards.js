@@ -1,7 +1,7 @@
 // index_ui_cards.js
 import { roomId } from './common_config.js';
 import { DOM_SELECTORS } from './common_dom_selectors.js';
-import { setButtonActive, setMultipleButtonsActive, callRpcWithDebug } from './common_utils.js';
+import { setButtonActive, setMultipleButtonsActive, callRpcWithDebug, displaySystemMessage } from './common_utils.js';
 
 const SEL_G = DOM_SELECTORS.GUEST;
 
@@ -13,10 +13,22 @@ const CELLS_DOODAD = [1, 7, 14];
 const CELLS_MARKET = [12, 22];
 
 /**
+ * 画面（DOM）から現在のプレイヤー名を取得するヘルパー関数
+ */
+function getLocalPlayerName() {
+    const nameEl = document.getElementById(SEL_G.STATUS.NAME);
+    return (nameEl && nameEl.textContent !== '未定') ? nameEl.textContent : 'プレイヤー';
+}
+
+/**
  * 現在地とフラグ状態に応じてカードフェーズのUIを切り替える
  * ※ index_ui.js から盤面移動直後や同期時に呼び出される
+ * @param {number} position - 現在のマス位置
+ * @param {Object} flags - プレイヤーのフラグ情報
+ * @param {Object|null} currentCard - 場に出ているカード情報
+ * @param {string} playerName - 手番プレイヤー名
  */
-export function updateCardPhaseUI(position, flags = {}) {
+export function updateCardPhaseUI(position, flags = {}, currentCard = null, playerName = "現在のプレイヤー") {
     console.log("【デバッグ】updateCardPhaseUI", flags);
     
     const drawButtons = [
@@ -43,7 +55,7 @@ export function updateCardPhaseUI(position, flags = {}) {
     // 状態1: 既にアクションを完了している場合
     // ==========================================
     if (flags.is_action_completed) {
-        if (statusMessage) statusMessage.textContent = "カードアクション完了。ローン操作を行うか、手番を終了してください。";
+        if (statusMessage) statusMessage.textContent = `【${playerName}】 カードアクション完了。ローン操作を行うか、手番を終了してください。`;
         return; // ここで処理を終了
     }
 
@@ -51,18 +63,24 @@ export function updateCardPhaseUI(position, flags = {}) {
     // 状態2: カードを引いた後（アクション選択中）の場合
     // ==========================================
     if (flags.is_card_drawn) {
+        let cardInfo = "";
+        if (currentCard) {
+            const costText = currentCard.cost ? `費用: $${currentCard.cost}` : (currentCard.down_payment ? `頭金: $${currentCard.down_payment}` : "");
+            cardInfo = `「${currentCard.title}」${costText ? ` (${costText})` : ""}`;
+        }
+
         if (CELLS_OPPORTUNITY.includes(position)) {
             setButtonActive(SEL_G.CARD.BTN_BUY_STOCK, true);
             setButtonActive(SEL_G.CARD.BTN_BUY_REALESTATE, true);
             setButtonActive(SEL_G.CARD.BTN_PASS, true);
-            if (statusMessage) statusMessage.textContent = "ディールカードを引きました。購入するか、パスしてください。";
+            if (statusMessage) statusMessage.textContent = `【${playerName}】 ディールカード${cardInfo}を引きました。購入するか、パスしてください。`;
         } else if (CELLS_MARKET.includes(position)) {
             setButtonActive(SEL_G.CARD.BTN_SELL_STOCK, true);
             setButtonActive(SEL_G.CARD.BTN_PASS, true);
-            if (statusMessage) statusMessage.textContent = "マーケットカードを引きました。売却するか、パスしてください。";
+            if (statusMessage) statusMessage.textContent = `【${playerName}】 マーケットカード${cardInfo}を引きました。売却するか、パスしてください。`;
         } else if (CELLS_DOODAD.includes(position)) {
             setButtonActive(SEL_G.CARD.BTN_PAY_DOODAD, true);
-            if (statusMessage) statusMessage.textContent = "Doodadカードを引きました。必ず費用を支払ってください。";
+            if (statusMessage) statusMessage.textContent = `【${playerName}】 Doodadカード${cardInfo}を引きました。必ず費用を支払ってください。`;
         }
         return; // ここで処理を終了
     }
@@ -85,7 +103,7 @@ export function updateCardPhaseUI(position, flags = {}) {
     }
 
     if (requireCardAction) {
-        if (statusMessage) statusMessage.textContent = "カードを引いてください。アクション必須です。";
+        if (statusMessage) statusMessage.textContent = `【${playerName}】 カードを引いてください。アクション必須です。`;
     } else {
         if (statusMessage) statusMessage.textContent = "現在場に出ているカードはありません。";
     }
@@ -101,6 +119,7 @@ export function initCardEventListeners(supabase, currentUserId) {
     const drawCardRpc = async (event) => {
         const btn = event.currentTarget;
         if (btn) btn.disabled = true;
+        const playerName = getLocalPlayerName();
         
         try {
             await callRpcWithDebug(supabase, 'draw_card', {
@@ -108,15 +127,16 @@ export function initCardEventListeners(supabase, currentUserId) {
                 p_user_id: currentUserId
             });
         } catch (error) {
-            alert(`エラー: ${error.message}`);
+            displaySystemMessage(playerName, "処理エラー", `カードを引く処理に失敗しました: ${error.message}`);
             if (btn) btn.disabled = false; // エラー時はロック解除
         }
     };
 
-    // Doodadの費用を支払う処理（新規追加・RPC経由）
+    // Doodadの費用を支払う処理（RPC経由）
     const payDoodadRpc = async (event) => {
         const btn = event.currentTarget;
         if (btn) btn.disabled = true;
+        const playerName = getLocalPlayerName();
         
         try {
             const result = await callRpcWithDebug(supabase, 'action_pay_doodad', {
@@ -125,11 +145,13 @@ export function initCardEventListeners(supabase, currentUserId) {
             });
             // 現金不足等の論理エラーを検知して通知
             if (result && result.status === 'error') {
-                alert(result.message);
+                displaySystemMessage(playerName, "支払いエラー", result.message);
                 if (btn) btn.disabled = false;
+            } else if (result && result.status === 'success') {
+                displaySystemMessage(playerName, "支払い完了", result.message);
             }
         } catch (error) {
-            alert(`エラー: ${error.message}`);
+            displaySystemMessage(playerName, "処理エラー", `支払いに失敗しました: ${error.message}`);
             if (btn) btn.disabled = false;
         }
     };
@@ -138,6 +160,7 @@ export function initCardEventListeners(supabase, currentUserId) {
     const completeActionRpc = async (event) => {
         const btn = event.currentTarget;
         if (btn) btn.disabled = true;
+        const playerName = getLocalPlayerName();
         
         try {
             await callRpcWithDebug(supabase, 'complete_card_action', {
@@ -145,7 +168,7 @@ export function initCardEventListeners(supabase, currentUserId) {
                 p_user_id: currentUserId
             });
         } catch (error) {
-            alert(`エラー: ${error.message}`);
+            displaySystemMessage(playerName, "処理エラー", `アクションの完了に失敗しました: ${error.message}`);
             if (btn) btn.disabled = false;
         }
     };
