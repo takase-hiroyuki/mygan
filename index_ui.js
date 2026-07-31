@@ -90,12 +90,11 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
 
         // 負債状況 (Liabilities)
         safeUpdate(SEL_G.PORTFOLIO.LIABILITY_MORTGAGE, toCurrency(liab.mortgage));
-        // ★修正: 新しいスキーマのキー名に合わせて変更
         safeUpdate(SEL_G.PORTFOLIO.LIABILITY_CAR_LOAN, toCurrency(liab.car_loans)); 
         safeUpdate(SEL_G.PORTFOLIO.LIABILITY_RETAIL, toCurrency(liab.retail_debt)); 
         safeUpdate(SEL_G.PORTFOLIO.DISPLAY_LIABILITY_BANKLOAN, toCurrency(liab.bank_loan));
         
-        // ★追加: その他の負債（DOMに定義があれば描画される）
+        // その他の負債
         safeUpdate(SEL_G.PORTFOLIO.LIABILITY_SCHOOL_LOAN, toCurrency(liab.school_loans));
         safeUpdate(SEL_G.PORTFOLIO.LIABILITY_CREDIT_CARD, toCurrency(liab.credit_card_debt));
         
@@ -103,7 +102,7 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
         safeUpdate(SEL_G.PORTFOLIO.DISPLAY_EXPENSE_LOANINTEREST, toCurrency(exp.bank_loan_payment));
         safeUpdate(SEL_G.PORTFOLIO.DISPLAY_EXPENSE_CHILD, toCurrency(exp.child_expense));
         
-        // ★追加: その他の各種支出（DOMに定義があれば描画される）
+        // その他の各種支出
         safeUpdate(SEL_G.PORTFOLIO.DISPLAY_EXPENSE_TAXES, toCurrency(exp.taxes));
         safeUpdate(SEL_G.PORTFOLIO.DISPLAY_EXPENSE_MORTGAGE, toCurrency(exp.mortgage_payment));
         safeUpdate(SEL_G.PORTFOLIO.DISPLAY_EXPENSE_SCHOOL, toCurrency(exp.school_loan_payment));
@@ -120,10 +119,14 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
     } else {
         const turnUser = cachedParticipants.find(p => p.user_id === turnUserId);
         const turnUserName = turnUser ? turnUser.state.name : "他のプレイヤー";
+        
+        // ★追加: データベース(room)から現在引かれているカードの情報を取得
+        const currentCard = cachedRoom?.game_state?.current_card || null;
 
         if (isMyTurn) {
             if (state.last_dice > 0) {
-                updateCardPhaseUI(state.position, flags);
+                // ★修正: currentCard と turnUserName を UI更新関数へ渡す
+                updateCardPhaseUI(state.position, flags, currentCard, turnUserName);
                 
                 const pendingPaydays = parseInt(flags.pending_paydays || 0, 10);
                 if (pendingPaydays > 0) {
@@ -157,7 +160,13 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
             
             const statusMessage = document.getElementById(SEL_G.CARD.STATUS_MESSAGE);
             if (statusMessage) {
-                statusMessage.textContent = "他のプレイヤーの行動を待っています。";
+                // ★修正: 他のプレイヤーがカードを引いている場合、その内容を待機画面にも表示する
+                if (currentCard) {
+                    const costText = currentCard.cost ? `費用: $${currentCard.cost}` : (currentCard.down_payment ? `頭金: $${currentCard.down_payment}` : "価格情報なし");
+                    statusMessage.textContent = `【${turnUserName} が引いたカード】 ${currentCard.title} - ${currentCard.description || ''} (${costText})`;
+                } else {
+                    statusMessage.textContent = "他のプレイヤーの行動を待っています。";
+                }
             }
         }
     }
