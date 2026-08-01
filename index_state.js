@@ -1,7 +1,7 @@
 // index_state.js
 import { renderGuestUI } from './index_ui.js';
 import { DOM_SELECTORS } from './common_dom_selectors.js';
-import { setButtonActive, OPPORTUNITY_CELLS, DOODAD_CELLS, MARKET_CELLS, displaySystemMessage } from './common_utils.js';        
+import { setButtonActive, OPPORTUNITY_CELLS, DOODAD_CELLS, MARKET_CELLS } from './common_utils.js';
 
 let cachedParticipants = [];
 let cachedRoom = null;
@@ -12,6 +12,41 @@ let cachedRoom = null;
 function getLocalPlayerName() {
     const nameEl = document.getElementById(DOM_SELECTORS.GUEST.STATUS.NAME);
     return (nameEl && nameEl.textContent !== '未定') ? nameEl.textContent : 'プレイヤー';
+}
+
+/**
+ * システムメッセージをDOMのテーブルに追記する関数
+ * @param {string} target - メッセージの宛先（1番目のtd用）
+ * @param {string} body - メッセージ本文（2番目のtd用）
+ */
+export function displaySystemMessage(target, body) {
+    const tbody = document.getElementById(DOM_SELECTORS.GUEST.MESSAGE.TABLE_BODY);
+    if (!tbody) {
+        console.warn("[WARNING] message-table-body が見つかりません。メッセージの表示をスキップします。");
+        return;
+    }
+
+    const tr = document.createElement('tr');
+    
+    const tdTarget = document.createElement('td');
+    tdTarget.textContent = target;
+    
+    const tdBody = document.createElement('td');
+    tdBody.textContent = body;
+    
+    tr.appendChild(tdTarget);
+    tr.appendChild(tdBody);
+    
+    // 古いログが上になり、最新ログが下に追加されていく
+    tbody.appendChild(tr);
+
+    // スクロールコンテナの最下部へ自動スクロール
+    const scrollContainer = tbody.parentElement.parentElement;
+    if (scrollContainer) {
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+    }
+
+    console.log(`[SYSTEM_MESSAGE] ${target} / ${body}`);
 }
 
 /**
@@ -51,7 +86,6 @@ function updateActionButtonsState(playerState, isMyTurn) {
     const hasMandatoryPaycheck = (pendingPaydays > 0) && isNegativeCashFlow;
 
     // 4. ターン終了ボタンの制御
-    // 支払い義務（hasMandatoryPaycheck）がある場合、またはアクション未完了時は終了不可
     const canEndTurn = isMyTurn && 
                        (hasRolledDice || isDownsized) && 
                        !isCalculating && 
@@ -69,6 +103,7 @@ function updateActionButtonsState(playerState, isMyTurn) {
 export function startSubscriptions(supabase, roomId, currentUserId) {
     if (!supabase) return;
 
+    // 参加者データの変更監視
     supabase.channel('public:participants').on('postgres_changes', {
         event: '*', schema: 'public', table: 'participants' 
     }, async (payload) => {
@@ -77,7 +112,7 @@ export function startSubscriptions(supabase, roomId, currentUserId) {
             if (payload.old.user_id === currentUserId) {
                 const playerName = getLocalPlayerName();
                 console.warn("[CRITICAL_WARNING] 自身のアカウントが部屋から削除されました。強制ログアウトします。");
-                displaySystemMessage(playerName, "強制退出", "部屋から削除されました。3秒後に画面を再読み込みします。");
+                displaySystemMessage(playerName, "部屋から削除されました。10秒後に画面を再読み込みします。");
                 
                 localStorage.removeItem('user_id');
                 localStorage.removeItem('player_name');
@@ -92,7 +127,7 @@ export function startSubscriptions(supabase, roomId, currentUserId) {
             const { data } = await supabase.from('participants').select('id').eq('room_id', roomId);
             if (!data || data.length === 0) {
                 const playerName = getLocalPlayerName();
-                displaySystemMessage(playerName, "部屋解散", "部屋の参加者が0になったため退出処理を行います。");
+                displaySystemMessage(playerName, "部屋の参加者が0になったため退出処理を行います。");
                 
                 localStorage.removeItem('user_id');
                 localStorage.removeItem('player_name');
@@ -106,10 +141,21 @@ export function startSubscriptions(supabase, roomId, currentUserId) {
         fetchAndRender(supabase, roomId, currentUserId);
     }).subscribe();
 
+    // 部屋データの変更監視
     supabase.channel('public:rooms').on('postgres_changes', { 
         event: '*', schema: 'public', table: 'rooms', filter: `id=eq.${roomId}` 
     }, () => {
         fetchAndRender(supabase, roomId, currentUserId);
+    }).subscribe();
+
+    // ★追加: game_logs テーブルへの INSERT 監視
+    supabase.channel('public:game_logs').on('postgres_changes', {
+        event: 'INSERT', schema: 'public', table: 'game_logs', filter: `room_id=eq.${roomId}`
+    }, (payload) => {
+        const logData = payload.new;
+        if (logData && logData.target && logData.body) {
+            displaySystemMessage(logData.target, logData.body);
+        }
     }).subscribe();
 
     fetchAndRender(supabase, roomId, currentUserId);
@@ -129,13 +175,13 @@ export async function fetchAndRender(supabase, roomId, currentUserId) {
     if (resPart.error) {
         console.error("[CRITICAL_ERROR] 参加者データのフェッチに失敗しました:", resPart.error);
         const playerName = getLocalPlayerName();
-        displaySystemMessage(playerName, "通信エラー", "参加者データの同期に失敗しました。");
+        displaySystemMessage(playerName, "参加者データの同期に失敗しました。");
         return;
     }
     if (resRoom.error) {
         console.error("[CRITICAL_ERROR] 部屋データのフェッチに失敗しました:", resRoom.error);
         const playerName = getLocalPlayerName();
-        displaySystemMessage(playerName, "通信エラー", "部屋データの同期に失敗しました。");
+        displaySystemMessage(playerName, "部屋データの同期に失敗しました。");
         return;
     }
     
