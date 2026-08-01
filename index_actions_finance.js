@@ -53,10 +53,9 @@ export async function actionCheckCalculations(supabase, currentUserId) {
             p_input_cashflow: userInputCashflow
         });
 
-        if (data.status === 'error') {
+        if (data && data.status === 'error') {
             displaySystemMessage(playerName, "エラー", data.message);
         } else {
-            displaySystemMessage(playerName, "計算チェック完了", data.message); 
             if (inputIncomeEl) inputIncomeEl.value = '';
             if (inputCashflowEl) inputCashflowEl.value = '';
         }
@@ -64,5 +63,3 @@ export async function actionCheckCalculations(supabase, currentUserId) {
         displaySystemMessage(playerName, "エラー", `エラーが発生しました: ${error.message}`);
     }
 }
-
-console.log("[デバッグ] index_actions_finance.js が正常にロードされました。");
