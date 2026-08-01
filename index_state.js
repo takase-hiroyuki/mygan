@@ -69,6 +69,7 @@ function updateActionButtonsState(playerState, isMyTurn) {
     const SEL = DOM_SELECTORS.GUEST.CONTROLS;
 
     const isCardCell = OPPORTUNITY_CELLS.includes(position) || DOODAD_CELLS.includes(position) || MARKET_CELLS.includes(position);
+    const isDownsizedCell = (position === 20); // 解雇マス
 
     // 1. サイコロ1個を振るボタンの制御
     const canRollDice1 = isMyTurn && !hasRolledDice && !isCalculating && !isDownsized;
@@ -86,15 +87,17 @@ function updateActionButtonsState(playerState, isMyTurn) {
     const hasMandatoryPaycheck = (pendingPaydays > 0) && isNegativeCashFlow;
 
     // 4. ターン終了ボタンの制御
+    // 解雇マス(20)の場合、アクション完了まで手番終了をブロックする
     const canEndTurn = isMyTurn && 
                        (hasRolledDice || isDownsized) && 
                        !isCalculating && 
                        (!isCardCell || isActionCompleted) &&
+                       (!isDownsizedCell || isActionCompleted) &&
                        !hasMandatoryPaycheck;
                        
     setButtonActive(SEL.BTN_END_TURN, canEndTurn);
     
-    console.log(`[DEBUG_STATE] Buttons Update: isMyTurn=${isMyTurn}, Roll1=${canRollDice1}, Roll2=${canRollDice2}, Paycheck=${canClaimPaycheck}, End=${canEndTurn}, Downsized=${isDownsized}, isCardCell=${isCardCell}, isActionCompleted=${isActionCompleted}, hasMandatoryPaycheck=${hasMandatoryPaycheck}`);
+    console.log(`[DEBUG_STATE] Buttons Update: isMyTurn=${isMyTurn}, Roll1=${canRollDice1}, Roll2=${canRollDice2}, Paycheck=${canClaimPaycheck}, End=${canEndTurn}, Downsized=${isDownsized}, isCardCell=${isCardCell}, isDownsizedCell=${isDownsizedCell}, isActionCompleted=${isActionCompleted}, hasMandatoryPaycheck=${hasMandatoryPaycheck}`);
 }
 
 /**
@@ -148,7 +151,7 @@ export function startSubscriptions(supabase, roomId, currentUserId) {
         fetchAndRender(supabase, roomId, currentUserId);
     }).subscribe();
 
-    // ★追加: game_logs テーブルへの INSERT 監視
+    // game_logs テーブルへの INSERT 監視
     supabase.channel('public:game_logs').on('postgres_changes', {
         event: 'INSERT', schema: 'public', table: 'game_logs', filter: `room_id=eq.${roomId}`
     }, (payload) => {
