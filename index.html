@@ -22,13 +22,14 @@
     <div id="section-guest">
         <fieldset>
             <legend>メッセージ</legend>
-            <span id="message-table-body"></span>
-            <table>
-                <tr><td>ぜんたい</td><td>ゲームスタート</td></tr>
-                <tr><td>あい</td><td>ログインした</td></tr>
-                <tr><td>うさ</td><td>ログインした</td></tr>
-                <tr><td>うさ</td><td>サイコロを振りましょう</td></tr>
-            </table>
+            <!-- ログが縦に長くなることを想定し、スクロール可能なコンテナでラップ -->
+            <div style="max-height: 150px; overflow-y: auto;">
+                <table border="1" style="width: 100%; border-collapse: collapse;">
+                    <tbody id="message-table-body">
+                        <!-- JavaScript (index_state.js) によって動的に <tr> が追加されます -->
+                    </tbody>
+                </table>
+            </div>
         </fieldset>
 
         <br>
