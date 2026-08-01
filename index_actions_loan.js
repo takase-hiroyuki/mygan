@@ -17,19 +17,18 @@ export async function actionBorrowBankLoan(supabaseClient, userId) {
     // confirmダイアログは禁止事項に該当するため削除し、即時実行とする
 
     try {
-        const result = await callRpcWithDebug(supabaseClient, 'borrow_bank_loan', {
+        const result = await callRpcWithDebug(supabaseClient, 'borrow_bank_loan_v2', {
             p_room_id: roomId,
             p_user_id: userId,
             p_amount: amount
         });
         
         if (result && result.status === 'error') {
-            displaySystemMessage(playerName, `エラー: ${result.message}`);
-        } else if (result && result.status === 'success') {
-            displaySystemMessage(playerName, `銀行ローン借入: ${result.message}`);
+            displaySystemMessage(playerName, `[エラー] ${result.message}`);
         }
+        // 成功時のシステムメッセージは game_logs テーブル経由で配信されるためローカル表示しない
     } catch (error) {
-        displaySystemMessage(playerName, `システムエラー: 借入処理に失敗しました。詳細: ${error.message}`);
+        displaySystemMessage(playerName, `[システムエラー] 借入処理に失敗しました。詳細: ${error.message}`);
     }
 }
 
@@ -41,19 +40,18 @@ export async function actionRepayBankLoan(supabaseClient, userId) {
     // confirmダイアログは禁止事項に該当するため削除し、即時実行とする
 
     try {
-        const result = await callRpcWithDebug(supabaseClient, 'repay_bank_loan', {
+        const result = await callRpcWithDebug(supabaseClient, 'repay_bank_loan_v2', {
             p_room_id: roomId,
             p_user_id: userId,
             p_amount: amount
         });
         
         if (result && result.status === 'error') {
-            displaySystemMessage(playerName, `エラー: ${result.message}`);
-        } else if (result && result.status === 'success') {
-            displaySystemMessage(playerName, `銀行ローン返済: ${result.message}`);
+            displaySystemMessage(playerName, `[エラー] ${result.message}`);
         }
+        // 成功時のシステムメッセージは game_logs テーブル経由で配信されるためローカル表示しない
     } catch (error) {
-        displaySystemMessage(playerName, `システムエラー: 返済処理に失敗しました。詳細: ${error.message}`);
+        displaySystemMessage(playerName, `[システムエラー] 返済処理に失敗しました。詳細: ${error.message}`);
     }
 }
 
