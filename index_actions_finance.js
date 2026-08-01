@@ -1,7 +1,8 @@
 // index_actions_finance.js
 import { roomId } from './common_config.js';
 import { DOM_SELECTORS } from './common_dom_selectors.js';
-import { callRpcWithDebug, displaySystemMessage } from './common_utils.js';
+import { callRpcWithDebug } from './common_utils.js';
+import { displaySystemMessage } from './index_state.js'; // ★変更: index_state.js からインポート
 
 function getLocalPlayerName() {
     const nameEl = document.getElementById(DOM_SELECTORS.GUEST.STATUS.NAME);
@@ -21,7 +22,8 @@ export async function actionClaimPaycheck(supabase, currentUserId) {
             p_user_id: currentUserId 
         });
     } catch (error) {
-        displaySystemMessage(playerName, "処理エラー", error.message);
+        // ★変更: 引数を (target, body) に変更
+        displaySystemMessage(playerName, `処理エラー: ${error.message}`);
         if (claimButton) claimButton.disabled = false;
     }
 }
@@ -37,7 +39,8 @@ export async function actionCheckCalculations(supabase, currentUserId) {
     const rawCashflow = inputCashflowEl ? inputCashflowEl.value.replace(/,/g, '').trim() : "";
 
     if (!/^-?\d+$/.test(rawIncome) || !/^-?\d+$/.test(rawCashflow)) {
-        displaySystemMessage(playerName, "入力エラー", "総収入と毎月のキャッシュフローの双方に【半角数字のみ】を正しく入力してください。");
+        // ★変更: 引数を (target, body) に変更
+        displaySystemMessage(playerName, "総収入と毎月のキャッシュフローの双方に【半角数字のみ】を正しく入力してください。");
         return;
     }
 
@@ -53,15 +56,18 @@ export async function actionCheckCalculations(supabase, currentUserId) {
         });
 
         if (data.status === 'error') {
-            displaySystemMessage(playerName, "計算エラー", data.message);
+            // ★変更: 引数を (target, body) に変更
+            displaySystemMessage(playerName, data.message);
         } else {
-            displaySystemMessage(playerName, "計算成功", data.message); 
+            // ★変更: 引数を (target, body) に変更
+            displaySystemMessage(playerName, data.message); 
             if (inputIncomeEl) inputIncomeEl.value = '';
             if (inputCashflowEl) inputCashflowEl.value = '';
         }
     } catch (error) {
-        displaySystemMessage(playerName, "エラー", `エラーが発生しました: ${error.message}`);
+        // ★変更: 引数を (target, body) に変更
+        displaySystemMessage(playerName, `エラーが発生しました: ${error.message}`);
     }
 }
 
-console.log("[デバッグ] index_actions_finace.js が正常にロードされました。");
+console.log("[デバッグ] index_actions_finance.js が正常にロードされました。");
