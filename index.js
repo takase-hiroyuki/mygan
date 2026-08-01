@@ -1,11 +1,10 @@
 // index.js
 import { roomId } from './common_config.js';
 import { DOM_SELECTORS } from './common_dom_selectors.js';
-import { displaySystemMessage } from './common_utils.js';
 import { toggleScreen } from './index_ui.js';
 import { initCardEventListeners } from './index_ui_cards.js'; 
 import { initSupabaseClient, checkExistingLogin, loginUser } from './index_auth.js';
-import { startSubscriptions } from './index_state.js';
+import { startSubscriptions, displaySystemMessage } from './index_state.js'; // ★変更: index_state.js からインポート
 import { actionRollDice, actionEndTurn } from './index_actions_turn.js';
 import { actionClaimPaycheck, actionCheckCalculations } from './index_actions_finance.js';
 import { actionBorrowBankLoan, actionRepayBankLoan } from './index_actions_loan.js';
@@ -63,7 +62,8 @@ btnLogin?.addEventListener('click', async () => {
     if (!supabase) return;
     const username = inputUsername?.value.trim();
     if (!username) { 
-        displaySystemMessage("ゲスト", "ログインエラー", "名前を入力してください。");
+        // ★変更: 引数を (target, body) の2つに変更
+        displaySystemMessage("システム", "名前を入力してください。");
         return; 
     }
 
@@ -137,4 +137,3 @@ async function debugSupabaseConnection(supabaseClient) {
 }
 
 console.log("[デバッグ] index.js が正常にロードされました。");
-
