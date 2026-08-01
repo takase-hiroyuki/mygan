@@ -235,7 +235,8 @@ export async function actionEndTurn(supabase, currentUserId) {
     }
     
     try {
-        await callRpcWithDebug(supabase, 'pass_and_end_turn', { 
+        // ★ 変更箇所: pass_and_end_turn_v2 を呼び出す
+        await callRpcWithDebug(supabase, 'pass_and_end_turn_v2', { 
             p_room_id: roomId, 
             p_user_id: currentUserId 
         });
