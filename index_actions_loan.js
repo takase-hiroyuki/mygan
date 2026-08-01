@@ -55,3 +55,5 @@ export async function actionRepayBankLoan(supabaseClient, userId) {
         displaySystemMessage(playerName, "システムエラー", `返済処理に失敗しました。詳細: ${error.message}`);
     }
 }
+
+console.log("[デバッグ] index_actions_loan.js が正常にロードされました。");
