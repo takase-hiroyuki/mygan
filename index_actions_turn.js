@@ -56,7 +56,7 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
     
     if (flags.has_rolled_dice || flags.is_calculating || downsizedTurnsLeft > 0) {
         if (downsizedTurnsLeft > 0) {
-            displaySystemMessage(playerName, "エラー", "アクション拒否: リストラ（解雇）による休み期間中です。サイコロは振れず、そのまま手番を終了する必要があります。");
+            displaySystemMessage(playerName, "休み期間中。そのまま手番を終了して下さい。");
         }
         return;
     }
@@ -68,7 +68,7 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
             p_dice_count: diceCount
         });
     } catch (error) {
-        displaySystemMessage(playerName, "エラー", `処理エラー: ${error.message}`);
+        displaySystemMessage(playerName, `エラー: ${error.message}`);
     }
 }
 
@@ -114,7 +114,7 @@ export async function actionEndTurn(supabase, currentUserId) {
             window.location.reload();
             return;
         } catch (error) {
-            displaySystemMessage(playerName, "エラー", `処理エラー: ${error.message}`);
+            displaySystemMessage(playerName, `エラー: ${error.message}`);
             return;
         }
     }
@@ -134,6 +134,8 @@ export async function actionEndTurn(supabase, currentUserId) {
             p_user_id: currentUserId 
         });
     } catch (error) {
-        displaySystemMessage(playerName, "エラー", error.message);
+        displaySystemMessage(playerName, `エラー: ${error.message}`);
     }
 }
+
+console.log("[デバッグ] index_actions_turn.js が正常にロードされました。");
