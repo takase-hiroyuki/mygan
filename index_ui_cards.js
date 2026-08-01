@@ -2,7 +2,7 @@
 import { roomId } from './common_config.js';
 import { DOM_SELECTORS } from './common_dom_selectors.js';
 import { setButtonActive, setMultipleButtonsActive, callRpcWithDebug } from './common_utils.js';
-import { displaySystemMessage } from './index_state.js'; // ★変更: index_state.js からインポート
+import { displaySystemMessage } from './index_state.js';
 
 const SEL_G = DOM_SELECTORS.GUEST;
 
@@ -57,7 +57,7 @@ export function updateCardPhaseUI(position, flags = {}, currentCard = null, play
     // ==========================================
     if (flags.is_action_completed) {
         if (statusMessage) statusMessage.textContent = `【${playerName}】 カードアクション完了。ローン操作を行うか、手番を終了してください。`;
-        return; // ここで処理を終了
+        return;
     }
 
     // ==========================================
@@ -83,7 +83,7 @@ export function updateCardPhaseUI(position, flags = {}, currentCard = null, play
             setButtonActive(SEL_G.CARD.BTN_PAY_DOODAD, true);
             if (statusMessage) statusMessage.textContent = `【${playerName}】 Doodadカード${cardInfo}を引きました。必ず費用を支払ってください。`;
         }
-        return; // ここで処理を終了
+        return;
     }
 
     // ==========================================
@@ -123,12 +123,12 @@ export function initCardEventListeners(supabase, currentUserId) {
         const playerName = getLocalPlayerName();
         
         try {
-            await callRpcWithDebug(supabase, 'draw_card', {
+            await callRpcWithDebug(supabase, 'draw_card_v2', {
                 p_room_id: roomId,
                 p_user_id: currentUserId
             });
         } catch (error) {
-            displaySystemMessage(playerName, `処理エラー: カードを引く処理に失敗しました: ${error.message}`);
+            displaySystemMessage(playerName, "エラー", `カードを引く処理に失敗しました: ${error.message}`);
             if (btn) btn.disabled = false; // エラー時はロック解除
         }
     };
@@ -140,19 +140,19 @@ export function initCardEventListeners(supabase, currentUserId) {
         const playerName = getLocalPlayerName();
         
         try {
-            const result = await callRpcWithDebug(supabase, 'action_pay_doodad', {
+            const result = await callRpcWithDebug(supabase, 'action_pay_doodad_v2', {
                 p_room_id: roomId,
                 p_user_id: currentUserId
             });
             // 現金不足等の論理エラーを検知して通知
             if (result && result.status === 'error') {
-                displaySystemMessage(playerName, `支払いエラー: ${result.message}`);
+                displaySystemMessage(playerName, "エラー", `支払いエラー: ${result.message}`);
                 if (btn) btn.disabled = false;
             } else if (result && result.status === 'success') {
-                displaySystemMessage(playerName, `支払い完了: ${result.message}`);
+                displaySystemMessage(playerName, "支払い完了", result.message);
             }
         } catch (error) {
-            displaySystemMessage(playerName, `処理エラー: 支払いに失敗しました: ${error.message}`);
+            displaySystemMessage(playerName, "エラー", `支払いに失敗しました: ${error.message}`);
             if (btn) btn.disabled = false;
         }
     };
@@ -164,12 +164,12 @@ export function initCardEventListeners(supabase, currentUserId) {
         const playerName = getLocalPlayerName();
         
         try {
-            await callRpcWithDebug(supabase, 'complete_card_action', {
+            await callRpcWithDebug(supabase, 'complete_card_action_v2', {
                 p_room_id: roomId,
                 p_user_id: currentUserId
             });
         } catch (error) {
-            displaySystemMessage(playerName, `処理エラー: アクションの完了に失敗しました: ${error.message}`);
+            displaySystemMessage(playerName, "エラー", `アクションの完了に失敗しました: ${error.message}`);
             if (btn) btn.disabled = false;
         }
     };
