@@ -6,14 +6,9 @@ import { toggleScreen } from './index_ui.js';
 import { initCardEventListeners } from './index_ui_cards.js'; 
 import { initSupabaseClient, checkExistingLogin, loginUser } from './index_auth.js';
 import { startSubscriptions } from './index_state.js';
-import { 
-    actionRollDice, 
-    actionEndTurn, 
-    actionClaimPaycheck, 
-    actionCheckCalculations,
-    actionBorrowBankLoan,
-    actionRepayBankLoan
-} from './index_actions.js';
+import { actionRollDice, actionEndTurn } from './index_actions_turn.js';
+import { actionClaimPaycheck, actionCheckCalculations } from './index_actions_finance.js';
+import { actionBorrowBankLoan, actionRepayBankLoan } from './index_actions_loan.js';
 
 let supabase = null;
 const SEL_G = DOM_SELECTORS.GUEST;
@@ -32,9 +27,6 @@ const btnPaybackLoan = document.getElementById(SEL_G.PORTFOLIO.BTN_PAYBACK_LOAN)
 let currentUserId = null;
 let isCardListenersReady = false; 
 
-/**
- * ユーザーID確定後にカードイベントを登録し、DB更新用情報を受け渡す
- */
 function setupCardListeners() {
     if (!isCardListenersReady && supabase && currentUserId) {
         initCardEventListeners(supabase, currentUserId);
@@ -43,14 +35,10 @@ function setupCardListeners() {
     }
 }
 
-/**
- * アプリケーションの初期化
- */
 (async function init() {
     console.log("[DEBUG] アプリケーションの初期化を開始します...");
     supabase = await initSupabaseClient();
     
-    // ネットワーク接続・データ整合性確認用デバッグ関数を実行
     await debugSupabaseConnection(supabase);
 
     currentUserId = await checkExistingLogin(supabase, SEL_G);
@@ -70,7 +58,6 @@ function setupCardListeners() {
 // イベントリスナーの登録
 // ==========================================
 
-// ログインボタンのイベントリスナー
 btnLogin?.addEventListener('click', async () => {
     console.log("[DEBUG-UI] 「ログイン」ボタンが押下されました");
     if (!supabase) return;
@@ -93,7 +80,6 @@ btnLogin?.addEventListener('click', async () => {
     }
 });
 
-// アクション実行のイベントリスナー
 btnRollDice?.addEventListener('click', () => {
     console.log("[DEBUG-UI] 「サイコロ１個」ボタンが押下されました");
     actionRollDice(supabase, currentUserId, 1);
@@ -119,7 +105,6 @@ btnCheckCalculations?.addEventListener('click', () => {
     actionCheckCalculations(supabase, currentUserId);
 });
 
-// 銀行ローン操作のイベントリスナー
 btnBorrowLoan?.addEventListener('click', () => {
     console.log("[DEBUG-UI] 「銀行ローンを借り入れる」ボタンが押下されました");
     actionBorrowBankLoan(supabase, currentUserId);
@@ -132,15 +117,10 @@ btnPaybackLoan?.addEventListener('click', () => {
 
 console.log("[DEBUG] index.js が正常にロードされました。");
 
-
 // ==========================================
 // デバッグ機能
 // ==========================================
 
-/**
- * Supabaseネットワーク疎通確認用デバッグ関数
- * @param {Object} supabaseClient 
- */
 async function debugSupabaseConnection(supabaseClient) {
     console.log("[DEBUG-NETWORK] 接続テストを開始します。");
     try {
