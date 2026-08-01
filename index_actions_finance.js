@@ -22,7 +22,7 @@ export async function actionClaimPaycheck(supabase, currentUserId) {
             p_user_id: currentUserId 
         });
     } catch (error) {
-        displaySystemMessage(playerName, "エラー", `処理エラー: ${error.message}`);
+        displaySystemMessage(playerName, `エラー: ${error.message}`);
         if (claimButton) claimButton.disabled = false;
     }
 }
@@ -38,7 +38,7 @@ export async function actionCheckCalculations(supabase, currentUserId) {
     const rawCashflow = inputCashflowEl ? inputCashflowEl.value.replace(/,/g, '').trim() : "";
 
     if (!/^-?\d+$/.test(rawIncome) || !/^-?\d+$/.test(rawCashflow)) {
-        displaySystemMessage(playerName, "入力エラー", "総収入と毎月のキャッシュフローの双方に【半角数字のみ】を正しく入力してください。");
+        displaySystemMessage(playerName, "総収入とキャッシュフローに【半角数字】を入力してください。");
         return;
     }
 
@@ -60,6 +60,6 @@ export async function actionCheckCalculations(supabase, currentUserId) {
             if (inputCashflowEl) inputCashflowEl.value = '';
         }
     } catch (error) {
-        displaySystemMessage(playerName, "エラー", `エラーが発生しました: ${error.message}`);
+        displaySystemMessage(playerName, `エラー: ${error.message}`);
     }
 }
