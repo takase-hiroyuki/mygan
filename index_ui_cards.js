@@ -26,10 +26,6 @@ function getLocalPlayerName() {
 /**
  * 現在地とフラグ状態に応じてカードフェーズのUIを切り替える
  * ※ index_ui.js から盤面移動直後や同期時に呼び出される
- * @param {number} position - 現在のマス位置
- * @param {Object} flags - プレイヤーのフラグ情報
- * @param {Object|null} currentCard - 場に出ているカード情報
- * @param {string} playerName - 手番プレイヤー名
  */
 export function updateCardPhaseUI(position, flags = {}, currentCard = null, playerName = "現在のプレイヤー") {
     console.log("【デバッグ】updateCardPhaseUI", flags);
@@ -60,7 +56,7 @@ export function updateCardPhaseUI(position, flags = {}, currentCard = null, play
     // 状態1: 既にアクションを完了している場合
     // ==========================================
     if (flags.is_action_completed) {
-        if (statusMessage) statusMessage.textContent = `【${playerName}】 アクション完了。ローン操作を行うか、手番を終了してください。`;
+        if (statusMessage) statusMessage.textContent = "アクション完了。ローン操作を行うか、手番を終了してください。";
         return;
     }
 
@@ -78,14 +74,14 @@ export function updateCardPhaseUI(position, flags = {}, currentCard = null, play
             setButtonActive(SEL_G.CARD.BTN_BUY_STOCK, true);
             setButtonActive(SEL_G.CARD.BTN_BUY_REALESTATE, true);
             setButtonActive(SEL_G.CARD.BTN_PASS, true);
-            if (statusMessage) statusMessage.textContent = `【${playerName}】 ディールカード${cardInfo}を引きました。購入するか、パスしてください。`;
+            if (statusMessage) statusMessage.textContent = `${cardInfo}：購入するか、パスしてください。`;
         } else if (CELLS_MARKET.includes(position)) {
             setButtonActive(SEL_G.CARD.BTN_SELL_STOCK, true);
             setButtonActive(SEL_G.CARD.BTN_PASS, true);
-            if (statusMessage) statusMessage.textContent = `【${playerName}】 マーケットカード${cardInfo}を引きました。売却するか、パスしてください。`;
+            if (statusMessage) statusMessage.textContent = `${cardInfo}：売却するか、パスしてください。`;
         } else if (CELLS_DOODAD.includes(position)) {
             setButtonActive(SEL_G.CARD.BTN_PAY_DOODAD, true);
-            if (statusMessage) statusMessage.textContent = `【${playerName}】 Doodadカード${cardInfo}を引きました。必ず費用を支払ってください。`;
+            if (statusMessage) statusMessage.textContent = `${cardInfo}：費用を支払ってください。`;
         }
         return;
     }
@@ -94,7 +90,6 @@ export function updateCardPhaseUI(position, flags = {}, currentCard = null, play
     // 状態3: まだカードを引いていない初期状態
     // ==========================================
     let requireCardAction = false;
-    let customMessage = "";
 
     if (CELLS_OPPORTUNITY.includes(position)) {
         setButtonActive(SEL_G.CARD.BTN_DRAW_SMALL_DEAL, true);
@@ -108,17 +103,14 @@ export function updateCardPhaseUI(position, flags = {}, currentCard = null, play
         requireCardAction = true;
     } else if (CELLS_CHARITY.includes(position)) {
         setButtonActive(SEL_G.CARD.BTN_ACTION_DONATE, true);
-        customMessage = `【${playerName}】 寄付マスです。総収入の10%を支払い、向こう3ターンサイコロを2個振る権利を得るか選択してください（任意のアクションです）。`;
+        requireCardAction = true;
     } else if (CELLS_DOWNSIZED.includes(position)) {
         setButtonActive(SEL_G.CARD.BTN_ACTION_DOWNSIZED, true);
         requireCardAction = true;
-        customMessage = `【${playerName}】 リストラ（解雇）されました。総支出額の支払いと2回休みを受け入れてください。`;
     }
 
-    if (customMessage) {
-        if (statusMessage) statusMessage.textContent = customMessage;
-    } else if (requireCardAction) {
-        if (statusMessage) statusMessage.textContent = `【${playerName}】 アクションを選択してください。`;
+    if (requireCardAction) {
+        if (statusMessage) statusMessage.textContent = "アクションを選択してください。";
     } else {
         if (statusMessage) statusMessage.textContent = "現在場に出ているカードはありません。";
     }
@@ -130,7 +122,7 @@ export function updateCardPhaseUI(position, flags = {}, currentCard = null, play
 export function initCardEventListeners(supabase, currentUserId) {
     console.log("【デバッグ】initCardEventListeners");
     
-    // カードを引く処理（二重送信防止UIロックを追加）
+    // カードを引く処理
     const drawCardRpc = async (event) => {
         const btn = event.currentTarget;
         if (btn) btn.disabled = true;
@@ -143,11 +135,11 @@ export function initCardEventListeners(supabase, currentUserId) {
             });
         } catch (error) {
             displaySystemMessage(playerName, "エラー", `カードを引く処理に失敗しました: ${error.message}`);
-            if (btn) btn.disabled = false; // エラー時はロック解除
+            if (btn) btn.disabled = false;
         }
     };
 
-    // Doodadの費用を支払う処理（RPC経由）
+    // Doodadの費用を支払う処理
     const payDoodadRpc = async (event) => {
         const btn = event.currentTarget;
         if (btn) btn.disabled = true;
@@ -159,7 +151,6 @@ export function initCardEventListeners(supabase, currentUserId) {
                 p_user_id: currentUserId
             });
             
-            // 現金不足等の論理エラーを検知して通知
             if (result && result.status === 'error') {
                 displaySystemMessage(playerName, "エラー", `支払いエラー: ${result.message}`);
                 if (btn) btn.disabled = false;
@@ -170,7 +161,7 @@ export function initCardEventListeners(supabase, currentUserId) {
         }
     };
 
-    // アクションの完了処理（RPC経由）
+    // アクションの完了処理
     const completeActionRpc = async (event) => {
         const btn = event.currentTarget;
         if (btn) btn.disabled = true;
@@ -187,7 +178,7 @@ export function initCardEventListeners(supabase, currentUserId) {
         }
     };
 
-    // 寄付ボタン処理（RPC経由）
+    // 寄付ボタン処理
     const donateRpc = async (event) => {
         const btn = event.currentTarget;
         if (btn) btn.disabled = true;
@@ -209,7 +200,7 @@ export function initCardEventListeners(supabase, currentUserId) {
         }
     };
 
-    // 解雇ボタン処理（RPC経由）
+    // 解雇ボタン処理
     const downsizedRpc = async (event) => {
         const btn = event.currentTarget;
         if (btn) btn.disabled = true;
