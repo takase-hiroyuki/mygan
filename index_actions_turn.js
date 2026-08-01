@@ -3,7 +3,7 @@ import { roomId } from './common_config.js';
 import { DOM_SELECTORS } from './common_dom_selectors.js';
 import { disableAllActionButtons } from './index_ui.js';
 import { callRpcWithDebug, OPPORTUNITY_CELLS, DOODAD_CELLS, MARKET_CELLS } from './common_utils.js'; 
-import { displaySystemMessage } from './index_state.js'; // ★変更: index_state.js からインポート
+import { displaySystemMessage } from './index_state.js'; 
 
 function getLocalPlayerName() {
     const nameEl = document.getElementById(DOM_SELECTORS.GUEST.STATUS.NAME);
@@ -124,7 +124,6 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
             const totalIncome = parseInt(newState.financials?.total_income || 0, 10);
             const donationAmount = Math.floor(totalIncome / 10);
             
-            // confirmダイアログは禁止事項に該当するため削除し、即時実行とする
             displaySystemMessage(playerName, `寄付マス: 総収入の10%（$${donationAmount}）の寄付手続きを開始します。`);
             try {
                 console.log("[DEBUG-ACTION] action_donate_charity 実行前");
@@ -154,6 +153,9 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
                     } else {
                         const cardText = doodadData.description || doodadData.title || "内容不明";
                         const cardCost = doodadData.cost || 0;
+                        
+                        // ★修正箇所: 引いたDoodadカードをシステムメッセージとして発出する
+                        displaySystemMessage(playerName, `カードドロー: Doodadカード「${doodadData.title}」を引きました。 - ${cardText} (費用: $${cardCost})`);
                         
                         const statusMessage = document.getElementById(DOM_SELECTORS.GUEST.CARD.STATUS_MESSAGE);
                         if (statusMessage) {
