@@ -43,7 +43,7 @@
             <p id="manual-action-area">
                 <button id="btn-roll-dice" disabled>X サイコロ１個</button>
                 <button id="btn-roll-dice-2" disabled>X サイコロ２個</button>
-                <button id="btn-claim-paycheck" disabled>X Paycheck請求</button>
+                <button id="btn-claim-paycheck" disabled>X 給料日</button>
                 <button id="btn-end-turn" disabled>X 手番終了</button>
                 <button id="btn-escape-rat-race" disabled>X ラットレース脱出</button>
             </p>
@@ -136,10 +136,12 @@
                 
                 <fieldset id="deck-draw-options">
                     <legend>カードを引く</legend>
-                    <button id="btn-draw-small-deal" disabled>X 細かい商売をする</button>
-                    <button id="btn-draw-big-deal" disabled>X 大きい商売をする</button>
-                    <button id="btn-draw-market" disabled>X 市場の様子をみる</button>
-                    <button id="btn-draw-doodad" disabled>X 個人的に、楽しむ</button>
+                    <button id="btn-draw-small-deal" disabled>X 細かい商売をする</button><br />
+                    <button id="btn-draw-big-deal" disabled>X 大きい商売をする</button><br />
+                    <button id="btn-draw-market" disabled>X 市場の様子をみる</button><br />
+                    <button id="btn-draw-doodad" disabled>X 個人的に、楽しむ</button><br />
+                    <button id="" disabled>X 寄付をする</button><br />
+                    <button id="" disabled>X 解雇を受け入れる</button><br />
                 </fieldset>
                 <br>
 
@@ -160,9 +162,8 @@
         <h2>財務諸表</h2>
         <div id="financials-container">
             <fieldset>
-                <legend>財務計算入力（筆算フェーズ: <span id="calc-phase-name">確認中</span>）</legend>
+                <legend>財務計算：<span id="calc-phase-name">確認中</span>）</legend>
                 <p>現在の状態: <span id="calc-lock-status">データを読み込み中...</span></p>
-                
                 <table border="1" cellspacing="0" cellpadding="5">
                     <tbody>
                         <tr>
@@ -195,10 +196,7 @@
                         </tr>
                     </tbody>
                 </table>
-                
-                <p>
-                    <button id="btn-check-calculations">計算チェック</button>
-                </p>
+                <button id="btn-check-calculations">計算チェック</button>
             </fieldset>
         </div>
 
@@ -211,8 +209,8 @@
                 
                 <fieldset id="bank-loan-control">
                     <legend>銀行ローン操作 (手番中の財務変動前に利用可能)</legend>
-                    <button id="btn-borrow-loan" disabled>銀行ローンを借り入れる (+$1,000単位)</button>
-                    <button id="btn-payback-loan" disabled>銀行ローンを返済する (-$1,000単位)</button>
+                    <button id="btn-borrow-loan" disabled>銀行ローン借入 (+$1,000単位)</button>
+                    <button id="btn-payback-loan" disabled>銀行ローン返済 (-$1,000単位)</button>
                 </fieldset>
                 
                 <br>
