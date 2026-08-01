@@ -115,8 +115,6 @@ btnPaybackLoan?.addEventListener('click', () => {
     actionRepayBankLoan(supabase, currentUserId);
 });
 
-console.log("[DEBUG] index.js が正常にロードされました。");
-
 // ==========================================
 // デバッグ機能
 // ==========================================
@@ -137,3 +135,6 @@ async function debugSupabaseConnection(supabaseClient) {
         console.error("[DEBUG-NETWORK] fetch例外発生:", err.name, err.message, err);
     }
 }
+
+console.log("[デバッグ] index.js が正常にロードされました。");
+
