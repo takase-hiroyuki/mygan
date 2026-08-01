@@ -1,7 +1,8 @@
 // index_ui.js
 import { DOM_SELECTORS } from './common_dom_selectors.js';
-import { setButtonActive, setMultipleButtonsActive, BOARD_CELL_NAMES, displaySystemMessage } from './common_utils.js';
+import { setButtonActive, setMultipleButtonsActive, BOARD_CELL_NAMES } from './common_utils.js';
 import { updateCardPhaseUI } from './index_ui_cards.js'; 
+import { displaySystemMessage } from './index_state.js'; // ★変更: index_state.js からインポート
 
 const SEL_G = DOM_SELECTORS.GUEST;
 const sectionLogin = document.getElementById(SEL_G.LOGIN.SECTION);
@@ -46,7 +47,7 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
         const currentTurnUser = cachedParticipants.find(p => p.user_id === turnUserId);
         const targetName = currentTurnUser?.state?.name || "プレイヤー";
         
-        displaySystemMessage(targetName, "システム通知", `${targetName} の手番です。サイコロを振ってください`);
+        displaySystemMessage(targetName, `システム通知: ${targetName} の手番です。サイコロを振ってください`);
         previousTurnUserId = turnUserId;
     }
 
