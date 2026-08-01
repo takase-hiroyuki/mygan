@@ -47,7 +47,7 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
         const currentTurnUser = cachedParticipants.find(p => p.user_id === turnUserId);
         const targetName = currentTurnUser?.state?.name || "プレイヤー";
         
-        displaySystemMessage(targetName, `システム通知: ${targetName} の手番です。サイコロを振ってください`);
+        displaySystemMessage(targetName, `${targetName} はサイコロを振って下さい`);
         previousTurnUserId = turnUserId;
     }
 
