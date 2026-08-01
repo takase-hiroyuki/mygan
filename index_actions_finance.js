@@ -63,3 +63,5 @@ export async function actionCheckCalculations(supabase, currentUserId) {
         displaySystemMessage(playerName, "エラー", `エラーが発生しました: ${error.message}`);
     }
 }
+
+console.log("[デバッグ] index_actions_finace.js が正常にロードされました。");
