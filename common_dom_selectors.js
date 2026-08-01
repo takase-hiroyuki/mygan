@@ -26,7 +26,8 @@ export const DOM_SELECTORS = {
         // システムメッセージ表示エリア
         MESSAGE: {
             TITLE: 'system-message-title',
-            BODY: 'system-message-body'
+            BODY: 'system-message-body',
+            TABLE_BODY: 'message-table-body' // ★追加: 動的メッセージ表示用のtbody
         },
 
         // あなたのステータス表示エリア
