@@ -2,7 +2,7 @@
 import { roomId } from './common_config.js';
 import { DOM_SELECTORS } from './common_dom_selectors.js';
 import { callRpcWithDebug } from './common_utils.js';
-import { displaySystemMessage } from './index_state.js'; // ★変更: index_state.js からインポート
+import { displaySystemMessage } from './index_state.js';
 
 function getLocalPlayerName() {
     const nameEl = document.getElementById(DOM_SELECTORS.GUEST.STATUS.NAME);
@@ -14,8 +14,6 @@ export async function actionBorrowBankLoan(supabaseClient, userId) {
     const amount = 1000;
     const playerName = getLocalPlayerName();
     
-    // confirmダイアログは禁止事項に該当するため削除し、即時実行とする
-
     try {
         const result = await callRpcWithDebug(supabaseClient, 'borrow_bank_loan_v2', {
             p_room_id: roomId,
@@ -24,11 +22,10 @@ export async function actionBorrowBankLoan(supabaseClient, userId) {
         });
         
         if (result && result.status === 'error') {
-            displaySystemMessage(playerName, `[エラー] ${result.message}`);
+            displaySystemMessage(playerName, `エラー: ${result.message}`);
         }
-        // 成功時のシステムメッセージは game_logs テーブル経由で配信されるためローカル表示しない
     } catch (error) {
-        displaySystemMessage(playerName, `[システムエラー] 借入処理に失敗しました。詳細: ${error.message}`);
+        displaySystemMessage(playerName, `借入処理に失敗しました。: ${error.message}`);
     }
 }
 
@@ -37,8 +34,6 @@ export async function actionRepayBankLoan(supabaseClient, userId) {
     const amount = 1000;
     const playerName = getLocalPlayerName();
     
-    // confirmダイアログは禁止事項に該当するため削除し、即時実行とする
-
     try {
         const result = await callRpcWithDebug(supabaseClient, 'repay_bank_loan_v2', {
             p_room_id: roomId,
@@ -47,11 +42,10 @@ export async function actionRepayBankLoan(supabaseClient, userId) {
         });
         
         if (result && result.status === 'error') {
-            displaySystemMessage(playerName, `[エラー] ${result.message}`);
+            displaySystemMessage(playerName, `エラー: ${result.message}`);
         }
-        // 成功時のシステムメッセージは game_logs テーブル経由で配信されるためローカル表示しない
     } catch (error) {
-        displaySystemMessage(playerName, `[システムエラー] 返済処理に失敗しました。詳細: ${error.message}`);
+        displaySystemMessage(playerName, `返済処理に失敗しました。: ${error.message}`);
     }
 }
 
