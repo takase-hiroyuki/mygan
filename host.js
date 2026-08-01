@@ -2,6 +2,7 @@
 import { roomId, SUPABASE_URL, SUPABASE_KEY } from './common_config.js';
 import { DOM_SELECTORS } from './common_dom_selectors.js';
 import { setButtonActive, BOARD_CELL_NAMES, waitForSupabase, callRpcWithDebug } from './common_utils.js'; 
+import { displaySystemMessage } from './index_state.js'; // システムメッセージ用に関数をインポート
 
 let supabase = null;
 const HOST_ADMIN_ID = 'host-admin-01';
@@ -116,13 +117,11 @@ function drawHostScreen() {
         const position = pState.position ?? 0;
         const flags = pState.flags || {}; 
 
-        // 【デバッグ監視】UI描画時に各プレイヤーのフラグ状態を強制出力
         console.log(`[DEBUG-HOST-UI] ${pState.name || p.user_id} の flags:`, JSON.stringify(flags));
 
         const isCurrentTurn = (p.user_id === currentTurnUserId);
         const displayName = (isCurrentTurn ? '★' : '') + (pState.name || '不明');
 
-        // 1. 参加者名簿テーブルの行生成
         const tr = document.createElement('tr');
         tr.classList.add(itemSEL.ROW_CLASS);
         tr.innerHTML = `
@@ -135,9 +134,7 @@ function drawHostScreen() {
         `;
         if (listBody) listBody.appendChild(tr);
 
-        // 2. フラグ監視テーブルの行生成
         if (flagsListBody) {
-            // 文字列として保存されてしまった場合を考慮し、明示的に数値へ変換
             const charityLeft = parseInt(flags.charity_turns_left || 0, 10);
             const downsizedLeft = parseInt(flags.downsized_turns_left || 0, 10);
 
@@ -156,7 +153,6 @@ function drawHostScreen() {
             flagsListBody.appendChild(trFlags);
         }
 
-        // 3. 盤面のプレイヤーコマ描画
         const targetCell = document.getElementById(`${boardSEL.CELL_PREFIX}${position}`);
         if (targetCell) {
             const table = document.createElement('table');
@@ -185,16 +181,13 @@ function drawHostScreen() {
 
 btnInitialShuffleStart?.addEventListener('click', async (event) => {
     if (!supabase) return;
-    const debugFunctionName = event.currentTarget.id;
-    
-    if (!confirm("職業割り当てとキャッシュフローを含めてゲームを開始しますか？")) return;
     setButtonActive(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE, false);
 
     try {
-        await callRpcWithDebug(supabase, 'start_game_with_professions', { p_room_id: roomId });
+        await callRpcWithDebug(supabase, 'start_game_with_professions_v2', { p_room_id: roomId });
         await syncAndFetchRoom();
     } catch (error) {
-        alert(`[エラー] ゲーム開始失敗\n詳細: ${error.message}\n※コンソールを確認してください`);
+        displaySystemMessage("ホスト", `[エラー] ゲーム開始失敗: ${error.message}`);
         setButtonActive(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE, true);
     }
 });
@@ -205,14 +198,11 @@ btnKickParticipant?.addEventListener('click', async () => {
     const orderIdx = parseInt(orderInput, 10) - 1;
     
     if (isNaN(orderIdx) || orderIdx < 0 || orderIdx >= currentParticipants.length) {
-        alert("有効な退室者の番号（入室順）を入力してください。");
+        displaySystemMessage("ホスト", "[エラー] 有効な退室者の番号（入室順）を入力してください。");
         return;
     }
 
     const targetUser = currentParticipants[orderIdx];
-    const targetName = targetUser.state?.name || '不明';
-
-    if (!confirm(`${targetName} (入室順: ${orderIdx + 1}) を退室させますか？\n※現在手番のプレイヤーを退室させた場合、手番は次の人に移ります。`)) return;
 
     try {
         await callRpcWithDebug(supabase, 'kick_participant', { 
@@ -222,7 +212,7 @@ btnKickParticipant?.addEventListener('click', async () => {
         inputKickOrder.value = '';
         await syncAndFetchRoom();
     } catch (error) {
-        alert(`[エラー] 退室処理失敗\n詳細: ${error.message}`);
+        displaySystemMessage("ホスト", `[エラー] 退室処理失敗: ${error.message}`);
     }
 });
 
@@ -232,14 +222,11 @@ btnSetTurn?.addEventListener('click', async () => {
     const orderIdx = parseInt(orderInput, 10) - 1;
     
     if (isNaN(orderIdx) || orderIdx < 0 || orderIdx >= currentParticipants.length) {
-        alert("有効なプレイヤーの番号（入室順）を入力してください。");
+        displaySystemMessage("ホスト", "[エラー] 有効なプレイヤーの番号（入室順）を入力してください。");
         return;
     }
 
     const targetUser = currentParticipants[orderIdx];
-    const targetName = targetUser.state?.name || '不明';
-
-    if (!confirm(`手番を ${targetName} (入室順: ${orderIdx + 1}) に強制的に移動させますか？`)) return;
 
     try {
         await callRpcWithDebug(supabase, 'force_set_turn', { 
@@ -249,13 +236,12 @@ btnSetTurn?.addEventListener('click', async () => {
         inputNextTurnOrder.value = '';
         await syncAndFetchRoom();
     } catch (error) {
-        alert(`[エラー] 手番変更失敗\n詳細: ${error.message}`);
+        displaySystemMessage("ホスト", `[エラー] 手番変更失敗: ${error.message}`);
     }
 });
 
 btnForceGameEnd?.addEventListener('click', async () => {
     if (!supabase) return;
-    if (!confirm("全員を退室させゲームを強制終了しますか？")) return;
     
     const { error: deleteError } = await supabase.from('participants').delete().eq('room_id', roomId);
         
@@ -269,13 +255,12 @@ btnForceGameEnd?.addEventListener('click', async () => {
             .eq('id', roomId);
             
         if (updateError) {
-            alert("部屋の状態リセットに失敗しました: " + updateError.message);
+            displaySystemMessage("ホスト", `[エラー] 部屋の状態リセットに失敗しました: ${updateError.message}`);
         } else {
-            alert("強制リセットが完了しました。");
             window.location.reload();
         }
     } else {
-        alert("参加者の退室処理に失敗しました: " + deleteError.message);
+        displaySystemMessage("ホスト", `[エラー] 参加者の退室処理に失敗しました: ${deleteError.message}`);
     }
 });
 
