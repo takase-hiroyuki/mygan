@@ -198,7 +198,7 @@ btnKickParticipant?.addEventListener('click', async () => {
     const orderIdx = parseInt(orderInput, 10) - 1;
     
     if (isNaN(orderIdx) || orderIdx < 0 || orderIdx >= currentParticipants.length) {
-        displaySystemMessage("ホスト", "[エラー] 有効な退室者の番号（入室順）を入力してください。");
+        displaySystemMessage("ホスト", "有効な退室者の番号（入室順）を入力してください。");
         return;
     }
 
@@ -212,7 +212,7 @@ btnKickParticipant?.addEventListener('click', async () => {
         inputKickOrder.value = '';
         await syncAndFetchRoom();
     } catch (error) {
-        displaySystemMessage("ホスト", `[エラー] 退室処理失敗: ${error.message}`);
+        displaySystemMessage("ホスト", `退室処理失敗: ${error.message}`);
     }
 });
 
@@ -222,7 +222,7 @@ btnSetTurn?.addEventListener('click', async () => {
     const orderIdx = parseInt(orderInput, 10) - 1;
     
     if (isNaN(orderIdx) || orderIdx < 0 || orderIdx >= currentParticipants.length) {
-        displaySystemMessage("ホスト", "[エラー] 有効なプレイヤーの番号（入室順）を入力してください。");
+        displaySystemMessage("ホスト", "有効なプレイヤーの番号（入室順）を入力してください。");
         return;
     }
 
@@ -236,7 +236,7 @@ btnSetTurn?.addEventListener('click', async () => {
         inputNextTurnOrder.value = '';
         await syncAndFetchRoom();
     } catch (error) {
-        displaySystemMessage("ホスト", `[エラー] 手番変更失敗: ${error.message}`);
+        displaySystemMessage("ホスト", `手番変更失敗: ${error.message}`);
     }
 });
 
@@ -255,12 +255,12 @@ btnForceGameEnd?.addEventListener('click', async () => {
             .eq('id', roomId);
             
         if (updateError) {
-            displaySystemMessage("ホスト", `[エラー] 部屋の状態リセットに失敗しました: ${updateError.message}`);
+            displaySystemMessage("ホスト", `部屋の状態リセットに失敗しました: ${updateError.message}`);
         } else {
             window.location.reload();
         }
     } else {
-        displaySystemMessage("ホスト", `[エラー] 参加者の退室処理に失敗しました: ${deleteError.message}`);
+        displaySystemMessage("ホスト", `参加者の退室処理に失敗しました: ${deleteError.message}`);
     }
 });
 
