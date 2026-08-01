@@ -74,18 +74,18 @@ export async function loginUser(supabase, username) {
         
     if (roomError) {
         console.error("[CRITICAL_ERROR] 部屋状態の取得に失敗しました:", roomError);
-        displaySystemMessage(username, "[システムエラー] 部屋情報の取得に失敗しました。");
+        displaySystemMessage(username, "システム", "[システムエラー] 部屋情報の取得に失敗しました。");
         return null;
     }
 
     if (!roomCheck) {
-        displaySystemMessage(username, "[入室エラー] 指定された部屋が存在しません。");
+        displaySystemMessage(username, "システム", "[入室エラー] 指定された部屋が存在しません。");
         return null;
     }
 
     if (roomCheck.game_state?.status !== 'waiting') {
         console.warn(`[DEBUG_AUTH] 入室拒否: 部屋のステータスが '${roomCheck.game_state.status}' です。`);
-        displaySystemMessage(username, "[入室拒否] ゲームが既に開始されているか終了しているため、入室できません。");
+        displaySystemMessage(username, "システム", "[入室拒否] ゲームが既に開始されているか終了しているため、入室できません。");
         return null;
     }
 
@@ -108,23 +108,27 @@ export async function loginUser(supabase, username) {
     
     if (insertError) {
         console.error("[CRITICAL_ERROR] ユーザー登録(INSERT)に失敗しました:", insertError);
-        displaySystemMessage(username, "[システムエラー] 参加登録に失敗しました。");
+        displaySystemMessage(username, "システム", "[システムエラー] 参加登録に失敗しました。");
         localStorage.removeItem('user_id');
         localStorage.removeItem('player_name');
         return null;
     }
 
-    // ★追加: 入室成功時に game_logs へメッセージを書き込む
-    const logMessage = `${username} が入室しました。ホストがゲームを開始するまでお待ちください。`;
+    // ★修正: game_logs の正しいカラム（target, title, body）に対してINSERTを行う
+    const logBody = `${username} が入室しました。ホストがゲームを開始するまでお待ちください。`;
     const { error: logError } = await supabase
         .from('game_logs')
         .insert([{ 
             room_id: roomId, 
-            message: logMessage 
+            target: username,
+            title: 'システム',
+            body: logBody 
         }]);
 
     if (logError) {
-        console.warn("[DEBUG_AUTH] 入室ログの書き込みに失敗しました:", logError);
+        console.error("[DEBUG_AUTH] 入室ログの書き込みに失敗しました:", logError);
+    } else {
+        console.log("[DEBUG_AUTH] 入室ログの書き込みに成功しました。");
     }
     
     console.log(`[DEBUG_AUTH] ログイン(INSERT)完了: user_id=${newUserId}`);
