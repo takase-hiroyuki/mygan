@@ -46,7 +46,7 @@ export function displaySystemMessage(target, body) {
         scrollContainer.scrollTop = scrollContainer.scrollHeight;
     }
 
-    console.log(`[SYSTEM_MESSAGE] ${target} / ${body}`);
+    console.log(`[game_logs] ${target} / ${body}`);
 }
 
 /**
