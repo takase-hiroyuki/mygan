@@ -74,18 +74,18 @@ export async function loginUser(supabase, username) {
         
     if (roomError) {
         console.error("[CRITICAL_ERROR] 部屋状態の取得に失敗しました:", roomError);
-        displaySystemMessage(username, "システム", "[システムエラー] 部屋情報の取得に失敗しました。");
+        displaySystemMessage(username, "部屋情報の取得に失敗しました。");
         return null;
     }
 
     if (!roomCheck) {
-        displaySystemMessage(username, "システム", "[入室エラー] 指定された部屋が存在しません。");
+        displaySystemMessage(username, "指定された部屋が存在しません。");
         return null;
     }
 
     if (roomCheck.game_state?.status !== 'waiting') {
         console.warn(`[DEBUG_AUTH] 入室拒否: 部屋のステータスが '${roomCheck.game_state.status}' です。`);
-        displaySystemMessage(username, "システム", "[入室拒否] ゲームが既に開始されているか終了しているため、入室できません。");
+        displaySystemMessage(username, "ゲームが既に開始されているか終了しているため、入室できません。");
         return null;
     }
 
@@ -108,7 +108,7 @@ export async function loginUser(supabase, username) {
     
     if (insertError) {
         console.error("[CRITICAL_ERROR] ユーザー登録(INSERT)に失敗しました:", insertError);
-        displaySystemMessage(username, "システム", "[システムエラー] 参加登録に失敗しました。");
+        displaySystemMessage(username, "参加登録に失敗しました。");
         localStorage.removeItem('user_id');
         localStorage.removeItem('player_name');
         return null;
