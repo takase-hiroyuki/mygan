@@ -68,6 +68,8 @@ export const DOM_SELECTORS = {
             BTN_DRAW_BIG_DEAL: 'btn-draw-big-deal',        
             BTN_DRAW_MARKET: 'btn-draw-market',            
             BTN_DRAW_DOODAD: 'btn-draw-doodad',            
+            BTN_ACTION_DONATE: 'btn-action-donate',        // ★追加: 寄付ボタン
+            BTN_ACTION_DOWNSIZED: 'btn-action-downsized',  // ★追加: 解雇ボタン
             OPTIONS_CONTAINER: 'card-action-options',    
             BTN_BUY_REALESTATE: 'btn-card-buy-realestate', 
             BTN_BUY_STOCK: 'btn-card-buy-stock',           
