@@ -122,17 +122,35 @@ export function updateCardPhaseUI(position, flags = {}, currentCard = null, play
 export function initCardEventListeners(supabase, currentUserId) {
     console.log("【デバッグ】initCardEventListeners");
     
-    // カードを引く処理
+    // カードを引く処理（各デッキに応じたRPCを呼び出す）
     const drawCardRpc = async (event) => {
         const btn = event.currentTarget;
         if (btn) btn.disabled = true;
         const playerName = getLocalPlayerName();
+        const btnId = btn.id;
+
+        let rpcName = 'draw_card_v2'; // デフォルト
+
+        if (btnId === SEL_G.CARD.BTN_DRAW_SMALL_DEAL) {
+            rpcName = 'action_draw_small_deal_v2';
+        } else if (btnId === SEL_G.CARD.BTN_DRAW_BIG_DEAL) {
+            rpcName = 'action_draw_big_deal_v2';
+        } else if (btnId === SEL_G.CARD.BTN_DRAW_MARKET) {
+            rpcName = 'action_draw_market_v2';
+        } else if (btnId === SEL_G.CARD.BTN_DRAW_DOODAD) {
+            rpcName = 'action_draw_doodad_v2';
+        }
         
         try {
-            await callRpcWithDebug(supabase, 'draw_card_v2', {
+            const result = await callRpcWithDebug(supabase, rpcName, {
                 p_room_id: roomId,
                 p_user_id: currentUserId
             });
+
+            if (result && result.status === 'error') {
+                displaySystemMessage(playerName, "エラー", result.message);
+                if (btn) btn.disabled = false;
+            }
         } catch (error) {
             displaySystemMessage(playerName, "エラー", `カードを引く処理に失敗しました: ${error.message}`);
             if (btn) btn.disabled = false;
@@ -168,10 +186,15 @@ export function initCardEventListeners(supabase, currentUserId) {
         const playerName = getLocalPlayerName();
         
         try {
-            await callRpcWithDebug(supabase, 'complete_card_action_v2', {
+            const result = await callRpcWithDebug(supabase, 'complete_card_action_v2', {
                 p_room_id: roomId,
                 p_user_id: currentUserId
             });
+
+            if (result && result.status === 'error') {
+                displaySystemMessage(playerName, "エラー", result.message);
+                if (btn) btn.disabled = false;
+            }
         } catch (error) {
             displaySystemMessage(playerName, "エラー", `アクションの完了に失敗しました: ${error.message}`);
             if (btn) btn.disabled = false;
