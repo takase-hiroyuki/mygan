@@ -92,13 +92,13 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
     }
 
     try {
-        console.log("[DEBUG-ACTION] roll_dice_and_move 実行前");
-        await callRpcWithDebug(supabase, 'roll_dice_and_move', { 
+        console.log("[DEBUG-ACTION] roll_dice_and_move_v2 実行前");
+        await callRpcWithDebug(supabase, 'roll_dice_and_move_v2', { 
             p_room_id: roomId, 
             p_user_id: currentUserId,
             p_dice_count: diceCount
         });
-        console.log("[DEBUG-ACTION] roll_dice_and_move 実行完了");
+        console.log("[DEBUG-ACTION] roll_dice_and_move_v2 実行完了");
     } catch (error) {
         displaySystemMessage(playerName, "処理エラー", error.message);
         return;
