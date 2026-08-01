@@ -187,7 +187,7 @@ btnInitialShuffleStart?.addEventListener('click', async (event) => {
         await callRpcWithDebug(supabase, 'start_game_with_professions_v2', { p_room_id: roomId });
         await syncAndFetchRoom();
     } catch (error) {
-        displaySystemMessage("ホスト", `[エラー] ゲーム開始失敗: ${error.message}`);
+        displaySystemMessage("ホスト", `ゲーム開始失敗: ${error.message}`);
         setButtonActive(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE, true);
     }
 });
