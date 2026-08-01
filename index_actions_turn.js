@@ -2,7 +2,8 @@
 import { roomId } from './common_config.js';
 import { DOM_SELECTORS } from './common_dom_selectors.js';
 import { disableAllActionButtons } from './index_ui.js';
-import { callRpcWithDebug, OPPORTUNITY_CELLS, DOODAD_CELLS, MARKET_CELLS, displaySystemMessage } from './common_utils.js'; 
+import { callRpcWithDebug, OPPORTUNITY_CELLS, DOODAD_CELLS, MARKET_CELLS } from './common_utils.js'; 
+import { displaySystemMessage } from './index_state.js'; // ★変更: index_state.js からインポート
 
 function getLocalPlayerName() {
     const nameEl = document.getElementById(DOM_SELECTORS.GUEST.STATUS.NAME);
@@ -68,7 +69,7 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
     if (flags.has_rolled_dice || flags.is_calculating || downsizedTurnsLeft > 0) {
         console.warn(`[ガード] ロール不可: has_rolled_dice=${flags.has_rolled_dice}, is_calculating=${flags.is_calculating}, downsized_turns_left=${downsizedTurnsLeft}`);
         if (downsizedTurnsLeft > 0) {
-            displaySystemMessage(playerName, "アクション拒否", "リストラ（解雇）による休み期間中です。サイコロは振れず、そのまま手番を終了する必要があります。");
+            displaySystemMessage(playerName, "アクション拒否: リストラ（解雇）による休み期間中です。サイコロは振れず、そのまま手番を終了する必要があります。");
         }
         return;
     }
@@ -82,7 +83,7 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
         });
         console.log("[DEBUG-ACTION] roll_dice_and_move_v2 実行完了");
     } catch (error) {
-        displaySystemMessage(playerName, "処理エラー", error.message);
+        displaySystemMessage(playerName, `処理エラー: ${error.message}`);
         return;
     }
 
@@ -99,10 +100,10 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
                 });
                 
                 if (babyData && babyData.message) {
-                    displaySystemMessage(playerName, "出産イベント", babyData.message);
+                    displaySystemMessage(playerName, `出産イベント: ${babyData.message}`);
                 }
             } catch (babyError) {
-                displaySystemMessage(playerName, "子供マス処理エラー", babyError.message);
+                displaySystemMessage(playerName, `子供マス処理エラー: ${babyError.message}`);
             }
         } else if (newState.position === 20) {
             console.log("[DEBUG-ACTION] 解雇マスに停止。action_land_on_downsized を呼び出します。");
@@ -113,31 +114,31 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
                 });
                 
                 if (downsizedData && downsizedData.message) {
-                    displaySystemMessage(playerName, "解雇イベント", downsizedData.message);
+                    displaySystemMessage(playerName, `解雇イベント: ${downsizedData.message}`);
                 }
             } catch (error) {
-                displaySystemMessage(playerName, "解雇マス処理エラー", error.message);
+                displaySystemMessage(playerName, `解雇マス処理エラー: ${error.message}`);
             }
         } else if (newState.position === 3 || newState.position === 16) {
-            console.log("[DEBUG-ACTION] 寄付マスに停止。確認ダイアログを表示します。");
+            console.log("[DEBUG-ACTION] 寄付マスに停止。");
             const totalIncome = parseInt(newState.financials?.total_income || 0, 10);
             const donationAmount = Math.floor(totalIncome / 10);
             
-            if (confirm(`寄付マスに止まりました。総収入の10%（$${donationAmount}）を寄付しますか？\n寄付すると、向こう3ターンサイコロを2個振ることができます。`)) {
-                try {
-                    console.log("[DEBUG-ACTION] action_donate_charity 実行前");
-                    const charityData = await callRpcWithDebug(supabase, 'action_donate_charity', {
-                        p_room_id: roomId,
-                        p_user_id: currentUserId
-                    });
-                    
-                    if (charityData && charityData.message) {
-                        displaySystemMessage(playerName, "寄付イベント", charityData.message);
-                    }
-                } catch (error) {
-                    console.error("[CRITICAL-ERROR] 寄付処理に失敗:", error);
-                    displaySystemMessage(playerName, "寄付処理エラー", error.message);
+            // confirmダイアログは禁止事項に該当するため削除し、即時実行とする
+            displaySystemMessage(playerName, `寄付マス: 総収入の10%（$${donationAmount}）の寄付手続きを開始します。`);
+            try {
+                console.log("[DEBUG-ACTION] action_donate_charity 実行前");
+                const charityData = await callRpcWithDebug(supabase, 'action_donate_charity', {
+                    p_room_id: roomId,
+                    p_user_id: currentUserId
+                });
+                
+                if (charityData && charityData.message) {
+                    displaySystemMessage(playerName, `寄付イベント: ${charityData.message}`);
                 }
+            } catch (error) {
+                console.error("[CRITICAL-ERROR] 寄付処理に失敗:", error);
+                displaySystemMessage(playerName, `寄付処理エラー: ${error.message}`);
             }
         } else if (DOODAD_CELLS.includes(newState.position)) {
             console.log("[DEBUG-ACTION] Doodadマスに停止。カード情報を取得します。");
@@ -149,7 +150,7 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
                 
                 if (doodadData) {
                     if (doodadData.status === 'error') {
-                        displaySystemMessage(playerName, "エラー", doodadData.message);
+                        displaySystemMessage(playerName, `エラー: ${doodadData.message}`);
                     } else {
                         const cardText = doodadData.description || doodadData.title || "内容不明";
                         const cardCost = doodadData.cost || 0;
@@ -168,7 +169,7 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
                 }
             } catch (error) {
                 console.error("[CRITICAL-ERROR] Doodad処理エラー:", error);
-                displaySystemMessage(playerName, "Doodadカード取得エラー", error.message);
+                displaySystemMessage(playerName, `Doodadカード取得エラー: ${error.message}`);
             }
         }
     }
@@ -205,7 +206,7 @@ export async function actionEndTurn(supabase, currentUserId) {
     disableAllActionButtons();
 
     if (cash < 0) {
-        displaySystemMessage(playerName, "ゲームオーバー", "現金がなくなったので、破産しました。");
+        displaySystemMessage(playerName, "ゲームオーバー: 現金がなくなったので、破産しました。");
         try {
             await callRpcWithDebug(supabase, 'action_bankrupt_and_remove', { 
                 p_room_id: roomId, 
@@ -217,7 +218,7 @@ export async function actionEndTurn(supabase, currentUserId) {
             window.location.reload();
             return;
         } catch (error) {
-            displaySystemMessage(playerName, "処理エラー", error.message);
+            displaySystemMessage(playerName, `処理エラー: ${error.message}`);
             return;
         }
     }
@@ -238,7 +239,7 @@ export async function actionEndTurn(supabase, currentUserId) {
             p_user_id: currentUserId 
         });
     } catch (error) {
-        displaySystemMessage(playerName, "エラー", error.message);
+        displaySystemMessage(playerName, `エラー: ${error.message}`);
     }
 }
 
