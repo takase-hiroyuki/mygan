@@ -241,3 +241,5 @@ export async function actionEndTurn(supabase, currentUserId) {
         displaySystemMessage(playerName, "エラー", error.message);
     }
 }
+
+console.log("[デバッグ] index_actions_turn.js が正常にロードされました。");
