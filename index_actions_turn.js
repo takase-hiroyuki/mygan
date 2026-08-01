@@ -69,68 +69,6 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
         });
     } catch (error) {
         displaySystemMessage(playerName, "エラー", `処理エラー: ${error.message}`);
-        return;
-    }
-
-    const newState = await getCurrentPlayerState(supabase, currentUserId);
-    if (newState) {
-        if (newState.position === 9) {
-            try {
-                await callRpcWithDebug(supabase, 'action_land_on_baby_v2', {
-                    p_room_id: roomId,
-                    p_user_id: currentUserId
-                });
-            } catch (babyError) {
-                displaySystemMessage(playerName, "エラー", `子供マス処理エラー: ${babyError.message}`);
-            }
-        } else if (newState.position === 20) {
-            try {
-                await callRpcWithDebug(supabase, 'action_land_on_downsized_v2', {
-                    p_room_id: roomId,
-                    p_user_id: currentUserId
-                });
-            } catch (error) {
-                displaySystemMessage(playerName, "エラー", `解雇マス処理エラー: ${error.message}`);
-            }
-        } else if (newState.position === 3 || newState.position === 16) {
-            try {
-                await callRpcWithDebug(supabase, 'action_donate_charity_v2', {
-                    p_room_id: roomId,
-                    p_user_id: currentUserId
-                });
-            } catch (error) {
-                displaySystemMessage(playerName, "エラー", `寄付処理エラー: ${error.message}`);
-            }
-        } else if (DOODAD_CELLS.includes(newState.position)) {
-            try {
-                const doodadData = await callRpcWithDebug(supabase, 'action_draw_doodad_v2', {
-                    p_room_id: roomId,
-                    p_user_id: currentUserId
-                });
-                
-                if (doodadData) {
-                    if (doodadData.status === 'error') {
-                        displaySystemMessage(playerName, "エラー", doodadData.message);
-                    } else {
-                        const cardText = doodadData.description || doodadData.title || "内容不明";
-                        const cardCost = doodadData.cost || 0;
-                        
-                        const statusMessage = document.getElementById(DOM_SELECTORS.GUEST.CARD.STATUS_MESSAGE);
-                        if (statusMessage) {
-                            statusMessage.textContent = `【${playerName} が引いたカード】 Doodad: ${doodadData.title} - ${cardText} (費用: $${cardCost})`;
-                        }
-
-                        const btnEndTurn = document.getElementById(DOM_SELECTORS.GUEST.CONTROLS.BTN_END_TURN);
-                        if (btnEndTurn) {
-                            btnEndTurn.disabled = true;
-                            btnEndTurn.innerText = 'X ' + btnEndTurn.innerText.replace(/^[OX]\s/, '');
-                        }
-                    }
-                }
-            } catch (error) {
-                displaySystemMessage(playerName, "エラー", `Doodadカード取得エラー: ${error.message}`);
-            }
-        }
     }
 }
 
@@ -165,9 +103,8 @@ export async function actionEndTurn(supabase, currentUserId) {
     disableAllActionButtons();
 
     if (cash < 0) {
-        displaySystemMessage(playerName, "システム", "ゲームオーバー: 現金がなくなったので、破産しました。");
         try {
-            await callRpcWithDebug(supabase, 'action_bankrupt_and_remove', { 
+            await callRpcWithDebug(supabase, 'action_bankrupt_and_remove_v2', { 
                 p_room_id: roomId, 
                 p_user_id: currentUserId 
             });
