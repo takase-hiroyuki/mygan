@@ -4,7 +4,7 @@ import { DOM_SELECTORS } from './common_dom_selectors.js';
 import { toggleScreen } from './index_ui.js';
 import { initCardEventListeners } from './index_ui_cards.js'; 
 import { initSupabaseClient, checkExistingLogin, loginUser } from './index_auth.js';
-import { startSubscriptions, displaySystemMessage } from './index_state.js'; // ★変更: index_state.js からインポート
+import { startSubscriptions, displaySystemMessage } from './index_state.js';
 import { actionRollDice, actionEndTurn } from './index_actions_turn.js';
 import { actionClaimPaycheck, actionCheckCalculations } from './index_actions_finance.js';
 import { actionBorrowBankLoan, actionRepayBankLoan } from './index_actions_loan.js';
@@ -62,7 +62,6 @@ btnLogin?.addEventListener('click', async () => {
     if (!supabase) return;
     const username = inputUsername?.value.trim();
     if (!username) { 
-        // ★変更: 引数を (target, body) の2つに変更
         displaySystemMessage("システム", "名前を入力してください。");
         return; 
     }
