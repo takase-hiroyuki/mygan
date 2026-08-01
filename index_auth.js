@@ -1,7 +1,7 @@
 // index_auth.js
 import { roomId, SUPABASE_URL, SUPABASE_KEY } from './common_config.js';
 import { waitForSupabase, getInitialRegistrationState } from './common_utils.js';
-import { displaySystemMessage } from './index_state.js'; // ★変更: index_state.js からインポート
+import { displaySystemMessage } from './index_state.js'; 
 
 /**
  * Supabaseクライアントの初期化
@@ -74,18 +74,18 @@ export async function loginUser(supabase, username) {
         
     if (roomError) {
         console.error("[CRITICAL_ERROR] 部屋状態の取得に失敗しました:", roomError);
-        displaySystemMessage(username, "システムエラー: 部屋情報の取得に失敗しました。");
+        displaySystemMessage(username, "[システムエラー] 部屋情報の取得に失敗しました。");
         return null;
     }
 
     if (!roomCheck) {
-        displaySystemMessage(username, "入室エラー: 指定された部屋が存在しません。");
+        displaySystemMessage(username, "[入室エラー] 指定された部屋が存在しません。");
         return null;
     }
 
     if (roomCheck.game_state?.status !== 'waiting') {
         console.warn(`[DEBUG_AUTH] 入室拒否: 部屋のステータスが '${roomCheck.game_state.status}' です。`);
-        displaySystemMessage(username, "入室拒否: ゲームが既に開始されているか終了しているため、入室できません。");
+        displaySystemMessage(username, "[入室拒否] ゲームが既に開始されているか終了しているため、入室できません。");
         return null;
     }
 
@@ -108,10 +108,23 @@ export async function loginUser(supabase, username) {
     
     if (insertError) {
         console.error("[CRITICAL_ERROR] ユーザー登録(INSERT)に失敗しました:", insertError);
-        displaySystemMessage(username, "システムエラー: 参加登録に失敗しました。");
+        displaySystemMessage(username, "[システムエラー] 参加登録に失敗しました。");
         localStorage.removeItem('user_id');
         localStorage.removeItem('player_name');
         return null;
+    }
+
+    // ★追加: 入室成功時に game_logs へメッセージを書き込む
+    const logMessage = `${username} が入室しました。ホストがゲームを開始するまでお待ちください。`;
+    const { error: logError } = await supabase
+        .from('game_logs')
+        .insert([{ 
+            room_id: roomId, 
+            message: logMessage 
+        }]);
+
+    if (logError) {
+        console.warn("[DEBUG_AUTH] 入室ログの書き込みに失敗しました:", logError);
     }
     
     console.log(`[DEBUG_AUTH] ログイン(INSERT)完了: user_id=${newUserId}`);
