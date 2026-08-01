@@ -1,7 +1,8 @@
 // index_actions_loan.js
 import { roomId } from './common_config.js';
 import { DOM_SELECTORS } from './common_dom_selectors.js';
-import { callRpcWithDebug, displaySystemMessage } from './common_utils.js';
+import { callRpcWithDebug } from './common_utils.js';
+import { displaySystemMessage } from './index_state.js'; // ★変更: index_state.js からインポート
 
 function getLocalPlayerName() {
     const nameEl = document.getElementById(DOM_SELECTORS.GUEST.STATUS.NAME);
@@ -13,7 +14,7 @@ export async function actionBorrowBankLoan(supabaseClient, userId) {
     const amount = 1000;
     const playerName = getLocalPlayerName();
     
-    if (!confirm(`銀行から $${amount} を借入しますか？\n（借入額の10%が毎月の支払いに加算され、計算チェックが必要になります）`)) return;
+    // confirmダイアログは禁止事項に該当するため削除し、即時実行とする
 
     try {
         const result = await callRpcWithDebug(supabaseClient, 'borrow_bank_loan', {
@@ -23,12 +24,12 @@ export async function actionBorrowBankLoan(supabaseClient, userId) {
         });
         
         if (result && result.status === 'error') {
-            displaySystemMessage(playerName, "エラー", result.message);
+            displaySystemMessage(playerName, `エラー: ${result.message}`);
         } else if (result && result.status === 'success') {
-            displaySystemMessage(playerName, "銀行ローン借入", result.message);
+            displaySystemMessage(playerName, `銀行ローン借入: ${result.message}`);
         }
     } catch (error) {
-        displaySystemMessage(playerName, "システムエラー", `借入処理に失敗しました。詳細: ${error.message}`);
+        displaySystemMessage(playerName, `システムエラー: 借入処理に失敗しました。詳細: ${error.message}`);
     }
 }
 
@@ -37,7 +38,7 @@ export async function actionRepayBankLoan(supabaseClient, userId) {
     const amount = 1000;
     const playerName = getLocalPlayerName();
     
-    if (!confirm(`銀行ローンを $${amount} 返済しますか？\n（計算チェックが必要になります）`)) return;
+    // confirmダイアログは禁止事項に該当するため削除し、即時実行とする
 
     try {
         const result = await callRpcWithDebug(supabaseClient, 'repay_bank_loan', {
@@ -47,12 +48,12 @@ export async function actionRepayBankLoan(supabaseClient, userId) {
         });
         
         if (result && result.status === 'error') {
-            displaySystemMessage(playerName, "エラー", result.message);
+            displaySystemMessage(playerName, `エラー: ${result.message}`);
         } else if (result && result.status === 'success') {
-            displaySystemMessage(playerName, "銀行ローン返済", result.message);
+            displaySystemMessage(playerName, `銀行ローン返済: ${result.message}`);
         }
     } catch (error) {
-        displaySystemMessage(playerName, "システムエラー", `返済処理に失敗しました。詳細: ${error.message}`);
+        displaySystemMessage(playerName, `システムエラー: 返済処理に失敗しました。詳細: ${error.message}`);
     }
 }
 
