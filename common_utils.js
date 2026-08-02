@@ -1,5 +1,6 @@
 // common_utils.js
 
+import { roomId } from './common_config.js'; // ★追加: insertSystemMessage等で利用
 import { DOM_SELECTORS } from './common_dom_selectors.js';
 
 // index.js と host.js の両方から参照される関数群
@@ -82,14 +83,16 @@ export function waitForSupabase() {
     });
 }
 
-// 盤面の特定のマスを示す定数
-export const PAYDAY_CELLS = [0, 5, 11, 18];        // 入金（給料マイナス経費）
-export const OPPORTUNITY_CELLS = [2, 4, 6, 8, 10, 13, 15, 17, 19, 21, 23]; // 好機
-export const DOODAD_CELLS = [1, 7, 14];            // 娯楽
-export const MARKET_CELLS = [12, 22];              // 市場
-export const BABY_CELLS = [9];                     // 子供
-export const CHARITY_CELLS = [3, 16];              // 寄付
-export const DOWNSIZED_CELLS = [20];               // 解雇
+// =========================================================================
+// 盤面の特定のマスを示す定数 (CELLS_... 形式に統一)
+// =========================================================================
+export const CELLS_PAYDAY = [0, 5, 11, 18];        // 入金（給料マイナス経費）
+export const CELLS_OPPORTUNITY = [2, 4, 6, 8, 10, 13, 15, 17, 19, 21, 23]; // 好機
+export const CELLS_DOODAD = [1, 7, 14];            // 娯楽
+export const CELLS_MARKET = [12, 22];              // 市場
+export const CELLS_BABY = [9];                     // 子供
+export const CELLS_CHARITY = [3, 16];              // 寄付
+export const CELLS_DOWNSIZED = [20];               // 解雇
 
 /**
  * プレイヤーの初期登録データを生成する関数
@@ -140,6 +143,61 @@ export function getInitialRegistrationState(username) {
             }
         }
     };
+}
+
+// =========================================================================
+// システムメッセージ・エラーログ共通関数
+// =========================================================================
+
+/**
+ * システムメッセージ（エラー含む）をデータベース(game_logs)に書き込む汎用関数
+ */
+export async function insertSystemMessage(supabase, target, message) {
+    try {
+        await supabase.rpc('fn_insert_game_log', {
+            p_room_id: roomId, 
+            p_target: target,
+            p_title: 'システム',
+            p_body: message
+        });
+    } catch (err) {
+        console.error("システムメッセージ保存失敗:", err);
+    }
+}
+
+/**
+ * システムメッセージをDOMのテーブルに追記する関数
+ * @param {string} target - メッセージの宛先（1番目のtd用）
+ * @param {string} body - メッセージ本文（2番目のtd用）
+ */
+export function displaySystemMessage(target, body) {
+    const tbody = document.getElementById(DOM_SELECTORS.GUEST.MESSAGE.TABLE_BODY);
+    if (!tbody) {
+        console.warn("[WARNING] message-table-body が見つかりません。メッセージの表示をスキップします。");
+        return;
+    }
+
+    const tr = document.createElement('tr');
+    
+    const tdTarget = document.createElement('td');
+    tdTarget.textContent = target;
+    
+    const tdBody = document.createElement('td');
+    tdBody.textContent = body;
+    
+    tr.appendChild(tdTarget);
+    tr.appendChild(tdBody);
+    
+    // 古いログが上になり、最新ログが下に追加されていく
+    tbody.appendChild(tr);
+
+    // スクロールコンテナの最下部へ自動スクロール
+    const scrollContainer = tbody.parentElement.parentElement;
+    if (scrollContainer) {
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+    }
+
+    console.log(`[game_logs] ${target} / ${body}`);
 }
 
 console.log("【デバッグ】common_utils.js が読み込まれました。");
