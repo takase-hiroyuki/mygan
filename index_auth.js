@@ -1,19 +1,17 @@
 // index_auth.js
 import { roomId, SUPABASE_URL, SUPABASE_KEY } from './common_config.js';
-import { waitForSupabase, getInitialRegistrationState, insertSystemMessage } from './common_utils.js'; // ★修正: displaySystemMessage を削除し、insertSystemMessage に統一
+import { waitForSupabase,
+        getInitialRegistrationState,
+        insertSystemMessage } from './common_utils.js';
 
-/**
- * Supabaseクライアントの初期化
- */
+// Supabaseクライアントの初期化
 export async function initSupabaseClient() {
     console.log("[DEBUG_AUTH] initSupabaseClient を実行します。");
     const supabaseGlobal = await waitForSupabase();
     return supabaseGlobal.createClient(SUPABASE_URL, SUPABASE_KEY);
 }
 
-/**
- * 既存のログインセッションが存在するか確認する
- */
+// 既存のログインセッションが存在するか確認する
 export async function checkExistingLogin(supabase, guestSelectors) {
     console.log("[DEBUG_AUTH] checkExistingLogin を実行します。");
     
@@ -58,13 +56,10 @@ export async function checkExistingLogin(supabase, guestSelectors) {
     return null;
 }
 
-/**
- * 新規ログイン（入室）処理を実行する
- */
+// 新規ログイン（入室）処理を実行する
 export async function loginUser(supabase, username) {
     console.log(`[DEBUG_AUTH] loginUser を実行します: username=${username}`);
     
-    // 部屋のステータス確認
     const { data: roomCheck, error: roomError } = await supabase
         .from('rooms')
         .select('game_state')
@@ -73,20 +68,17 @@ export async function loginUser(supabase, username) {
         
     if (roomError) {
         console.error("[CRITICAL_ERROR] 部屋状態の取得に失敗しました:", roomError);
-        // ★修正: insertSystemMessage に変更
         await insertSystemMessage(supabase, username, "部屋情報の取得に失敗しました。");
         return null;
     }
 
     if (!roomCheck) {
-        // ★修正: insertSystemMessage に変更
         await insertSystemMessage(supabase, username, "指定された部屋が存在しません。");
         return null;
     }
 
     if (roomCheck.game_state?.status !== 'waiting') {
         console.warn(`[DEBUG_AUTH] 入室拒否: 部屋のステータスが '${roomCheck.game_state.status}' です。`);
-        // ★修正: insertSystemMessage に変更
         await insertSystemMessage(supabase, username, "ゲームが既に開始されているか終了しているため、入室できません。");
         return null;
     }
@@ -110,7 +102,6 @@ export async function loginUser(supabase, username) {
     
     if (insertError) {
         console.error("[CRITICAL_ERROR] ユーザー登録(INSERT)に失敗しました:", insertError);
-        // ★修正: insertSystemMessage に変更
         await insertSystemMessage(supabase, username, "参加登録に失敗しました。");
         localStorage.removeItem('user_id');
         localStorage.removeItem('player_name');
