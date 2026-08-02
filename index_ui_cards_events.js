@@ -24,7 +24,7 @@ export function initCardEventListeners(supabase, currentUserId) {
                 if (btn) btn.disabled = false;
             } else {
                 // ★追加: 成功時に返ってきたカードデータを丸ごと文字列化してログに表示する
-                const rawCardData = JSON.stringify(result);
+                const rawCardData = JSON.stringify(result).replace(/,/g, ', ');
                 await insertSystemMessage(supabase, playerName, `【カード内容】 ${rawCardData}`);
             }
         } catch (error) {
