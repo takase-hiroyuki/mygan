@@ -1,7 +1,12 @@
 // index_ui_cards_payment.js
 import { roomId } from './common_config.js';
-import { callRpcWithDebug, CELLS_DOODAD, CELLS_DOWNSIZED, CELLS_CHARITY, insertSystemMessage, getLocalPlayerName } from './common_utils.js'; // ★修正: getLocalPlayerName もここからインポート
 import { SEL_G } from './common_dom_selectors.js'; 
+import { callRpcWithDebug,
+        CELLS_DOODAD,
+        CELLS_DOWNSIZED,
+        CELLS_CHARITY,
+        insertSystemMessage,
+        getLocalPlayerName } from './common_utils.js';
 
 export async function executeGenericPayment(supabase, currentUserId, amountStr) {
     const playerName = getLocalPlayerName();
@@ -71,7 +76,6 @@ export async function executeGenericPayment(supabase, currentUserId, amountStr) 
 
     // 解雇（Downsized）の支払い判定
     if (CELLS_DOWNSIZED.includes(position) && !flags.is_action_completed) {
-        // ★修正: ルール通り「総支出の1ヶ月分」となるよう * 3 を削除しました
         const expectedAmount = state.financials?.total_expenses || 0;
         if (inputAmount !== expectedAmount) return await insertSystemMessage(supabase, playerName, "金額が一致しません。入力しなおしてください。"); 
         if (cash < expectedAmount) return await insertSystemMessage(supabase, playerName, "銀行ローンを組みなさい。"); 
