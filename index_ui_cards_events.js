@@ -75,8 +75,8 @@ export function initCardEventListeners(supabase, currentUserId) {
                 if (btn) btn.disabled = false;
                 return;
             }
-            const expectedAmount = (data.state?.financials?.total_expenses || 0) * 3;
-            await broadcastError(supabase, playerName, `解雇されたため、生活費3か月分として $${expectedAmount} を支払って下さい。`);
+            const expectedAmount = (data.state?.financials?.total_expenses || 0);
+            await broadcastError(supabase, playerName, `解雇されました。生活費3か月分 $${expectedAmount} を支払います。`);
             setButtonActive(SEL_G.CARD.BTN_EXECUTE_PAYMENT, true);
         } catch (error) {
             await broadcastError(supabase, playerName, `解雇処理エラー: ${error.message}`);
