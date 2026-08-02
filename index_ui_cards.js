@@ -76,7 +76,8 @@ export function updateCardPhaseUI(position, flags = {}, currentCard = null, play
     } else if (CELLS_DOODAD.includes(position)) {
         setButtonActive(SEL_G.CARD.BTN_DRAW_DOODAD, true);
     } else if (CELLS_CHARITY.includes(position)) {
-        setButtonActive(SEL_G.CARD.BTN_ACTION_DONATE, true);
+        // 寄付マス到達時は汎用支払いボタンを有効化する
+        setButtonActive(SEL_G.CARD.BTN_EXECUTE_PAYMENT, true);
     } else if (CELLS_DOWNSIZED.includes(position)) {
         setButtonActive(SEL_G.CARD.BTN_ACTION_DOWNSIZED, true);
     }
@@ -188,7 +189,45 @@ export async function executeGenericPayment(supabase, currentUserId, amountStr) 
         return;
     }
 
-    // 今後、ここに投資などの支払い判定ブロックを追加します
+    // ==========================================
+    // ケース3: 寄付（Charity）の支払い判定
+    // ==========================================
+    if (CELLS_CHARITY.includes(position) && !flags.is_action_completed) {
+        const totalIncome = state.financials?.total_income || 0;
+        // 総収入の10%（端数切り捨て等の調整が必要な場合は適宜変更）
+        const expectedAmount = Math.floor(totalIncome * 0.1);
+
+        if (inputAmount !== expectedAmount) {
+            await broadcastError(supabase, playerName, "金額が一致しません。入力しなおしてください。");
+            return;
+        }
+
+        if (cash < expectedAmount) {
+            await broadcastError(supabase, playerName, "銀行ローンを組みなさい。");
+            return;
+        }
+
+        if (btn) btn.disabled = true;
+        try {
+            const result = await callRpcWithDebug(supabase, 'action_donate_charity_v2', {
+                p_room_id: roomId,
+                p_user_id: currentUserId
+            });
+            
+            if (result && result.status === 'error') {
+                await broadcastError(supabase, playerName, `寄付処理エラー: ${result.message}`);
+                if (btn) btn.disabled = false;
+            } else {
+                const inputEl = document.getElementById(SEL_G.CARD.INPUT_PAYMENT_AMOUNT);
+                if (inputEl) inputEl.value = '';
+            }
+        } catch (error) {
+            await broadcastError(supabase, playerName, `寄付の支払いに失敗しました: ${error.message}`);
+            if (btn) btn.disabled = false;
+        }
+        return;
+    }
+
     await broadcastError(supabase, playerName, "現在、実行可能な支払いアクションはありません。");
 }
 
@@ -254,15 +293,23 @@ export function initCardEventListeners(supabase, currentUserId) {
         const playerName = getLocalPlayerName();
         
         try {
-            const result = await callRpcWithDebug(supabase, 'action_donate_charity_v2', {
-                p_room_id: roomId,
-                p_user_id: currentUserId
-            });
-            
-            if (result && result.status === 'error') {
-                await broadcastError(supabase, playerName, result.message);
+            // ★変更: 即時決済を行わず、総収入の10%を計算してgame_logsへ通知するのみとする
+            const { data, error } = await supabase.from('participants').select('state').eq('user_id', currentUserId).single();
+            if (error || !data) {
+                await broadcastError(supabase, playerName, "データの取得に失敗しました。");
                 if (btn) btn.disabled = false;
+                return;
             }
+
+            const totalIncome = data.state?.financials?.total_income || 0;
+            const expectedAmount = Math.floor(totalIncome * 0.1);
+
+            // game_logsへ支払いの指示を通知
+            await broadcastError(supabase, playerName, `寄付をするため、総収入の10%にあたる $${expectedAmount} を支払って下さい。`);
+            
+            // 汎用支払いボタンをアクティブにする
+            setButtonActive(SEL_G.CARD.BTN_EXECUTE_PAYMENT, true);
+
         } catch (error) {
             await broadcastError(supabase, playerName, `寄付処理エラー: ${error.message}`);
             if (btn) btn.disabled = false;
@@ -275,7 +322,6 @@ export function initCardEventListeners(supabase, currentUserId) {
         const playerName = getLocalPlayerName();
         
         try {
-            // ★変更: 即時決済を行わず、生活費3か月分を計算してgame_logsへ通知するのみとする
             const { data, error } = await supabase.from('participants').select('state').eq('user_id', currentUserId).single();
             if (error || !data) {
                 await broadcastError(supabase, playerName, "データの取得に失敗しました。");
@@ -286,10 +332,7 @@ export function initCardEventListeners(supabase, currentUserId) {
             const totalExpenses = data.state?.financials?.total_expenses || 0;
             const expectedAmount = totalExpenses * 3;
 
-            // game_logsへ支払いの指示を通知
             await broadcastError(supabase, playerName, `解雇されたため、生活費3か月分として $${expectedAmount} を支払って下さい。`);
-            
-            // 汎用支払いボタンをアクティブにする
             setButtonActive(SEL_G.CARD.BTN_EXECUTE_PAYMENT, true);
 
         } catch (error) {
