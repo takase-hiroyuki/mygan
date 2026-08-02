@@ -1,6 +1,9 @@
 // index_ui.js
 import { SEL_G } from './common_dom_selectors.js'; 
-import { setButtonActive, setMultipleButtonsActive, BOARD_CELL_NAMES, insertSystemMessage } from './common_utils.js'; 
+import { setButtonActive,
+        setMultipleButtonsActive,
+        BOARD_CELL_NAMES,
+        insertSystemMessage } from './common_utils.js'; 
 import { updateCardPhaseUI } from './index_ui_cards_ui.js'; 
 
 const sectionLogin = document.getElementById(SEL_G.LOGIN.SECTION);
@@ -75,27 +78,22 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
     if (Object.keys(financials).length > 0) {
         const liab = financials.liabilities || {};
         const exp = financials.expenses || {};
-
         const calcPhaseMsg = flags.is_calculating ? "計算せよ" : "計算不要";
-        safeUpdate(SEL_G.FINANCIALS.CALC_LOCK_STATUS, calcPhaseMsg);
 
+        safeUpdate(SEL_G.FINANCIALS.CALC_LOCK_STATUS, calcPhaseMsg);
         safeUpdate(SEL_G.FINANCIALS.DISPLAY_SALARY, toCurrency(financials.salary));
         safeUpdate(SEL_G.FINANCIALS.DISPLAY_PASSIVE_INCOME, toCurrency(financials.passive_income));
         safeUpdate(SEL_G.FINANCIALS.DISPLAY_TOTAL_INCOME, toCurrency(financials.total_income));
         safeUpdate(SEL_G.FINANCIALS.DISPLAY_TOTAL_EXPENSES, toCurrency(financials.total_expenses));
         safeUpdate(SEL_G.FINANCIALS.DISPLAY_MONTHLY_CASHFLOW, toCurrency(financials.net_cash_flow));
-
         safeUpdate(SEL_G.PORTFOLIO.LIABILITY_MORTGAGE, toCurrency(liab.mortgage));
         safeUpdate(SEL_G.PORTFOLIO.LIABILITY_CAR_LOAN, toCurrency(liab.car_loans)); 
         safeUpdate(SEL_G.PORTFOLIO.LIABILITY_RETAIL, toCurrency(liab.retail_debt)); 
-        safeUpdate(SEL_G.PORTFOLIO.DISPLAY_LIABILITY_BANKLOAN, toCurrency(liab.bank_loan));
-        
+        safeUpdate(SEL_G.PORTFOLIO.DISPLAY_LIABILITY_BANKLOAN, toCurrency(liab.bank_loan));        
         safeUpdate(SEL_G.PORTFOLIO.LIABILITY_SCHOOL_LOAN, toCurrency(liab.school_loans));
         safeUpdate(SEL_G.PORTFOLIO.LIABILITY_CREDIT_CARD, toCurrency(liab.credit_card_debt));
-        
         safeUpdate(SEL_G.PORTFOLIO.DISPLAY_EXPENSE_LOANINTEREST, toCurrency(exp.bank_loan_payment));
-        safeUpdate(SEL_G.PORTFOLIO.DISPLAY_EXPENSE_CHILD, toCurrency(exp.child_expense));
-        
+        safeUpdate(SEL_G.PORTFOLIO.DISPLAY_EXPENSE_CHILD, toCurrency(exp.child_expense));        
         safeUpdate(SEL_G.PORTFOLIO.DISPLAY_EXPENSE_TAXES, toCurrency(exp.taxes));
         safeUpdate(SEL_G.PORTFOLIO.DISPLAY_EXPENSE_MORTGAGE, toCurrency(exp.mortgage_payment));
         safeUpdate(SEL_G.PORTFOLIO.DISPLAY_EXPENSE_SCHOOL, toCurrency(exp.school_loan_payment));
@@ -110,8 +108,7 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
         disableAllActionButtons();
     } else {
         const turnUser = cachedParticipants.find(p => p.user_id === turnUserId);
-        const turnUserName = turnUser ? turnUser.state.name : "他のプレイヤー";
-        
+        const turnUserName = turnUser ? turnUser.state.name : "他のプレイヤー";        
         const currentCard = cachedRoom?.game_state?.current_card || null;
 
         if (isMyTurn) {
@@ -121,7 +118,7 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
                 const pendingPaydays = parseInt(flags.pending_paydays || 0, 10);
                 if (diceStatusArea) {
                     if (pendingPaydays > 0) {
-                        diceStatusArea.textContent = `結果:【${state.last_dice}】 Paycheck請求可能（${pendingPaydays}回分）`;
+                        diceStatusArea.textContent = `結果:【${state.last_dice}】 入金請求（${pendingPaydays}回分）`;
                     } else {
                         diceStatusArea.textContent = `結果:【${state.last_dice}】`;
                     }
@@ -137,8 +134,8 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
             
             setButtonActive(SEL_G.CONTROLS.BTN_ESCAPE_RAT_RACE, false);
             setButtonActive(SEL_G.FINANCIALS.BTN_CHECK_CALCULATIONS, !!flags.is_calculating);
-
             setButtonActive(SEL_G.PORTFOLIO.BTN_BORROW_LOAN, true);
+
             const currentCash = parseInt(financials.cash || 0, 10);
             const currentBankLoan = parseInt(financials.liabilities?.bank_loan || 0, 10);
             const canRepay = (currentCash >= 1000) && (currentBankLoan >= 1000);
@@ -161,12 +158,22 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
 export function disableAllActionButtons() {
     const { CONTROLS, CARD, PORTFOLIO, FINANCIALS } = SEL_G; 
     const actionButtonIds = [
-        CONTROLS.BTN_ROLL_DICE, CONTROLS.BTN_ROLL_DICE_2, CONTROLS.BTN_CLAIM_PAYCHECK, 
-        CONTROLS.BTN_END_TURN, CONTROLS.BTN_ESCAPE_RAT_RACE,
-        CARD.BTN_DRAW_SMALL_DEAL, CARD.BTN_DRAW_BIG_DEAL, CARD.BTN_DRAW_MARKET, CARD.BTN_DRAW_DOODAD,
-        CARD.BTN_BUY_REALESTATE, CARD.BTN_BUY_STOCK, CARD.BTN_SELL_STOCK, CARD.BTN_PASS,
+        CONTROLS.BTN_ROLL_DICE,
+        CONTROLS.BTN_ROLL_DICE_2,
+        CONTROLS.BTN_CLAIM_PAYCHECK, 
+        CONTROLS.BTN_END_TURN,
+        CONTROLS.BTN_ESCAPE_RAT_RACE,
+        CARD.BTN_DRAW_SMALL_DEAL,
+        CARD.BTN_DRAW_BIG_DEAL,
+        CARD.BTN_DRAW_MARKET,
+        CARD.BTN_DRAW_DOODAD,
+        CARD.BTN_BUY_REALESTATE,
+        CARD.BTN_BUY_STOCK,
+        CARD.BTN_SELL_STOCK,
+        CARD.BTN_PASS,
         CARD.BTN_EXECUTE_PAYMENT, 
-        PORTFOLIO.BTN_BORROW_LOAN, PORTFOLIO.BTN_PAYBACK_LOAN, 
+        PORTFOLIO.BTN_BORROW_LOAN,
+        PORTFOLIO.BTN_PAYBACK_LOAN, 
         FINANCIALS.BTN_CHECK_CALCULATIONS
     ];
     setMultipleButtonsActive(actionButtonIds, false);
