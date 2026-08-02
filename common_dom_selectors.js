@@ -58,9 +58,9 @@ export const DOM_SELECTORS = {
         CARD: {
             CONTAINER: 'card-display-container',
             NUMERICAL_DETAILS_CONTAINER: 'card-numerical-details', 
-            DETAIL_COST: 'card-detail-cost',               
+            DETAIL_COST: 'card-detail-cost',                
             DETAIL_DOWNPAYMENT: 'card-detail-downpayment', 
-            DETAIL_CASHFLOW: 'card-detail-cashflow',       
+            DETAIL_CASHFLOW: 'card-detail-cashflow',        
             DRAW_OPTIONS_CONTAINER: 'deck-draw-options',   
             BTN_DRAW_SMALL_DEAL: 'btn-draw-small-deal',    
             BTN_DRAW_BIG_DEAL: 'btn-draw-big-deal',        
@@ -71,8 +71,8 @@ export const DOM_SELECTORS = {
             OPTIONS_CONTAINER: 'card-action-options',    
             BTN_CARD_PASS: 'btn-card-pass',
             BTN_BUY_REALESTATE: 'btn-card-buy-realestate', 
-            BTN_BUY_STOCK: 'btn-card-buy-stock',           
-            BTN_SELL_STOCK: 'btn-card-sell-stock',         
+            BTN_BUY_STOCK: 'btn-card-buy-stock',            
+            BTN_SELL_STOCK: 'btn-card-sell-stock',          
             INPUT_PAYMENT_AMOUNT: 'input-payment-amount', // ★追加: 汎用支払い金額入力
             BTN_EXECUTE_PAYMENT: 'btn-execute-payment'    // ★追加: 汎用支払いボタン（「支払いを実行」用）
         },
@@ -189,5 +189,7 @@ export const DOM_SELECTORS = {
         }
     }
 };
+
+export const SEL_G = DOM_SELECTORS.GUEST;
 
 console.log("【デバッグ】common_dom_selectors.js が読み込まれました。");
