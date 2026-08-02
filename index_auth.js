@@ -1,6 +1,6 @@
 // index_auth.js
 import { roomId, SUPABASE_URL, SUPABASE_KEY } from './common_config.js';
-import { waitForSupabase, getInitialRegistrationState, displaySystemMessage, insertSystemMessage } from './common_utils.js'; // ★修正: displaySystemMessage と insertSystemMessage をインポート
+import { waitForSupabase, getInitialRegistrationState, insertSystemMessage } from './common_utils.js'; // ★修正: displaySystemMessage を削除し、insertSystemMessage に統一
 
 /**
  * Supabaseクライアントの初期化
@@ -73,18 +73,21 @@ export async function loginUser(supabase, username) {
         
     if (roomError) {
         console.error("[CRITICAL_ERROR] 部屋状態の取得に失敗しました:", roomError);
-        displaySystemMessage(username, "部屋情報の取得に失敗しました。");
+        // ★修正: insertSystemMessage に変更
+        await insertSystemMessage(supabase, username, "部屋情報の取得に失敗しました。");
         return null;
     }
 
     if (!roomCheck) {
-        displaySystemMessage(username, "指定された部屋が存在しません。");
+        // ★修正: insertSystemMessage に変更
+        await insertSystemMessage(supabase, username, "指定された部屋が存在しません。");
         return null;
     }
 
     if (roomCheck.game_state?.status !== 'waiting') {
         console.warn(`[DEBUG_AUTH] 入室拒否: 部屋のステータスが '${roomCheck.game_state.status}' です。`);
-        displaySystemMessage(username, "ゲームが既に開始されているか終了しているため、入室できません。");
+        // ★修正: insertSystemMessage に変更
+        await insertSystemMessage(supabase, username, "ゲームが既に開始されているか終了しているため、入室できません。");
         return null;
     }
 
@@ -107,13 +110,13 @@ export async function loginUser(supabase, username) {
     
     if (insertError) {
         console.error("[CRITICAL_ERROR] ユーザー登録(INSERT)に失敗しました:", insertError);
-        displaySystemMessage(username, "参加登録に失敗しました。");
+        // ★修正: insertSystemMessage に変更
+        await insertSystemMessage(supabase, username, "参加登録に失敗しました。");
         localStorage.removeItem('user_id');
         localStorage.removeItem('player_name');
         return null;
     }
 
-    // ★修正: 共通関数 insertSystemMessage を使用して入室ログを書き込む
     const logBody = `${username} が入室しました。ホストがゲームを開始するまでお待ちください。`;
     await insertSystemMessage(supabase, username, logBody);
     console.log("[DEBUG_AUTH] 入室ログの書き込みリクエストを送信しました。");
