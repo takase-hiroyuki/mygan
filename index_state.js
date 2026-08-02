@@ -1,18 +1,12 @@
 // index_state.js
 import { renderGuestUI } from './index_ui.js';
-import { SEL_G } from './common_dom_selectors.js'; // ★修正: SEL_G を直接インポート
-import { setButtonActive, CELLS_OPPORTUNITY, CELLS_DOODAD, CELLS_MARKET, displaySystemMessage } from './common_utils.js'; // ★修正: 定数名の変更と displaySystemMessage のインポートを追加
+import { SEL_G } from './common_dom_selectors.js'; 
+import { setButtonActive, CELLS_OPPORTUNITY, CELLS_DOODAD, CELLS_MARKET, displaySystemMessage, getLocalPlayerName } from './common_utils.js'; // ★修正: getLocalPlayerName をインポートに追加
 
 let cachedParticipants = [];
 let cachedRoom = null;
 
-/**
- * 画面（DOM）から現在のプレイヤー名を取得するヘルパー関数
- */
-function getLocalPlayerName() {
-    const nameEl = document.getElementById(SEL_G.STATUS.NAME); // ★修正
-    return (nameEl && nameEl.textContent !== '未定') ? nameEl.textContent : 'プレイヤー';
-}
+// ★修正: ここにあった getLocalPlayerName() のローカル定義を削除しました
 
 /**
  * プレイヤーの状態（フラグなど）に基づいて、アクションボタンの有効/無効を厳格に一元管理する
@@ -31,9 +25,9 @@ function updateActionButtonsState(playerState, isMyTurn) {
     const pendingPaydays = parseInt(flags.pending_paydays || 0, 10);
 
     const isDownsized = downsizedTurnsLeft > 0;
-    const SEL = SEL_G.CONTROLS; // ★修正
+    const SEL = SEL_G.CONTROLS; 
 
-    // ★修正: 新しいマスの定数名 (CELLS_...) を使用
+    // 新しいマスの定数名 (CELLS_...) を使用
     const isCardCell = CELLS_OPPORTUNITY.includes(position) || CELLS_DOODAD.includes(position) || CELLS_MARKET.includes(position);
     const isDownsizedCell = (position === 20); // 解雇マス
 
