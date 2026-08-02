@@ -1,7 +1,7 @@
 // index_state.js
 import { renderGuestUI } from './index_ui.js';
-import { DOM_SELECTORS } from './common_dom_selectors.js';
-import { setButtonActive, OPPORTUNITY_CELLS, DOODAD_CELLS, MARKET_CELLS } from './common_utils.js';
+import { SEL_G } from './common_dom_selectors.js'; // ★修正: SEL_G を直接インポート
+import { setButtonActive, CELLS_OPPORTUNITY, CELLS_DOODAD, CELLS_MARKET, displaySystemMessage } from './common_utils.js'; // ★修正: 定数名の変更と displaySystemMessage のインポートを追加
 
 let cachedParticipants = [];
 let cachedRoom = null;
@@ -10,43 +10,8 @@ let cachedRoom = null;
  * 画面（DOM）から現在のプレイヤー名を取得するヘルパー関数
  */
 function getLocalPlayerName() {
-    const nameEl = document.getElementById(DOM_SELECTORS.GUEST.STATUS.NAME);
+    const nameEl = document.getElementById(SEL_G.STATUS.NAME); // ★修正
     return (nameEl && nameEl.textContent !== '未定') ? nameEl.textContent : 'プレイヤー';
-}
-
-/**
- * システムメッセージをDOMのテーブルに追記する関数
- * @param {string} target - メッセージの宛先（1番目のtd用）
- * @param {string} body - メッセージ本文（2番目のtd用）
- */
-export function displaySystemMessage(target, body) {
-    const tbody = document.getElementById(DOM_SELECTORS.GUEST.MESSAGE.TABLE_BODY);
-    if (!tbody) {
-        console.warn("[WARNING] message-table-body が見つかりません。メッセージの表示をスキップします。");
-        return;
-    }
-
-    const tr = document.createElement('tr');
-    
-    const tdTarget = document.createElement('td');
-    tdTarget.textContent = target;
-    
-    const tdBody = document.createElement('td');
-    tdBody.textContent = body;
-    
-    tr.appendChild(tdTarget);
-    tr.appendChild(tdBody);
-    
-    // 古いログが上になり、最新ログが下に追加されていく
-    tbody.appendChild(tr);
-
-    // スクロールコンテナの最下部へ自動スクロール
-    const scrollContainer = tbody.parentElement.parentElement;
-    if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight;
-    }
-
-    console.log(`[game_logs] ${target} / ${body}`);
 }
 
 /**
@@ -66,9 +31,10 @@ function updateActionButtonsState(playerState, isMyTurn) {
     const pendingPaydays = parseInt(flags.pending_paydays || 0, 10);
 
     const isDownsized = downsizedTurnsLeft > 0;
-    const SEL = DOM_SELECTORS.GUEST.CONTROLS;
+    const SEL = SEL_G.CONTROLS; // ★修正
 
-    const isCardCell = OPPORTUNITY_CELLS.includes(position) || DOODAD_CELLS.includes(position) || MARKET_CELLS.includes(position);
+    // ★修正: 新しいマスの定数名 (CELLS_...) を使用
+    const isCardCell = CELLS_OPPORTUNITY.includes(position) || CELLS_DOODAD.includes(position) || CELLS_MARKET.includes(position);
     const isDownsizedCell = (position === 20); // 解雇マス
 
     // 1. サイコロ1個を振るボタンの制御
