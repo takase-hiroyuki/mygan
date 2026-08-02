@@ -1,7 +1,7 @@
 // index_actions_finance.js
 import { roomId } from './common_config.js';
 import { SEL_G } from './common_dom_selectors.js'; 
-import { callRpcWithDebug, displaySystemMessage, insertSystemMessage, getLocalPlayerName } from './common_utils.js'; // ★修正: insertSystemMessage をインポートに追加
+import { callRpcWithDebug, displaySystemMessage, insertSystemMessage, getLocalPlayerName } from './common_utils.js';
 
 export async function actionClaimPaycheck(supabase, currentUserId) {
     if (!supabase || !currentUserId) return;
@@ -16,7 +16,6 @@ export async function actionClaimPaycheck(supabase, currentUserId) {
             p_user_id: currentUserId 
         });
     } catch (error) {
-        // ★修正: DBに永続化するため insertSystemMessage に変更
         await insertSystemMessage(supabase, playerName, `エラー: ${error.message}`);
         if (claimButton) claimButton.disabled = false;
     }
@@ -33,7 +32,6 @@ export async function actionCheckCalculations(supabase, currentUserId) {
     const rawCashflow = inputCashflowEl ? inputCashflowEl.value.replace(/,/g, '').trim() : "";
 
     if (!/^-?\d+$/.test(rawIncome) || !/^-?\d+$/.test(rawCashflow)) {
-        // ★修正: DBに永続化するため insertSystemMessage に変更
         await insertSystemMessage(supabase, playerName, "総収入とキャッシュフローに【半角数字】を入力してください。");
         return;
     }
@@ -50,14 +48,12 @@ export async function actionCheckCalculations(supabase, currentUserId) {
         });
 
         if (data && data.status === 'error') {
-            // ★修正: DBに永続化するため insertSystemMessage に変更
             await insertSystemMessage(supabase, playerName, `エラー: ${data.message}`);
         } else {
             if (inputIncomeEl) inputIncomeEl.value = '';
             if (inputCashflowEl) inputCashflowEl.value = '';
         }
     } catch (error) {
-        // ★修正: DBに永続化するため insertSystemMessage に変更
         await insertSystemMessage(supabase, playerName, `エラー: ${error.message}`);
     }
 }
