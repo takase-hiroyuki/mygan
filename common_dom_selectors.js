@@ -57,7 +57,6 @@ export const DOM_SELECTORS = {
         // カードドロー・取引エリア
         CARD: {
             CONTAINER: 'card-display-container',
-            LEGEND: 'display-card-legend',                 
             NUMERICAL_DETAILS_CONTAINER: 'card-numerical-details', 
             DETAIL_COST: 'card-detail-cost',               
             DETAIL_DOWNPAYMENT: 'card-detail-downpayment', 
@@ -70,11 +69,12 @@ export const DOM_SELECTORS = {
             BTN_ACTION_DONATE: 'btn-action-donate',        
             BTN_ACTION_DOWNSIZED: 'btn-action-downsized',  
             OPTIONS_CONTAINER: 'card-action-options',    
+            BTN_CARD_PASS: 'btn-card-pass',
             BTN_BUY_REALESTATE: 'btn-card-buy-realestate', 
             BTN_BUY_STOCK: 'btn-card-buy-stock',           
             BTN_SELL_STOCK: 'btn-card-sell-stock',         
-            BTN_PAY_DOODAD: 'btn-card-pay-doodad',         
-            BTN_PASS: 'btn-card-pass'                      
+            INPUT_PAYMENT_AMOUNT: 'input-payment-amount', // ★追加: 汎用支払い金額入力
+            BTN_EXECUTE_PAYMENT: 'btn-execute-payment'    // ★追加: 汎用支払いボタン（「支払いを実行」用）
         },
 
         // 財務諸表（PL/BS）手動計算エリア
