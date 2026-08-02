@@ -8,7 +8,6 @@ import { executeGenericPayment } from './index_ui_cards_payment.js';
 
 import { initSupabaseClient, checkExistingLogin, loginUser } from './index_auth.js';
 import { startSubscriptions } from './index_state.js'; 
-// ★修正: displaySystemMessage を廃止し、insertSystemMessage をインポート
 import { insertSystemMessage } from './common_utils.js'; 
 import { actionRollDice, actionEndTurn } from './index_actions_turn.js';
 import { actionClaimPaycheck, actionCheckCalculations } from './index_actions_finance.js';
@@ -26,8 +25,6 @@ const btnEndTurn = document.getElementById(SEL_G.CONTROLS.BTN_END_TURN);
 const btnCheckCalculations = document.getElementById(SEL_G.FINANCIALS.BTN_CHECK_CALCULATIONS);
 const btnBorrowLoan = document.getElementById(SEL_G.PORTFOLIO.BTN_BORROW_LOAN);
 const btnPaybackLoan = document.getElementById(SEL_G.PORTFOLIO.BTN_PAYBACK_LOAN);
-
-// 汎用支払い関連のDOM要素を取得
 const inputPaymentAmount = document.getElementById(SEL_G.CARD.INPUT_PAYMENT_AMOUNT);
 const btnExecutePayment = document.getElementById(SEL_G.CARD.BTN_EXECUTE_PAYMENT);
 
@@ -61,16 +58,12 @@ function setupCardListeners() {
     }
 })();
 
-// ==========================================
 // イベントリスナーの登録
-// ==========================================
-
 btnLogin?.addEventListener('click', async () => {
     console.log("[DEBUG-UI] 「ログイン」ボタンが押下されました");
     if (!supabase) return;
     const username = inputUsername?.value.trim();
     if (!username) { 
-        // ★修正: DBに永続化するため insertSystemMessage に変更
         await insertSystemMessage(supabase, "システム", "名前を入力してください。");
         return; 
     }
@@ -123,7 +116,6 @@ btnPaybackLoan?.addEventListener('click', () => {
     actionRepayBankLoan(supabase, currentUserId);
 });
 
-// 汎用支払い実行ボタンのイベントリスナー
 btnExecutePayment?.addEventListener('click', () => {
     console.log("[DEBUG-UI] 「支払いを実行」ボタンが押下されました");
     if (!supabase || !currentUserId) return;
@@ -136,10 +128,7 @@ btnExecutePayment?.addEventListener('click', () => {
     }
 });
 
-// ==========================================
 // デバッグ機能
-// ==========================================
-
 async function debugSupabaseConnection(supabaseClient) {
     console.log("[DEBUG-NETWORK] 接続テストを開始します。");
     try {
