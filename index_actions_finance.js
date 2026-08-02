@@ -1,12 +1,9 @@
 // index_actions_finance.js
 import { roomId } from './common_config.js';
-import { SEL_G } from './common_dom_selectors.js'; // ★修正: SEL_G を直接インポート
-import { callRpcWithDebug, displaySystemMessage } from './common_utils.js'; // ★修正: displaySystemMessage のインポート元を変更
+import { SEL_G } from './common_dom_selectors.js'; 
+import { callRpcWithDebug, displaySystemMessage, getLocalPlayerName } from './common_utils.js'; // ★修正: getLocalPlayerName をインポートに追加
 
-function getLocalPlayerName() {
-    const nameEl = document.getElementById(SEL_G.STATUS.NAME);
-    return (nameEl && nameEl.textContent !== '未定') ? nameEl.textContent : 'プレイヤー';
-}
+// ★修正: ここにあった getLocalPlayerName() のローカル定義を削除しました
 
 export async function actionClaimPaycheck(supabase, currentUserId) {
     if (!supabase || !currentUserId) return;
