@@ -2,7 +2,7 @@
 import { DOM_SELECTORS } from './common_dom_selectors.js';
 import { setButtonActive, setMultipleButtonsActive, BOARD_CELL_NAMES } from './common_utils.js';
 import { updateCardPhaseUI } from './index_ui_cards.js'; 
-import { displaySystemMessage } from './index_state.js'; // ★変更: index_state.js からインポート
+import { displaySystemMessage } from './index_state.js'; 
 
 const SEL_G = DOM_SELECTORS.GUEST;
 const sectionLogin = document.getElementById(SEL_G.LOGIN.SECTION);
@@ -10,27 +10,17 @@ const sectionGuest = document.getElementById(SEL_G.STATUS.SECTION);
 const diceStatusArea = document.getElementById(SEL_G.CONTROLS.STATUS_AREA);
 const guestDiceResult = document.getElementById(SEL_G.CONTROLS.DICE_RESULT);
 
-// 直前の手番ユーザーIDを保持し、通知の連続発出を防止する
 let previousTurnUserId = null;
 
-/**
- * ログイン画面とゲスト画面の切り替え
- */
 export function toggleScreen(isLoggedIn) {
     if (sectionLogin) sectionLogin.hidden = isLoggedIn;
     if (sectionGuest) sectionGuest.hidden = !isLoggedIn;
 }
 
-/**
- * 通貨フォーマット用ヘルパー関数
- */
 function toCurrency(value) {
     return Number(value || 0).toLocaleString();
 }
 
-/**
- * ゲスト画面全体の描画更新（純粋なView関数）
- */
 export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
     const record = cachedParticipants.find(p => p.user_id === currentUserId);
     if (!record || !record.state) return;
@@ -42,7 +32,6 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
     const isMyTurn = (turnUserId === currentUserId);
     const isPlaying = cachedRoom?.game_state?.status === 'playing';
 
-    // ターンが切り替わった瞬間、すべてのクライアントでシステムメッセージを発出
     if (isPlaying && turnUserId !== previousTurnUserId) {
         const currentTurnUser = cachedParticipants.find(p => p.user_id === turnUserId);
         const targetName = currentTurnUser?.state?.name || "プレイヤー";
@@ -51,7 +40,6 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
         previousTurnUserId = turnUserId;
     }
 
-    // 1. プレイヤー情報の表示
     const safeUpdate = (selectorId, text) => {
         if (selectorId) {
             const el = document.getElementById(selectorId);
@@ -64,12 +52,9 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
     safeUpdate(SEL_G.STATUS.PROFESSION, state.profession || "未定");
     safeUpdate(SEL_G.STATUS.ROLE, state.role || "general");
     
-    // 子供の数の描画
     safeUpdate(SEL_G.STATUS.CHILDREN_COUNT, state.children_count || 0);
-    // 1人あたりの養育費の描画
     safeUpdate(SEL_G.STATUS.PER_CHILD_EXPENSE, toCurrency(financials.per_child_expense));
 
-    // 2. 盤面描画
     for (let i = 0; i < 24; i++) {
         const cell = document.getElementById(`${SEL_G.BOARD.RAT_PREFIX}${i}`);
         if (cell) cell.innerHTML = "";
@@ -86,7 +71,6 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
         }
     });
 
-    // 3. 財務諸表・資産負債状況の描画更新
     if (Object.keys(financials).length > 0) {
         const liab = financials.liabilities || {};
         const exp = financials.expenses || {};
@@ -94,28 +78,23 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
         const calcPhaseMsg = flags.is_calculating ? "計算せよ" : "計算不要";
         safeUpdate(SEL_G.FINANCIALS.CALC_LOCK_STATUS, calcPhaseMsg);
 
-        // 財務諸表 (Income & Expenses)
         safeUpdate(SEL_G.FINANCIALS.DISPLAY_SALARY, toCurrency(financials.salary));
         safeUpdate(SEL_G.FINANCIALS.DISPLAY_PASSIVE_INCOME, toCurrency(financials.passive_income));
         safeUpdate(SEL_G.FINANCIALS.DISPLAY_TOTAL_INCOME, toCurrency(financials.total_income));
         safeUpdate(SEL_G.FINANCIALS.DISPLAY_TOTAL_EXPENSES, toCurrency(financials.total_expenses));
         safeUpdate(SEL_G.FINANCIALS.DISPLAY_MONTHLY_CASHFLOW, toCurrency(financials.net_cash_flow));
 
-        // 負債状況 (Liabilities)
         safeUpdate(SEL_G.PORTFOLIO.LIABILITY_MORTGAGE, toCurrency(liab.mortgage));
         safeUpdate(SEL_G.PORTFOLIO.LIABILITY_CAR_LOAN, toCurrency(liab.car_loans)); 
         safeUpdate(SEL_G.PORTFOLIO.LIABILITY_RETAIL, toCurrency(liab.retail_debt)); 
         safeUpdate(SEL_G.PORTFOLIO.DISPLAY_LIABILITY_BANKLOAN, toCurrency(liab.bank_loan));
         
-        // その他の負債
         safeUpdate(SEL_G.PORTFOLIO.LIABILITY_SCHOOL_LOAN, toCurrency(liab.school_loans));
         safeUpdate(SEL_G.PORTFOLIO.LIABILITY_CREDIT_CARD, toCurrency(liab.credit_card_debt));
         
-        // 支出 (Expenses)
         safeUpdate(SEL_G.PORTFOLIO.DISPLAY_EXPENSE_LOANINTEREST, toCurrency(exp.bank_loan_payment));
         safeUpdate(SEL_G.PORTFOLIO.DISPLAY_EXPENSE_CHILD, toCurrency(exp.child_expense));
         
-        // その他の各種支出
         safeUpdate(SEL_G.PORTFOLIO.DISPLAY_EXPENSE_TAXES, toCurrency(exp.taxes));
         safeUpdate(SEL_G.PORTFOLIO.DISPLAY_EXPENSE_MORTGAGE, toCurrency(exp.mortgage_payment));
         safeUpdate(SEL_G.PORTFOLIO.DISPLAY_EXPENSE_SCHOOL, toCurrency(exp.school_loan_payment));
@@ -125,7 +104,6 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
         safeUpdate(SEL_G.PORTFOLIO.DISPLAY_EXPENSE_OTHER, toCurrency(exp.other_expenses));
     }
 
-    // 4. ステータスメッセージ・個別ボタン制御
     if (!isPlaying) {
         if (diceStatusArea) diceStatusArea.textContent = "ホストがゲームを開始するまでお待ちください。";
         disableAllActionButtons();
@@ -133,12 +111,11 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
         const turnUser = cachedParticipants.find(p => p.user_id === turnUserId);
         const turnUserName = turnUser ? turnUser.state.name : "他のプレイヤー";
         
-        // データベース(room)から現在引かれているカードの情報を取得
         const currentCard = cachedRoom?.game_state?.current_card || null;
 
         if (isMyTurn) {
             if (state.last_dice > 0) {
-                // currentCard と turnUserName を UI更新関数へ渡す
+                // UI表示の更新を index_ui_cards.js に委譲
                 updateCardPhaseUI(state.position, flags, currentCard, turnUserName);
                 
                 const pendingPaydays = parseInt(flags.pending_paydays || 0, 10);
@@ -156,8 +133,7 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
                     SEL_G.CARD.BTN_DRAW_SMALL_DEAL, SEL_G.CARD.BTN_DRAW_BIG_DEAL,
                     SEL_G.CARD.BTN_DRAW_MARKET, SEL_G.CARD.BTN_DRAW_DOODAD
                 ], false);
-                const statusMessage = document.getElementById(SEL_G.CARD.STATUS_MESSAGE);
-                if (statusMessage) statusMessage.textContent = "サイコロを振って移動してください。";
+                // ローカルメッセージの削除: STATUS_MESSAGEへのテキスト代入を削除
             }
             
             setButtonActive(SEL_G.CONTROLS.BTN_ESCAPE_RAT_RACE, false);
@@ -172,21 +148,10 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
         } else {
             if (diceStatusArea) diceStatusArea.textContent = `[${turnUserName}] がプレイ中`;
             disableAllActionButtons();
-            
-            const statusMessage = document.getElementById(SEL_G.CARD.STATUS_MESSAGE);
-            if (statusMessage) {
-                // 他のプレイヤーがカードを引いている場合、その内容を待機画面にも表示する
-                if (currentCard) {
-                    const costText = currentCard.cost ? `費用: $${currentCard.cost}` : (currentCard.down_payment ? `頭金: $${currentCard.down_payment}` : "価格情報なし");
-                    statusMessage.textContent = `【${turnUserName} が引いたカード】 ${currentCard.title} - ${currentCard.description || ''} (${costText})`;
-                } else {
-                    statusMessage.textContent = "他のプレイヤーの行動を待っています。";
-                }
-            }
+            // ローカルメッセージの削除: 待機時における STATUS_MESSAGEへのテキスト代入を削除
         }
     }
 
-    // 5. 現在位置の表示更新
     if (guestDiceResult && state.position !== undefined) {
         const posNum = state.position;
         const posStr = String(posNum).padStart(2, '0');
@@ -195,9 +160,6 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
     }
 }
 
-/**
- * ゲスト画面のすべてのアクションボタンを一括で無効化する
- */
 export function disableAllActionButtons() {
     const { CONTROLS, CARD, PORTFOLIO, FINANCIALS } = DOM_SELECTORS.GUEST;
     const actionButtonIds = [
