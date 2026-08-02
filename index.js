@@ -2,8 +2,11 @@
 import { roomId } from './common_config.js';
 import { DOM_SELECTORS } from './common_dom_selectors.js';
 import { toggleScreen } from './index_ui.js';
-// ★追加: 今後実装する executeGenericPayment をインポートに加える
-import { initCardEventListeners, executeGenericPayment } from './index_ui_cards.js'; 
+
+// ★変更: 分割されたファイルからインポートするように修正
+import { initCardEventListeners } from './index_ui_cards_events.js'; 
+import { executeGenericPayment } from './index_ui_cards_payment.js';
+
 import { initSupabaseClient, checkExistingLogin, loginUser } from './index_auth.js';
 import { startSubscriptions, displaySystemMessage } from './index_state.js';
 import { actionRollDice, actionEndTurn } from './index_actions_turn.js';
