@@ -1,13 +1,10 @@
 // index_actions_turn.js
 import { roomId } from './common_config.js';
-import { SEL_G } from './common_dom_selectors.js'; // ★修正: SEL_G を直接インポート
+import { SEL_G } from './common_dom_selectors.js'; 
 import { disableAllActionButtons } from './index_ui.js';
-import { callRpcWithDebug, CELLS_OPPORTUNITY, CELLS_DOODAD, CELLS_MARKET, displaySystemMessage } from './common_utils.js'; // ★修正: マス目定数の名前変更と displaySystemMessage の移動を反映
+import { callRpcWithDebug, CELLS_OPPORTUNITY, CELLS_DOODAD, CELLS_MARKET, insertSystemMessage, getLocalPlayerName } from './common_utils.js'; // ★修正: displaySystemMessage を廃止し insertSystemMessage と getLocalPlayerName をインポート
 
-function getLocalPlayerName() {
-    const nameEl = document.getElementById(SEL_G.STATUS.NAME);
-    return (nameEl && nameEl.textContent !== '未定') ? nameEl.textContent : 'プレイヤー';
-}
+// ★修正: ここにあった localGetPlayerName() のローカル定義を削除しました
 
 async function updatePlayerFlag(supabase, userId, flagName, value) {
     const { data, error: fetchError } = await supabase
@@ -55,7 +52,8 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
     
     if (flags.has_rolled_dice || flags.is_calculating || downsizedTurnsLeft > 0) {
         if (downsizedTurnsLeft > 0) {
-            displaySystemMessage(playerName, "休み期間中。そのまま手番を終了して下さい。");
+            // ★修正: DBに永続化するため insertSystemMessage に変更
+            await insertSystemMessage(supabase, playerName, "休み期間中。そのまま手番を終了して下さい。");
         }
         return;
     }
@@ -67,7 +65,8 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
             p_dice_count: diceCount
         });
     } catch (error) {
-        displaySystemMessage(playerName, `エラー: ${error.message}`);
+        // ★修正: DBに永続化するため insertSystemMessage に変更
+        await insertSystemMessage(supabase, playerName, `エラー: ${error.message}`);
     }
 }
 
@@ -96,7 +95,6 @@ export async function actionEndTurn(supabase, currentUserId) {
     const isDownsized = downsizedTurnsLeft > 0;
     const cash = parseInt(financials.cash || 0, 10);
 
-    // ★修正: 新しい CELLS_ プレフィックスの定数を使用する
     const isCardCell = CELLS_OPPORTUNITY.includes(position) || CELLS_DOODAD.includes(position) || CELLS_MARKET.includes(position);
     const hasMandatoryPaycheck = (pendingPaydays > 0) && isNegativeCashFlow;
 
@@ -114,7 +112,8 @@ export async function actionEndTurn(supabase, currentUserId) {
             window.location.reload();
             return;
         } catch (error) {
-            displaySystemMessage(playerName, `エラー: ${error.message}`);
+            // ★修正: DBに永続化するため insertSystemMessage に変更
+            await insertSystemMessage(supabase, playerName, `エラー: ${error.message}`);
             return;
         }
     }
@@ -134,7 +133,8 @@ export async function actionEndTurn(supabase, currentUserId) {
             p_user_id: currentUserId 
         });
     } catch (error) {
-        displaySystemMessage(playerName, `エラー: ${error.message}`);
+        // ★修正: DBに永続化するため insertSystemMessage に変更
+        await insertSystemMessage(supabase, playerName, `エラー: ${error.message}`);
     }
 }
 
