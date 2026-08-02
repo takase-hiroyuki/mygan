@@ -18,9 +18,14 @@ export function initCardEventListeners(supabase, currentUserId) {
         
         try {
             const result = await callRpcWithDebug(supabase, rpcName, { p_room_id: roomId, p_user_id: currentUserId });
+            
             if (result && result.status === 'error') {
                 await insertSystemMessage(supabase, playerName, result.message);
                 if (btn) btn.disabled = false;
+            } else {
+                // ★追加: 成功時に返ってきたカードデータを丸ごと文字列化してログに表示する
+                const rawCardData = JSON.stringify(result);
+                await insertSystemMessage(supabase, playerName, `【カード内容】 ${rawCardData}`);
             }
         } catch (error) {
             await insertSystemMessage(supabase, playerName, `カードを引く処理に失敗しました: ${error.message}`);
@@ -75,7 +80,6 @@ export function initCardEventListeners(supabase, currentUserId) {
                 if (btn) btn.disabled = false;
                 return;
             }
-            // ★修正: ルール通り「総支出の1ヶ月分」に修正し、メッセージテキストも変更
             const expectedAmount = data.state?.financials?.total_expenses || 0;
             await insertSystemMessage(supabase, playerName, `解雇されました。総支出と同額の $${expectedAmount} を支払います。`);
             setButtonActive(SEL_G.CARD.BTN_EXECUTE_PAYMENT, true);
