@@ -1,11 +1,10 @@
 // index_actions_loan.js
 import { roomId } from './common_config.js';
-import { DOM_SELECTORS } from './common_dom_selectors.js';
-import { callRpcWithDebug } from './common_utils.js';
-import { displaySystemMessage } from './index_state.js';
+import { SEL_G } from './common_dom_selectors.js'; // ★修正: SEL_G を直接インポート
+import { callRpcWithDebug, displaySystemMessage } from './common_utils.js'; // ★修正: displaySystemMessage のインポート元を変更
 
 function getLocalPlayerName() {
-    const nameEl = document.getElementById(DOM_SELECTORS.GUEST.STATUS.NAME);
+    const nameEl = document.getElementById(SEL_G.STATUS.NAME);
     return (nameEl && nameEl.textContent !== '未定') ? nameEl.textContent : 'プレイヤー';
 }
 
