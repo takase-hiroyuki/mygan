@@ -50,6 +50,14 @@ export function updateCardPhaseUI(position, flags = {}, currentCard = null, play
     setMultipleButtonsActive(drawButtons, false);
     setMultipleButtonsActive(actionButtons, false);
 
+    // ==========================================
+    // マイナスキャッシュフロー時の強制支払いフェーズ
+    // ==========================================
+    if (flags.is_negative_cash_flow) {
+        setButtonActive(SEL_G.CARD.BTN_EXECUTE_PAYMENT, true);
+        return;
+    }
+
     if (flags.is_action_completed) {
         return;
     }
@@ -76,7 +84,6 @@ export function updateCardPhaseUI(position, flags = {}, currentCard = null, play
     } else if (CELLS_DOODAD.includes(position)) {
         setButtonActive(SEL_G.CARD.BTN_DRAW_DOODAD, true);
     } else if (CELLS_CHARITY.includes(position)) {
-        // 寄付マス到達時は汎用支払いボタンを有効化する
         setButtonActive(SEL_G.CARD.BTN_EXECUTE_PAYMENT, true);
     } else if (CELLS_DOWNSIZED.includes(position)) {
         setButtonActive(SEL_G.CARD.BTN_ACTION_DOWNSIZED, true);
@@ -108,6 +115,45 @@ export async function executeGenericPayment(supabase, currentUserId, amountStr) 
     const currentCard = roomData.game_state?.current_card;
 
     const btn = document.getElementById(SEL_G.CARD.BTN_EXECUTE_PAYMENT);
+
+    // ==========================================
+    // ケース4: マイナスキャッシュフローの支払い判定
+    // ==========================================
+    if (flags.is_negative_cash_flow) {
+        const netCashFlow = state.financials?.net_cash_flow || 0;
+        const expectedAmount = Math.abs(netCashFlow); // マイナス分を絶対値で取得
+
+        if (inputAmount !== expectedAmount) {
+            await broadcastError(supabase, playerName, "金額が一致しません。入力しなおしてください。");
+            return;
+        }
+
+        if (cash < expectedAmount) {
+            await broadcastError(supabase, playerName, "銀行ローンを組みなさい。");
+            return;
+        }
+
+        if (btn) btn.disabled = true;
+        try {
+            // ※サーバー側の決済RPCの名称に合わせて調整してください（仮: action_pay_negative_cashflow_v2）
+            const result = await callRpcWithDebug(supabase, 'action_pay_negative_cashflow_v2', {
+                p_room_id: roomId,
+                p_user_id: currentUserId
+            });
+            
+            if (result && result.status === 'error') {
+                await broadcastError(supabase, playerName, `支払いエラー: ${result.message}`);
+                if (btn) btn.disabled = false;
+            } else {
+                const inputEl = document.getElementById(SEL_G.CARD.INPUT_PAYMENT_AMOUNT);
+                if (inputEl) inputEl.value = '';
+            }
+        } catch (error) {
+            await broadcastError(supabase, playerName, `マイナスキャッシュフローの支払いに失敗しました: ${error.message}`);
+            if (btn) btn.disabled = false;
+        }
+        return;
+    }
 
     // ==========================================
     // ケース1: Doodad（無駄遣い）の支払い判定
@@ -194,7 +240,6 @@ export async function executeGenericPayment(supabase, currentUserId, amountStr) 
     // ==========================================
     if (CELLS_CHARITY.includes(position) && !flags.is_action_completed) {
         const totalIncome = state.financials?.total_income || 0;
-        // 総収入の10%（端数切り捨て等の調整が必要な場合は適宜変更）
         const expectedAmount = Math.floor(totalIncome * 0.1);
 
         if (inputAmount !== expectedAmount) {
@@ -293,7 +338,6 @@ export function initCardEventListeners(supabase, currentUserId) {
         const playerName = getLocalPlayerName();
         
         try {
-            // ★変更: 即時決済を行わず、総収入の10%を計算してgame_logsへ通知するのみとする
             const { data, error } = await supabase.from('participants').select('state').eq('user_id', currentUserId).single();
             if (error || !data) {
                 await broadcastError(supabase, playerName, "データの取得に失敗しました。");
@@ -304,10 +348,7 @@ export function initCardEventListeners(supabase, currentUserId) {
             const totalIncome = data.state?.financials?.total_income || 0;
             const expectedAmount = Math.floor(totalIncome * 0.1);
 
-            // game_logsへ支払いの指示を通知
             await broadcastError(supabase, playerName, `寄付をするため、総収入の10%にあたる $${expectedAmount} を支払って下さい。`);
-            
-            // 汎用支払いボタンをアクティブにする
             setButtonActive(SEL_G.CARD.BTN_EXECUTE_PAYMENT, true);
 
         } catch (error) {
