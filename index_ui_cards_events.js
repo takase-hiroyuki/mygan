@@ -23,10 +23,7 @@ export function initCardEventListeners(supabase, currentUserId) {
                 await insertSystemMessage(supabase, playerName, result.message);
                 if (btn) btn.disabled = false;
             } else {
-                // ★追加: ブラウザのコンソール（F12）に生のオブジェクトを直接出力する
-                console.log("[DEBUG] RPCから受け取ったカードデータ:", result);
-                
-                // ★追加: 成功時に返ってきたカードデータを丸ごと文字列化し、画面はみ出しを防ぐためカンマ後にスペースを挿入する
+                console.log("[DEBUG] RPCから受け取ったカードデータ:", result);                
                 const rawCardData = JSON.stringify(result).replace(/,/g, ', ');
                 await insertSystemMessage(supabase, playerName, `【カード内容】 ${rawCardData}`);
             }
