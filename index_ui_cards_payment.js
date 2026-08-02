@@ -27,13 +27,13 @@ export async function executeGenericPayment(supabase, currentUserId, amountStr) 
     const btn = document.getElementById(SEL_G.CARD.BTN_EXECUTE_PAYMENT);
 
     // マイナスキャッシュフローの支払い判定
-    if (flags.is_negative_cash_flow) {
-        const expectedAmount = Math.abs(state.financials?.net_cash_flow || 0);
+    if (flags.is_negative_cash_flow && (flags.pending_paydays || 0) > 0) {
+        const expectedAmount = Math.abs(state.financials?.net_cash_flow || 0) * flags.pending_paydays;
         if (inputAmount !== expectedAmount) return await broadcastError(supabase, playerName, "金額が一致しません。入力しなおしてください。");
         if (cash < expectedAmount) return await broadcastError(supabase, playerName, "銀行ローンを組みなさい。");
         if (btn) btn.disabled = true;
         try {
-            const result = await callRpcWithDebug(supabase, 'action_pay_negative_cashflow_v2', { p_room_id: roomId, p_user_id: currentUserId });
+            const result = await callRpcWithDebug(supabase, 'claim_paycheck_v2', { p_room_id: roomId, p_user_id: currentUserId });
             if (result && result.status === 'error') {
                 await broadcastError(supabase, playerName, `支払いエラー: ${result.message}`);
                 if (btn) btn.disabled = false;
