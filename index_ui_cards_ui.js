@@ -1,16 +1,28 @@
 // index_ui_cards_ui.js
-import { setButtonActive, setMultipleButtonsActive, CELLS_OPPORTUNITY, CELLS_MARKET, CELLS_DOODAD, CELLS_CHARITY, CELLS_DOWNSIZED } from './common_utils.js';
 import { SEL_G } from './common_dom_selectors.js';
+import { setButtonActive,
+        setMultipleButtonsActive,
+        CELLS_OPPORTUNITY,
+        CELLS_MARKET,
+        CELLS_DOODAD,
+        CELLS_CHARITY,
+        CELLS_DOWNSIZED } from './common_utils.js';
 
 export function updateCardPhaseUI(position, flags = {}, currentCard = null, playerName = "現在のプレイヤー") {
     const drawButtons = [
-        SEL_G.CARD.BTN_DRAW_SMALL_DEAL, SEL_G.CARD.BTN_DRAW_BIG_DEAL,
-        SEL_G.CARD.BTN_DRAW_MARKET, SEL_G.CARD.BTN_DRAW_DOODAD,
-        SEL_G.CARD.BTN_ACTION_DONATE, SEL_G.CARD.BTN_ACTION_DOWNSIZED
+        SEL_G.CARD.BTN_DRAW_SMALL_DEAL,
+        SEL_G.CARD.BTN_DRAW_BIG_DEAL,
+        SEL_G.CARD.BTN_DRAW_MARKET,
+        SEL_G.CARD.BTN_DRAW_DOODAD,
+        SEL_G.CARD.BTN_ACTION_DONATE,
+        SEL_G.CARD.BTN_ACTION_DOWNSIZED
     ];
     const actionButtons = [
-        SEL_G.CARD.BTN_BUY_REALESTATE, SEL_G.CARD.BTN_BUY_STOCK,
-        SEL_G.CARD.BTN_SELL_STOCK, SEL_G.CARD.BTN_PASS, SEL_G.CARD.BTN_EXECUTE_PAYMENT 
+        SEL_G.CARD.BTN_BUY_REALESTATE,
+        SEL_G.CARD.BTN_BUY_STOCK,
+        SEL_G.CARD.BTN_SELL_STOCK,
+        SEL_G.CARD.BTN_PASS,
+        SEL_G.CARD.BTN_EXECUTE_PAYMENT 
     ];
     
     setMultipleButtonsActive(drawButtons, false);
@@ -45,7 +57,6 @@ export function updateCardPhaseUI(position, flags = {}, currentCard = null, play
     } else if (CELLS_DOODAD.includes(position)) {
         setButtonActive(SEL_G.CARD.BTN_DRAW_DOODAD, true);
     } else if (CELLS_CHARITY.includes(position)) {
-        // ★修正: いきなり支払いではなく「寄付アクション」ボタンと「パス」ボタンを有効にする
         setButtonActive(SEL_G.CARD.BTN_ACTION_DONATE, true);
         setButtonActive(SEL_G.CARD.BTN_PASS, true);
     } else if (CELLS_DOWNSIZED.includes(position)) {
