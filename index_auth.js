@@ -1,7 +1,6 @@
 // index_auth.js
 import { roomId, SUPABASE_URL, SUPABASE_KEY } from './common_config.js';
-import { waitForSupabase, getInitialRegistrationState } from './common_utils.js';
-import { displaySystemMessage } from './index_state.js'; 
+import { waitForSupabase, getInitialRegistrationState, displaySystemMessage, insertSystemMessage } from './common_utils.js'; // ★修正: displaySystemMessage と insertSystemMessage をインポート
 
 /**
  * Supabaseクライアントの初期化
@@ -114,22 +113,10 @@ export async function loginUser(supabase, username) {
         return null;
     }
 
-    // ★修正: game_logs の正しいカラム（target, title, body）に対してINSERTを行う
+    // ★修正: 共通関数 insertSystemMessage を使用して入室ログを書き込む
     const logBody = `${username} が入室しました。ホストがゲームを開始するまでお待ちください。`;
-    const { error: logError } = await supabase
-        .from('game_logs')
-        .insert([{ 
-            room_id: roomId, 
-            target: username,
-            title: 'システム',
-            body: logBody 
-        }]);
-
-    if (logError) {
-        console.error("[DEBUG_AUTH] 入室ログの書き込みに失敗しました:", logError);
-    } else {
-        console.log("[DEBUG_AUTH] 入室ログの書き込みに成功しました。");
-    }
+    await insertSystemMessage(supabase, username, logBody);
+    console.log("[DEBUG_AUTH] 入室ログの書き込みリクエストを送信しました。");
     
     console.log(`[DEBUG_AUTH] ログイン(INSERT)完了: user_id=${newUserId}`);
     return newUserId;
