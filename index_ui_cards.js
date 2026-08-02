@@ -43,8 +43,8 @@ export function updateCardPhaseUI(position, flags = {}, currentCard = null, play
         SEL_G.CARD.BTN_BUY_REALESTATE,
         SEL_G.CARD.BTN_BUY_STOCK,
         SEL_G.CARD.BTN_SELL_STOCK,
-        SEL_G.CARD.BTN_PAY_DOODAD,
-        SEL_G.CARD.BTN_PASS
+        SEL_G.CARD.BTN_PASS,
+        SEL_G.CARD.BTN_EXECUTE_PAYMENT // ★変更: 汎用支払いボタンを追加（旧 BTN_PAY_DOODAD を削除）
     ];
     
     setMultipleButtonsActive(drawButtons, false);
@@ -63,7 +63,8 @@ export function updateCardPhaseUI(position, flags = {}, currentCard = null, play
             setButtonActive(SEL_G.CARD.BTN_SELL_STOCK, true);
             setButtonActive(SEL_G.CARD.BTN_PASS, true);
         } else if (CELLS_DOODAD.includes(position)) {
-            setButtonActive(SEL_G.CARD.BTN_PAY_DOODAD, true);
+            // ★変更: Doodad支払い時に汎用支払いボタンをアクティブにする
+            setButtonActive(SEL_G.CARD.BTN_EXECUTE_PAYMENT, true);
         }
         return;
     }
@@ -80,6 +81,83 @@ export function updateCardPhaseUI(position, flags = {}, currentCard = null, play
     } else if (CELLS_DOWNSIZED.includes(position)) {
         setButtonActive(SEL_G.CARD.BTN_ACTION_DOWNSIZED, true);
     }
+}
+
+// ★追加: 汎用支払い実行関数
+export async function executeGenericPayment(supabase, currentUserId, amountStr) {
+    const playerName = getLocalPlayerName();
+    const inputAmount = parseInt(amountStr.replace(/,/g, ''), 10);
+
+    if (isNaN(inputAmount) || inputAmount < 0) {
+        await broadcastError(supabase, playerName, "金額が一致しません。入力しなおしてください。");
+        return;
+    }
+
+    // プレイヤーと部屋の最新状態を取得
+    const { data: userData, error: userError } = await supabase.from('participants').select('state').eq('user_id', currentUserId).single();
+    const { data: roomData, error: roomError } = await supabase.from('rooms').select('game_state').eq('id', roomId).single();
+
+    if (userError || roomError || !userData || !roomData) {
+        await broadcastError(supabase, playerName, "データの取得に失敗しました。");
+        return;
+    }
+
+    const state = userData.state;
+    const position = state.position;
+    const flags = state.flags || {};
+    const cash = state.financials?.cash || 0;
+    const currentCard = roomData.game_state?.current_card;
+
+    const btn = document.getElementById(SEL_G.CARD.BTN_EXECUTE_PAYMENT);
+
+    // ==========================================
+    // ケース1: Doodad（無駄遣い）の支払い判定
+    // ==========================================
+    if (CELLS_DOODAD.includes(position) && flags.is_card_drawn && !flags.is_action_completed) {
+        if (!currentCard || currentCard.type !== 'doodad') {
+            await broadcastError(supabase, playerName, "Doodadカード情報が見つかりません。");
+            return;
+        }
+
+        const expectedAmount = currentCard.cost;
+
+        // 要件6: 金額不一致時のバリデーション
+        if (inputAmount !== expectedAmount) {
+            await broadcastError(supabase, playerName, "金額が一致しません。入力しなおしてください。");
+            return;
+        }
+
+        // 要件5: 現金不足時のバリデーション
+        if (cash < expectedAmount) {
+            await broadcastError(supabase, playerName, "銀行ローンを組みなさい。");
+            return;
+        }
+
+        // 要件4: 一致し、現金が足りている場合は決済RPCを実行
+        if (btn) btn.disabled = true;
+        try {
+            const result = await callRpcWithDebug(supabase, 'action_pay_doodad_v2', {
+                p_room_id: roomId,
+                p_user_id: currentUserId
+            });
+            
+            if (result && result.status === 'error') {
+                await broadcastError(supabase, playerName, `支払いエラー: ${result.message}`);
+                if (btn) btn.disabled = false;
+            } else {
+                // 成功時: 入力フィールドをリセット
+                const inputEl = document.getElementById(SEL_G.CARD.INPUT_PAYMENT_AMOUNT);
+                if (inputEl) inputEl.value = '';
+            }
+        } catch (error) {
+            await broadcastError(supabase, playerName, `支払いに失敗しました: ${error.message}`);
+            if (btn) btn.disabled = false;
+        }
+        return;
+    }
+
+    // 今後、ここに解雇や投資などの支払い判定ブロックを追加します
+    await broadcastError(supabase, playerName, "現在、実行可能な支払いアクションはありません。");
 }
 
 export function initCardEventListeners(supabase, currentUserId) {
@@ -113,27 +191,6 @@ export function initCardEventListeners(supabase, currentUserId) {
             }
         } catch (error) {
             await broadcastError(supabase, playerName, `カードを引く処理に失敗しました: ${error.message}`);
-            if (btn) btn.disabled = false;
-        }
-    };
-
-    const payDoodadRpc = async (event) => {
-        const btn = event.currentTarget;
-        if (btn) btn.disabled = true;
-        const playerName = getLocalPlayerName();
-        
-        try {
-            const result = await callRpcWithDebug(supabase, 'action_pay_doodad_v2', {
-                p_room_id: roomId,
-                p_user_id: currentUserId
-            });
-            
-            if (result && result.status === 'error') {
-                await broadcastError(supabase, playerName, `支払いエラー: ${result.message}`);
-                if (btn) btn.disabled = false;
-            }
-        } catch (error) {
-            await broadcastError(supabase, playerName, `支払いに失敗しました: ${error.message}`);
             if (btn) btn.disabled = false;
         }
     };
@@ -209,7 +266,8 @@ export function initCardEventListeners(supabase, currentUserId) {
     document.getElementById(SEL_G.CARD.BTN_ACTION_DONATE)?.addEventListener('click', donateRpc);
     document.getElementById(SEL_G.CARD.BTN_ACTION_DOWNSIZED)?.addEventListener('click', downsizedRpc);
 
-    document.getElementById(SEL_G.CARD.BTN_PAY_DOODAD)?.addEventListener('click', payDoodadRpc);
+    // ★削除: 旧BTN_PAY_DOODADのイベントリスナーは削除しました
+    // document.getElementById(SEL_G.CARD.BTN_PAY_DOODAD)?.addEventListener('click', payDoodadRpc);
 
     document.getElementById(SEL_G.CARD.BTN_PASS)?.addEventListener('click', completeActionRpc);
     document.getElementById(SEL_G.CARD.BTN_BUY_STOCK)?.addEventListener('click', completeActionRpc);
