@@ -1,14 +1,11 @@
 // common_utils.js
 
 import { roomId } from './common_config.js';
-import { SEL_G } from './common_dom_selectors.js'; // ★修正: SEL_G を直接インポート
+import { SEL_G } from './common_dom_selectors.js';
 
 // index.js と host.js の両方から参照される関数群
 
-/**
- * SupabaseのRPC関数を安全に呼び出し、入出力をデバッグするためのラッパー関数。
- * データベースの不整合や予期せぬ引数のエラーを即座に検知する。
- */
+// SupabaseのRPC関数を安全に呼び出し、入出力をデバッグするためのラッパー関数。
 export async function callRpcWithDebug(supabaseClient, rpcName, params = {}) {
     const startTime = performance.now();
     console.log(`[RPC_CALL_START] ${rpcName}`);
@@ -36,38 +33,27 @@ export async function callRpcWithDebug(supabaseClient, rpcName, params = {}) {
     return data;
 }
 
-/**
- * 単一のボタンの有効/無効とテキストプレフィックス(O/X)を同期する
- */
+// 単一のボタンの有効/無効とテキストプレフィックス(O/X)を同期する
 export function setButtonActive(id, isActive) {
     const btn = document.getElementById(id);
     if (!btn) return;
-
     btn.disabled = !isActive;
-
-    // 現在のテキストから先頭の "O " または "X " を正規表現で取り除く
     const baseText = btn.innerText.replace(/^[OX]\s/, '');
-    
-    // 状態に応じたプレフィックスを付与してテキストを上書き
     btn.innerText = (isActive ? 'O ' : 'X ') + baseText;
 }
 
-/**
- * 複数のボタンの一括状態変更を行う
- */
+// 複数のボタンの一括状態変更を行う
 export function setMultipleButtonsActive(ids, isActive) {
     ids.forEach(id => setButtonActive(id, isActive));
 }
 
 export const BOARD_CELL_NAMES = [
-    "入金", "娯楽", "好機", "寄付", "好機", "入金", "好機", "娯楽",
-    "好機", "子供", "好機", "入金", "市場", "好機", "娯楽", "好機",
-    "寄付", "好機", "入金", "好機", "解雇", "好機", "市場", "好機"
+    "入金", "娯楽", "商売", "寄付", "商売", "入金", "商売", "娯楽",
+    "商売", "子供", "商売", "入金", "市場", "商売", "娯楽", "商売",
+    "寄付", "商売", "入金", "商売", "解雇", "商売", "市場", "商売"
 ];
 
-/**
- * window.supabase のロードを安全に待機する関数
- */
+// window.supabase のロードを安全に待機する関数
 export function waitForSupabase() {
     return new Promise((resolve) => {
         if (window.supabase) {
@@ -83,20 +69,16 @@ export function waitForSupabase() {
     });
 }
 
-// =========================================================================
 // 盤面の特定のマスを示す定数 (CELLS_... 形式に統一)
-// =========================================================================
 export const CELLS_PAYDAY = [0, 5, 11, 18];        // 入金（給料マイナス経費）
-export const CELLS_OPPORTUNITY = [2, 4, 6, 8, 10, 13, 15, 17, 19, 21, 23]; // 好機
+export const CELLS_OPPORTUNITY = [2, 4, 6, 8, 10, 13, 15, 17, 19, 21, 23]; // 商売
 export const CELLS_DOODAD = [1, 7, 14];            // 娯楽
 export const CELLS_MARKET = [12, 22];              // 市場
 export const CELLS_BABY = [9];                     // 子供
 export const CELLS_CHARITY = [3, 16];              // 寄付
 export const CELLS_DOWNSIZED = [20];               // 解雇
 
-/**
- * プレイヤーの初期登録データを生成する関数
- */
+// プレイヤーの初期登録データを生成する関数
 export function getInitialRegistrationState(username) {
     return {
         name: username,
@@ -107,7 +89,7 @@ export function getInitialRegistrationState(username) {
         last_dice: 0,
         calculation_phase: "none",
         children_count: 0,
-        // 最新のスキーマ（整数値フラグへの統合）に合わせる
+
         flags: {
             has_rolled_dice: false,
             is_card_drawn: false,
@@ -118,9 +100,9 @@ export function getInitialRegistrationState(username) {
             downsized_turns_left: 0,
             pending_paydays: 0
         },
+        
         financials: {
             cash: 0, total_income: 0, total_expenses: 0, passive_income: 0, net_cash_flow: 0, per_child_expense: 0,
-            // 最新のJSONスキーマに合わせてキー名を修正・補完
             expenses: { 
                 taxes: 0, 
                 mortgage_payment: 0, 
@@ -145,22 +127,13 @@ export function getInitialRegistrationState(username) {
     };
 }
 
-// =========================================================================
-// システムメッセージ・エラーログ共通関数
-// =========================================================================
-
-/**
- * 画面（DOM）から現在のプレイヤー名を取得するヘルパー関数
- * 各ファイルで重複定義されていたものをここに集約
- */
+// 画面（DOM）から現在のプレイヤー名を取得するヘルパー関数
 export function getLocalPlayerName() {
     const nameEl = document.getElementById(SEL_G.STATUS.NAME);
     return (nameEl && nameEl.textContent !== '未定') ? nameEl.textContent : 'プレイヤー';
 }
 
-/**
- * システムメッセージ（エラー含む）をデータベース(game_logs)に書き込む汎用関数
- */
+// システムメッセージ（エラー含む）をデータベース(game_logs)に書き込む汎用関数
 export async function insertSystemMessage(supabase, target, message) {
     try {
         await supabase.rpc('fn_insert_game_log', {
@@ -187,13 +160,10 @@ export function displaySystemMessage(target, body) {
     }
 
     const tr = document.createElement('tr');
-    
     const tdTarget = document.createElement('td');
     tdTarget.textContent = target;
-    
     const tdBody = document.createElement('td');
     tdBody.textContent = body;
-    
     tr.appendChild(tdTarget);
     tr.appendChild(tdBody);
     
