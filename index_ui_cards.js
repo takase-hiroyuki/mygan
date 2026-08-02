@@ -16,7 +16,7 @@ function getLocalPlayerName() {
     return (nameEl && nameEl.textContent !== '未定') ? nameEl.textContent : 'プレイヤー';
 }
 
-// 🌟追加：エラー通知をローカルで処理せず、game_logs経由で全員に配信する関数
+// エラー通知をローカルで処理せず、game_logs経由で全員に配信する関数
 async function broadcastError(supabase, target, message) {
     try {
         await supabase.from('game_logs').insert([{
@@ -50,60 +50,35 @@ export function updateCardPhaseUI(position, flags = {}, currentCard = null, play
     setMultipleButtonsActive(drawButtons, false);
     setMultipleButtonsActive(actionButtons, false);
 
-    const statusMessage = document.getElementById(SEL_G.CARD.STATUS_MESSAGE);
-
     if (flags.is_action_completed) {
-        if (statusMessage) statusMessage.textContent = "アクション完了。ローン操作を行うか、手番を終了してください。";
         return;
     }
 
     if (flags.is_card_drawn) {
-        let cardInfo = "";
-        if (currentCard) {
-            const costText = currentCard.cost ? `費用: $${currentCard.cost}` : (currentCard.down_payment ? `頭金: $${currentCard.down_payment}` : "");
-            cardInfo = `「${currentCard.title}」${costText ? ` (${costText})` : ""}`;
-        }
-
         if (CELLS_OPPORTUNITY.includes(position)) {
             setButtonActive(SEL_G.CARD.BTN_BUY_STOCK, true);
             setButtonActive(SEL_G.CARD.BTN_BUY_REALESTATE, true);
             setButtonActive(SEL_G.CARD.BTN_PASS, true);
-            if (statusMessage) statusMessage.textContent = `${cardInfo}：購入するか、パスしてください。`;
         } else if (CELLS_MARKET.includes(position)) {
             setButtonActive(SEL_G.CARD.BTN_SELL_STOCK, true);
             setButtonActive(SEL_G.CARD.BTN_PASS, true);
-            if (statusMessage) statusMessage.textContent = `${cardInfo}：売却するか、パスしてください。`;
         } else if (CELLS_DOODAD.includes(position)) {
             setButtonActive(SEL_G.CARD.BTN_PAY_DOODAD, true);
-            if (statusMessage) statusMessage.textContent = `${cardInfo}：費用を支払ってください。`;
         }
         return;
     }
 
-    let requireCardAction = false;
-
     if (CELLS_OPPORTUNITY.includes(position)) {
         setButtonActive(SEL_G.CARD.BTN_DRAW_SMALL_DEAL, true);
         setButtonActive(SEL_G.CARD.BTN_DRAW_BIG_DEAL, true);
-        requireCardAction = true;
     } else if (CELLS_MARKET.includes(position)) {
         setButtonActive(SEL_G.CARD.BTN_DRAW_MARKET, true);
-        requireCardAction = true;
     } else if (CELLS_DOODAD.includes(position)) {
         setButtonActive(SEL_G.CARD.BTN_DRAW_DOODAD, true);
-        requireCardAction = true;
     } else if (CELLS_CHARITY.includes(position)) {
         setButtonActive(SEL_G.CARD.BTN_ACTION_DONATE, true);
-        requireCardAction = true;
     } else if (CELLS_DOWNSIZED.includes(position)) {
         setButtonActive(SEL_G.CARD.BTN_ACTION_DOWNSIZED, true);
-        requireCardAction = true;
-    }
-
-    if (requireCardAction) {
-        if (statusMessage) statusMessage.textContent = "アクションを選択してください。";
-    } else {
-        if (statusMessage) statusMessage.textContent = "現在場に出ているカードはありません。";
     }
 }
 
