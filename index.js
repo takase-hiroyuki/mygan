@@ -1,6 +1,6 @@
 // index.js
 import { roomId } from './common_config.js';
-import { DOM_SELECTORS } from './common_dom_selectors.js';
+import { SEL_G } from './common_dom_selectors.js'; // ★修正: SEL_G を直接インポート
 import { toggleScreen } from './index_ui.js';
 
 // ★変更: 分割されたファイルからインポートするように修正
@@ -8,13 +8,13 @@ import { initCardEventListeners } from './index_ui_cards_events.js';
 import { executeGenericPayment } from './index_ui_cards_payment.js';
 
 import { initSupabaseClient, checkExistingLogin, loginUser } from './index_auth.js';
-import { startSubscriptions, displaySystemMessage } from './index_state.js';
+import { startSubscriptions } from './index_state.js'; // ★修正: displaySystemMessage をここから削除
+import { displaySystemMessage } from './common_utils.js'; // ★追加: common_utils.js からインポート
 import { actionRollDice, actionEndTurn } from './index_actions_turn.js';
 import { actionClaimPaycheck, actionCheckCalculations } from './index_actions_finance.js';
 import { actionBorrowBankLoan, actionRepayBankLoan } from './index_actions_loan.js';
 
 let supabase = null;
-const SEL_G = DOM_SELECTORS.GUEST;
 
 // DOM要素の取得
 const inputUsername = document.getElementById(SEL_G.LOGIN.INPUT_USERNAME);
