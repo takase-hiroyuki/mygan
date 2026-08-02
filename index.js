@@ -2,7 +2,8 @@
 import { roomId } from './common_config.js';
 import { DOM_SELECTORS } from './common_dom_selectors.js';
 import { toggleScreen } from './index_ui.js';
-import { initCardEventListeners } from './index_ui_cards.js'; 
+// ★追加: 今後実装する executeGenericPayment をインポートに加える
+import { initCardEventListeners, executeGenericPayment } from './index_ui_cards.js'; 
 import { initSupabaseClient, checkExistingLogin, loginUser } from './index_auth.js';
 import { startSubscriptions, displaySystemMessage } from './index_state.js';
 import { actionRollDice, actionEndTurn } from './index_actions_turn.js';
@@ -22,6 +23,10 @@ const btnEndTurn = document.getElementById(SEL_G.CONTROLS.BTN_END_TURN);
 const btnCheckCalculations = document.getElementById(SEL_G.FINANCIALS.BTN_CHECK_CALCULATIONS);
 const btnBorrowLoan = document.getElementById(SEL_G.PORTFOLIO.BTN_BORROW_LOAN);
 const btnPaybackLoan = document.getElementById(SEL_G.PORTFOLIO.BTN_PAYBACK_LOAN);
+
+// ★追加: 汎用支払い関連のDOM要素を取得
+const inputPaymentAmount = document.getElementById(SEL_G.CARD.INPUT_PAYMENT_AMOUNT);
+const btnExecutePayment = document.getElementById(SEL_G.CARD.BTN_EXECUTE_PAYMENT);
 
 let currentUserId = null;
 let isCardListenersReady = false; 
@@ -112,6 +117,19 @@ btnBorrowLoan?.addEventListener('click', () => {
 btnPaybackLoan?.addEventListener('click', () => {
     console.log("[DEBUG-UI] 「銀行ローンを返済する」ボタンが押下されました");
     actionRepayBankLoan(supabase, currentUserId);
+});
+
+// ★追加: 汎用支払い実行ボタンのイベントリスナー
+btnExecutePayment?.addEventListener('click', () => {
+    console.log("[DEBUG-UI] 「支払いを実行」ボタンが押下されました");
+    if (!supabase || !currentUserId) return;
+    
+    const amountStr = inputPaymentAmount ? inputPaymentAmount.value.trim() : "";
+    if (typeof executeGenericPayment === 'function') {
+        executeGenericPayment(supabase, currentUserId, amountStr);
+    } else {
+        console.warn("[DEBUG-UI] executeGenericPayment がまだ実装されていません。");
+    }
 });
 
 // ==========================================
