@@ -44,7 +44,7 @@ export function updateCardPhaseUI(position, flags = {}, currentCard = null, play
         SEL_G.CARD.BTN_BUY_STOCK,
         SEL_G.CARD.BTN_SELL_STOCK,
         SEL_G.CARD.BTN_PASS,
-        SEL_G.CARD.BTN_EXECUTE_PAYMENT // ★変更: 汎用支払いボタンを追加（旧 BTN_PAY_DOODAD を削除）
+        SEL_G.CARD.BTN_EXECUTE_PAYMENT 
     ];
     
     setMultipleButtonsActive(drawButtons, false);
@@ -63,7 +63,6 @@ export function updateCardPhaseUI(position, flags = {}, currentCard = null, play
             setButtonActive(SEL_G.CARD.BTN_SELL_STOCK, true);
             setButtonActive(SEL_G.CARD.BTN_PASS, true);
         } else if (CELLS_DOODAD.includes(position)) {
-            // ★変更: Doodad支払い時に汎用支払いボタンをアクティブにする
             setButtonActive(SEL_G.CARD.BTN_EXECUTE_PAYMENT, true);
         }
         return;
@@ -83,7 +82,6 @@ export function updateCardPhaseUI(position, flags = {}, currentCard = null, play
     }
 }
 
-// ★追加: 汎用支払い実行関数
 export async function executeGenericPayment(supabase, currentUserId, amountStr) {
     const playerName = getLocalPlayerName();
     const inputAmount = parseInt(amountStr.replace(/,/g, ''), 10);
@@ -114,7 +112,8 @@ export async function executeGenericPayment(supabase, currentUserId, amountStr) 
     // ケース1: Doodad（無駄遣い）の支払い判定
     // ==========================================
     if (CELLS_DOODAD.includes(position) && flags.is_card_drawn && !flags.is_action_completed) {
-        if (!currentCard || currentCard.type !== 'doodad') {
+        // ★修正: type ではなく deck_type で判定する
+        if (!currentCard || currentCard.deck_type !== 'doodad') {
             await broadcastError(supabase, playerName, "Doodadカード情報が見つかりません。");
             return;
         }
@@ -265,9 +264,6 @@ export function initCardEventListeners(supabase, currentUserId) {
 
     document.getElementById(SEL_G.CARD.BTN_ACTION_DONATE)?.addEventListener('click', donateRpc);
     document.getElementById(SEL_G.CARD.BTN_ACTION_DOWNSIZED)?.addEventListener('click', downsizedRpc);
-
-    // ★削除: 旧BTN_PAY_DOODADのイベントリスナーは削除しました
-    // document.getElementById(SEL_G.CARD.BTN_PAY_DOODAD)?.addEventListener('click', payDoodadRpc);
 
     document.getElementById(SEL_G.CARD.BTN_PASS)?.addEventListener('click', completeActionRpc);
     document.getElementById(SEL_G.CARD.BTN_BUY_STOCK)?.addEventListener('click', completeActionRpc);
