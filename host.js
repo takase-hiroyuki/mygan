@@ -1,8 +1,10 @@
 // host.js
 import { roomId, SUPABASE_URL, SUPABASE_KEY } from './common_config.js';
 import { DOM_SELECTORS } from './common_dom_selectors.js';
-import { setButtonActive, BOARD_CELL_NAMES, waitForSupabase, callRpcWithDebug } from './common_utils.js'; 
-import { displaySystemMessage } from './index_state.js'; // システムメッセージ用に関数をインポート
+import { setButtonActive, BOARD_CELL_NAMES, waitForSupabase, callRpcWithDebug, displaySystemMessage } from './common_utils.js'; // ★修正: displaySystemMessage をこちらに統合
+
+// ★修正: 以下の index_state.js からのインポートは不要になったため削除
+// import { displaySystemMessage } from './index_state.js'; 
 
 let supabase = null;
 const HOST_ADMIN_ID = 'host-admin-01';
