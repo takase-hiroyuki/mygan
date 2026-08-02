@@ -27,7 +27,7 @@ export const DOM_SELECTORS = {
         MESSAGE: {
             TITLE: 'system-message-title',
             BODY: 'system-message-body',
-            TABLE_BODY: 'message-table-body' // ★追加: 動的メッセージ表示用のtbody
+            TABLE_BODY: 'message-table-body' // 動的メッセージ表示用のtbody
         },
 
         // あなたのステータス表示エリア
@@ -58,7 +58,6 @@ export const DOM_SELECTORS = {
         CARD: {
             CONTAINER: 'card-display-container',
             LEGEND: 'display-card-legend',                 
-            STATUS_MESSAGE: 'card-status-message',         
             NUMERICAL_DETAILS_CONTAINER: 'card-numerical-details', 
             DETAIL_COST: 'card-detail-cost',               
             DETAIL_DOWNPAYMENT: 'card-detail-downpayment', 
@@ -68,8 +67,8 @@ export const DOM_SELECTORS = {
             BTN_DRAW_BIG_DEAL: 'btn-draw-big-deal',        
             BTN_DRAW_MARKET: 'btn-draw-market',            
             BTN_DRAW_DOODAD: 'btn-draw-doodad',            
-            BTN_ACTION_DONATE: 'btn-action-donate',        // ★追加: 寄付ボタン
-            BTN_ACTION_DOWNSIZED: 'btn-action-downsized',  // ★追加: 解雇ボタン
+            BTN_ACTION_DONATE: 'btn-action-donate',        
+            BTN_ACTION_DOWNSIZED: 'btn-action-downsized',  
             OPTIONS_CONTAINER: 'card-action-options',    
             BTN_BUY_REALESTATE: 'btn-card-buy-realestate', 
             BTN_BUY_STOCK: 'btn-card-buy-stock',           
@@ -101,9 +100,9 @@ export const DOM_SELECTORS = {
             
             // 負債の表示ID
             LIABILITY_MORTGAGE: 'display-liability-mortgage',
-            LIABILITY_SCHOOL_LOAN: 'display-liability-school-loan', // ★追加
+            LIABILITY_SCHOOL_LOAN: 'display-liability-school-loan', 
             LIABILITY_CAR_LOAN: 'display-liability-carloan',
-            LIABILITY_CREDIT_CARD: 'display-liability-credit-card', // ★追加
+            LIABILITY_CREDIT_CARD: 'display-liability-credit-card', 
             LIABILITY_RETAIL: 'display-liability-retail',
             DISPLAY_LIABILITY_BANKLOAN: 'display-liability-bankloan',    
             
@@ -113,13 +112,13 @@ export const DOM_SELECTORS = {
             BTN_PAYBACK_LOAN: 'btn-payback-loan',          
             
             // 各種支出の表示ID
-            DISPLAY_EXPENSE_TAXES: 'display-expense-taxes', // ★追加
-            DISPLAY_EXPENSE_MORTGAGE: 'display-expense-mortgage', // ★追加
-            DISPLAY_EXPENSE_SCHOOL: 'display-expense-school', // ★追加
-            DISPLAY_EXPENSE_CAR: 'display-expense-car', // ★追加
-            DISPLAY_EXPENSE_CREDIT: 'display-expense-credit', // ★追加
-            DISPLAY_EXPENSE_RETAIL: 'display-expense-retail', // ★追加
-            DISPLAY_EXPENSE_OTHER: 'display-expense-other', // ★追加
+            DISPLAY_EXPENSE_TAXES: 'display-expense-taxes', 
+            DISPLAY_EXPENSE_MORTGAGE: 'display-expense-mortgage', 
+            DISPLAY_EXPENSE_SCHOOL: 'display-expense-school', 
+            DISPLAY_EXPENSE_CAR: 'display-expense-car', 
+            DISPLAY_EXPENSE_CREDIT: 'display-expense-credit', 
+            DISPLAY_EXPENSE_RETAIL: 'display-expense-retail', 
+            DISPLAY_EXPENSE_OTHER: 'display-expense-other', 
             DISPLAY_EXPENSE_CHILD: 'display-expense-child',
             DISPLAY_EXPENSE_LOANINTEREST: 'display-expense-loaninterest'
         },
@@ -137,20 +136,20 @@ export const DOM_SELECTORS = {
     HOST: {
         SECTION: 'section-host',
         
-        // 🌟部屋ステータス管理・ライフサイクル制御エリア
+        // 部屋ステータス管理・ライフサイクル制御エリア
         LIFECYCLE: {
             DISPLAY_ROOM_STATUS: 'host-room-status',             
             BTN_INITIAL_SHUFFLE: 'btn-initial-shuffle-start',     
             BTN_FORCE_GAME_END: 'btn-force-game-end'              
         },
 
-        // 🌟4種類の山札および使用済みカードの残り枚数監視モニター
+        // 4種類の山札および使用済みカードの残り枚数監視モニター
         DECK_MONITOR: {
             SMALL_DEAL_COUNT: 'deck-count-small-deal',
             BIG_DEAL_COUNT: 'deck-count-big-deal',
             MARKET_COUNT: 'deck-count-market',
             DOODAD_COUNT: 'deck-count-doodad',
-            // 🌟デッキ個別の手動リシャッフルボタン用
+            // デッキ個別の手動リシャッフルボタン用
             BTN_RESHUFFLE_SMALL_DEAL: 'btn-reshuffle-small-deal',
             BTN_RESHUFFLE_BIG_DEAL: 'btn-reshuffle-big-deal',
             BTN_RESHUFFLE_MARKET: 'btn-reshuffle-market',
