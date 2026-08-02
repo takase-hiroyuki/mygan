@@ -1,7 +1,7 @@
 // common_utils.js
 
-import { roomId } from './common_config.js'; // ★追加: insertSystemMessage等で利用
-import { DOM_SELECTORS } from './common_dom_selectors.js';
+import { roomId } from './common_config.js';
+import { SEL_G } from './common_dom_selectors.js'; // ★修正: SEL_G を直接インポート
 
 // index.js と host.js の両方から参照される関数群
 
@@ -150,6 +150,15 @@ export function getInitialRegistrationState(username) {
 // =========================================================================
 
 /**
+ * 画面（DOM）から現在のプレイヤー名を取得するヘルパー関数
+ * 各ファイルで重複定義されていたものをここに集約
+ */
+export function getLocalPlayerName() {
+    const nameEl = document.getElementById(SEL_G.STATUS.NAME);
+    return (nameEl && nameEl.textContent !== '未定') ? nameEl.textContent : 'プレイヤー';
+}
+
+/**
  * システムメッセージ（エラー含む）をデータベース(game_logs)に書き込む汎用関数
  */
 export async function insertSystemMessage(supabase, target, message) {
@@ -171,7 +180,7 @@ export async function insertSystemMessage(supabase, target, message) {
  * @param {string} body - メッセージ本文（2番目のtd用）
  */
 export function displaySystemMessage(target, body) {
-    const tbody = document.getElementById(DOM_SELECTORS.GUEST.MESSAGE.TABLE_BODY);
+    const tbody = document.getElementById(SEL_G.MESSAGE.TABLE_BODY); // ★修正: DOM_SELECTORS.GUEST を SEL_G に変更
     if (!tbody) {
         console.warn("[WARNING] message-table-body が見つかりません。メッセージの表示をスキップします。");
         return;
