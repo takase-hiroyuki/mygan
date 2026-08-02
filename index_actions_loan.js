@@ -1,11 +1,13 @@
 // index_actions_loan.js
 import { roomId } from './common_config.js';
 import { SEL_G } from './common_dom_selectors.js';
-import { callRpcWithDebug, insertSystemMessage, getLocalPlayerName } from './common_utils.js'; // ★修正: displaySystemMessage を廃止し insertSystemMessage をインポート
+import { callRpcWithDebug,
+        insertSystemMessage,
+        getLocalPlayerName } from './common_utils.js';
 
 export async function actionBorrowBankLoan(supabaseClient, userId) {
     if (!supabaseClient || !userId) return;
-    const amount = 1000;
+    const amount = 700;
     const playerName = getLocalPlayerName();
     
     try {
@@ -16,18 +18,16 @@ export async function actionBorrowBankLoan(supabaseClient, userId) {
         });
         
         if (result && result.status === 'error') {
-            // ★修正: DBに永続化するため insertSystemMessage に変更
             await insertSystemMessage(supabaseClient, playerName, `エラー: ${result.message}`);
         }
     } catch (error) {
-        // ★修正: DBに永続化するため insertSystemMessage に変更
         await insertSystemMessage(supabaseClient, playerName, `借入処理に失敗しました。: ${error.message}`);
     }
 }
 
 export async function actionRepayBankLoan(supabaseClient, userId) {
     if (!supabaseClient || !userId) return;
-    const amount = 1000;
+    const amount = 700;
     const playerName = getLocalPlayerName();
     
     try {
@@ -38,11 +38,9 @@ export async function actionRepayBankLoan(supabaseClient, userId) {
         });
         
         if (result && result.status === 'error') {
-            // ★修正: DBに永続化するため insertSystemMessage に変更
             await insertSystemMessage(supabaseClient, playerName, `エラー: ${result.message}`);
         }
     } catch (error) {
-        // ★修正: DBに永続化するため insertSystemMessage に変更
         await insertSystemMessage(supabaseClient, playerName, `返済処理に失敗しました。: ${error.message}`);
     }
 }
