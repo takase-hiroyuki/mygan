@@ -1,8 +1,7 @@
 // index_ui_cards_events.js
 import { roomId } from './common_config.js';
-import { callRpcWithDebug, setButtonActive, insertSystemMessage } from './common_utils.js'; // ★修正: insertSystemMessage をインポート
-import { SEL_G } from './common_dom_selectors.js'; // ★修正: SEL_G を直接インポート
-import { getLocalPlayerName } from './index_ui_cards_utils.js'; // ★修正: 不要になった SEL_G と broadcastError のインポートを削除
+import { callRpcWithDebug, setButtonActive, insertSystemMessage, getLocalPlayerName } from './common_utils.js';
+import { SEL_G } from './common_dom_selectors.js';
 
 export function initCardEventListeners(supabase, currentUserId) {
     const drawCardRpc = async (event) => {
@@ -20,11 +19,11 @@ export function initCardEventListeners(supabase, currentUserId) {
         try {
             const result = await callRpcWithDebug(supabase, rpcName, { p_room_id: roomId, p_user_id: currentUserId });
             if (result && result.status === 'error') {
-                await insertSystemMessage(supabase, playerName, result.message); // ★修正: broadcastError から置き換え
+                await insertSystemMessage(supabase, playerName, result.message);
                 if (btn) btn.disabled = false;
             }
         } catch (error) {
-            await insertSystemMessage(supabase, playerName, `カードを引く処理に失敗しました: ${error.message}`); // ★修正
+            await insertSystemMessage(supabase, playerName, `カードを引く処理に失敗しました: ${error.message}`);
             if (btn) btn.disabled = false;
         }
     };
@@ -36,11 +35,11 @@ export function initCardEventListeners(supabase, currentUserId) {
         try {
             const result = await callRpcWithDebug(supabase, 'complete_card_action_v2', { p_room_id: roomId, p_user_id: currentUserId });
             if (result && result.status === 'error') {
-                await insertSystemMessage(supabase, playerName, result.message); // ★修正
+                await insertSystemMessage(supabase, playerName, result.message);
                 if (btn) btn.disabled = false;
             }
         } catch (error) {
-            await insertSystemMessage(supabase, playerName, `アクションの完了に失敗しました: ${error.message}`); // ★修正
+            await insertSystemMessage(supabase, playerName, `アクションの完了に失敗しました: ${error.message}`);
             if (btn) btn.disabled = false;
         }
     };
@@ -52,15 +51,15 @@ export function initCardEventListeners(supabase, currentUserId) {
         try {
             const { data, error } = await supabase.from('participants').select('state').eq('user_id', currentUserId).single();
             if (error || !data) {
-                await insertSystemMessage(supabase, playerName, "データの取得に失敗しました。"); // ★修正
+                await insertSystemMessage(supabase, playerName, "データの取得に失敗しました。");
                 if (btn) btn.disabled = false;
                 return;
             }
             const expectedAmount = Math.floor((data.state?.financials?.total_income || 0) * 0.1);
-            await insertSystemMessage(supabase, playerName, `寄付をするため、総収入の10%にあたる $${expectedAmount} を支払って下さい。`); // ★修正
+            await insertSystemMessage(supabase, playerName, `寄付をするため、総収入の10%にあたる $${expectedAmount} を支払って下さい。`);
             setButtonActive(SEL_G.CARD.BTN_EXECUTE_PAYMENT, true);
         } catch (error) {
-            await insertSystemMessage(supabase, playerName, `寄付処理エラー: ${error.message}`); // ★修正
+            await insertSystemMessage(supabase, playerName, `寄付処理エラー: ${error.message}`);
             if (btn) btn.disabled = false;
         }
     };
@@ -72,15 +71,16 @@ export function initCardEventListeners(supabase, currentUserId) {
         try {
             const { data, error } = await supabase.from('participants').select('state').eq('user_id', currentUserId).single();
             if (error || !data) {
-                await insertSystemMessage(supabase, playerName, "データの取得に失敗しました。"); // ★修正
+                await insertSystemMessage(supabase, playerName, "データの取得に失敗しました。");
                 if (btn) btn.disabled = false;
                 return;
             }
-            const expectedAmount = (data.state?.financials?.total_expenses || 0);
-            await insertSystemMessage(supabase, playerName, `解雇されました。生活費3か月分 $${expectedAmount} を支払います。`); // ★修正
+            // ★修正: ルール通り「総支出の1ヶ月分」に修正し、メッセージテキストも変更
+            const expectedAmount = data.state?.financials?.total_expenses || 0;
+            await insertSystemMessage(supabase, playerName, `解雇されました。総支出と同額の $${expectedAmount} を支払います。`);
             setButtonActive(SEL_G.CARD.BTN_EXECUTE_PAYMENT, true);
         } catch (error) {
-            await insertSystemMessage(supabase, playerName, `解雇処理エラー: ${error.message}`); // ★修正
+            await insertSystemMessage(supabase, playerName, `解雇処理エラー: ${error.message}`);
             if (btn) btn.disabled = false;
         }
     };
