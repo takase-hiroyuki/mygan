@@ -1,10 +1,8 @@
 // index_ui.js
-import { DOM_SELECTORS } from './common_dom_selectors.js';
-import { setButtonActive, setMultipleButtonsActive, BOARD_CELL_NAMES } from './common_utils.js';
+import { SEL_G } from './common_dom_selectors.js'; // ★修正: SEL_G を直接インポート
+import { setButtonActive, setMultipleButtonsActive, BOARD_CELL_NAMES, displaySystemMessage } from './common_utils.js'; // ★修正: displaySystemMessage のインポート元を変更
 import { updateCardPhaseUI } from './index_ui_cards_ui.js'; // ★修正: 分割後のファイルからインポート
-import { displaySystemMessage } from './index_state.js'; 
 
-const SEL_G = DOM_SELECTORS.GUEST;
 const sectionLogin = document.getElementById(SEL_G.LOGIN.SECTION);
 const sectionGuest = document.getElementById(SEL_G.STATUS.SECTION);
 const diceStatusArea = document.getElementById(SEL_G.CONTROLS.STATUS_AREA);
@@ -161,7 +159,7 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
 }
 
 export function disableAllActionButtons() {
-    const { CONTROLS, CARD, PORTFOLIO, FINANCIALS } = DOM_SELECTORS.GUEST;
+    const { CONTROLS, CARD, PORTFOLIO, FINANCIALS } = SEL_G; // ★修正: DOM_SELECTORS.GUEST を SEL_G に変更
     const actionButtonIds = [
         CONTROLS.BTN_ROLL_DICE, CONTROLS.BTN_ROLL_DICE_2, CONTROLS.BTN_CLAIM_PAYCHECK, 
         CONTROLS.BTN_END_TURN, CONTROLS.BTN_ESCAPE_RAT_RACE,
