@@ -1,7 +1,7 @@
 // index_ui.js
 import { DOM_SELECTORS } from './common_dom_selectors.js';
 import { setButtonActive, setMultipleButtonsActive, BOARD_CELL_NAMES } from './common_utils.js';
-import { updateCardPhaseUI } from './index_ui_cards.js'; 
+import { updateCardPhaseUI } from './index_ui_cards_ui.js'; // ★修正: 分割後のファイルからインポート
 import { displaySystemMessage } from './index_state.js'; 
 
 const SEL_G = DOM_SELECTORS.GUEST;
@@ -115,7 +115,7 @@ export function renderGuestUI(currentUserId, cachedParticipants, cachedRoom) {
 
         if (isMyTurn) {
             if (state.last_dice > 0) {
-                // UI表示の更新を index_ui_cards.js に委譲
+                // UI表示の更新を index_ui_cards_ui.js に委譲
                 updateCardPhaseUI(state.position, flags, currentCard, turnUserName);
                 
                 const pendingPaydays = parseInt(flags.pending_paydays || 0, 10);
@@ -167,7 +167,7 @@ export function disableAllActionButtons() {
         CONTROLS.BTN_END_TURN, CONTROLS.BTN_ESCAPE_RAT_RACE,
         CARD.BTN_DRAW_SMALL_DEAL, CARD.BTN_DRAW_BIG_DEAL, CARD.BTN_DRAW_MARKET, CARD.BTN_DRAW_DOODAD,
         CARD.BTN_BUY_REALESTATE, CARD.BTN_BUY_STOCK, CARD.BTN_SELL_STOCK, CARD.BTN_PASS,
-        CARD.BTN_EXECUTE_PAYMENT, // ★変更: 旧BTN_PAY_DOODADをBTN_EXECUTE_PAYMENTへ置換
+        CARD.BTN_EXECUTE_PAYMENT, 
         PORTFOLIO.BTN_BORROW_LOAN, PORTFOLIO.BTN_PAYBACK_LOAN, 
         FINANCIALS.BTN_CHECK_CALCULATIONS
     ];
