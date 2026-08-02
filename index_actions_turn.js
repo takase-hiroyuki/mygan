@@ -1,12 +1,11 @@
 // index_actions_turn.js
 import { roomId } from './common_config.js';
-import { DOM_SELECTORS } from './common_dom_selectors.js';
+import { SEL_G } from './common_dom_selectors.js'; // ★修正: SEL_G を直接インポート
 import { disableAllActionButtons } from './index_ui.js';
-import { callRpcWithDebug, OPPORTUNITY_CELLS, DOODAD_CELLS, MARKET_CELLS } from './common_utils.js'; 
-import { displaySystemMessage } from './index_state.js'; 
+import { callRpcWithDebug, CELLS_OPPORTUNITY, CELLS_DOODAD, CELLS_MARKET, displaySystemMessage } from './common_utils.js'; // ★修正: マス目定数の名前変更と displaySystemMessage の移動を反映
 
 function getLocalPlayerName() {
-    const nameEl = document.getElementById(DOM_SELECTORS.GUEST.STATUS.NAME);
+    const nameEl = document.getElementById(SEL_G.STATUS.NAME);
     return (nameEl && nameEl.textContent !== '未定') ? nameEl.textContent : 'プレイヤー';
 }
 
@@ -97,7 +96,8 @@ export async function actionEndTurn(supabase, currentUserId) {
     const isDownsized = downsizedTurnsLeft > 0;
     const cash = parseInt(financials.cash || 0, 10);
 
-    const isCardCell = OPPORTUNITY_CELLS.includes(position) || DOODAD_CELLS.includes(position) || MARKET_CELLS.includes(position);
+    // ★修正: 新しい CELLS_ プレフィックスの定数を使用する
+    const isCardCell = CELLS_OPPORTUNITY.includes(position) || CELLS_DOODAD.includes(position) || CELLS_MARKET.includes(position);
     const hasMandatoryPaycheck = (pendingPaydays > 0) && isNegativeCashFlow;
 
     disableAllActionButtons();
