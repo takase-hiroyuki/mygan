@@ -7,7 +7,7 @@ import { callRpcWithDebug,
 
 export async function actionBorrowBankLoan(supabaseClient, userId) {
     if (!supabaseClient || !userId) return;
-    const amount = 700;
+    const amount = 1000;
     const playerName = getLocalPlayerName();
     
     try {
@@ -27,7 +27,7 @@ export async function actionBorrowBankLoan(supabaseClient, userId) {
 
 export async function actionRepayBankLoan(supabaseClient, userId) {
     if (!supabaseClient || !userId) return;
-    const amount = 700;
+    const amount = 1000;
     const playerName = getLocalPlayerName();
     
     try {
