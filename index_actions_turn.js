@@ -2,9 +2,12 @@
 import { roomId } from './common_config.js';
 import { SEL_G } from './common_dom_selectors.js'; 
 import { disableAllActionButtons } from './index_ui.js';
-import { callRpcWithDebug, CELLS_OPPORTUNITY, CELLS_DOODAD, CELLS_MARKET, insertSystemMessage, getLocalPlayerName } from './common_utils.js'; // ★修正: displaySystemMessage を廃止し insertSystemMessage と getLocalPlayerName をインポート
-
-// ★修正: ここにあった localGetPlayerName() のローカル定義を削除しました
+import { callRpcWithDebug,
+        CELLS_OPPORTUNITY,
+        CELLS_DOODAD,
+        CELLS_MARKET,
+        insertSystemMessage,
+        getLocalPlayerName } from './common_utils.js';
 
 async function updatePlayerFlag(supabase, userId, flagName, value) {
     const { data, error: fetchError } = await supabase
@@ -52,7 +55,6 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
     
     if (flags.has_rolled_dice || flags.is_calculating || downsizedTurnsLeft > 0) {
         if (downsizedTurnsLeft > 0) {
-            // ★修正: DBに永続化するため insertSystemMessage に変更
             await insertSystemMessage(supabase, playerName, "休み期間中。そのまま手番を終了して下さい。");
         }
         return;
@@ -65,7 +67,6 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
             p_dice_count: diceCount
         });
     } catch (error) {
-        // ★修正: DBに永続化するため insertSystemMessage に変更
         await insertSystemMessage(supabase, playerName, `エラー: ${error.message}`);
     }
 }
@@ -112,7 +113,6 @@ export async function actionEndTurn(supabase, currentUserId) {
             window.location.reload();
             return;
         } catch (error) {
-            // ★修正: DBに永続化するため insertSystemMessage に変更
             await insertSystemMessage(supabase, playerName, `エラー: ${error.message}`);
             return;
         }
@@ -133,7 +133,6 @@ export async function actionEndTurn(supabase, currentUserId) {
             p_user_id: currentUserId 
         });
     } catch (error) {
-        // ★修正: DBに永続化するため insertSystemMessage に変更
         await insertSystemMessage(supabase, playerName, `エラー: ${error.message}`);
     }
 }
