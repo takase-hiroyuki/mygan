@@ -1,10 +1,7 @@
 // host.js
 import { roomId, SUPABASE_URL, SUPABASE_KEY } from './common_config.js';
 import { DOM_SELECTORS } from './common_dom_selectors.js';
-import { setButtonActive, BOARD_CELL_NAMES, waitForSupabase, callRpcWithDebug, displaySystemMessage } from './common_utils.js'; // ★修正: displaySystemMessage をこちらに統合
-
-// ★修正: 以下の index_state.js からのインポートは不要になったため削除
-// import { displaySystemMessage } from './index_state.js'; 
+import { setButtonActive, BOARD_CELL_NAMES, waitForSupabase, callRpcWithDebug, insertSystemMessage } from './common_utils.js'; // ★修正: displaySystemMessage を廃止し insertSystemMessage をインポート
 
 let supabase = null;
 const HOST_ADMIN_ID = 'host-admin-01';
@@ -189,7 +186,8 @@ btnInitialShuffleStart?.addEventListener('click', async (event) => {
         await callRpcWithDebug(supabase, 'start_game_with_professions_v2', { p_room_id: roomId });
         await syncAndFetchRoom();
     } catch (error) {
-        displaySystemMessage("ホスト", `ゲーム開始失敗: ${error.message}`);
+        // ★修正: DBに永続化するため insertSystemMessage に変更
+        await insertSystemMessage(supabase, "ホスト", `ゲーム開始失敗: ${error.message}`);
         setButtonActive(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE, true);
     }
 });
@@ -200,7 +198,8 @@ btnKickParticipant?.addEventListener('click', async () => {
     const orderIdx = parseInt(orderInput, 10) - 1;
     
     if (isNaN(orderIdx) || orderIdx < 0 || orderIdx >= currentParticipants.length) {
-        displaySystemMessage("ホスト", "有効な退室者の番号（入室順）を入力してください。");
+        // ★修正: DBに永続化するため insertSystemMessage に変更
+        await insertSystemMessage(supabase, "ホスト", "有効な退室者の番号（入室順）を入力してください。");
         return;
     }
 
@@ -214,7 +213,8 @@ btnKickParticipant?.addEventListener('click', async () => {
         inputKickOrder.value = '';
         await syncAndFetchRoom();
     } catch (error) {
-        displaySystemMessage("ホスト", `退室処理失敗: ${error.message}`);
+        // ★修正: DBに永続化するため insertSystemMessage に変更
+        await insertSystemMessage(supabase, "ホスト", `退室処理失敗: ${error.message}`);
     }
 });
 
@@ -224,7 +224,8 @@ btnSetTurn?.addEventListener('click', async () => {
     const orderIdx = parseInt(orderInput, 10) - 1;
     
     if (isNaN(orderIdx) || orderIdx < 0 || orderIdx >= currentParticipants.length) {
-        displaySystemMessage("ホスト", "有効なプレイヤーの番号（入室順）を入力してください。");
+        // ★修正: DBに永続化するため insertSystemMessage に変更
+        await insertSystemMessage(supabase, "ホスト", "有効なプレイヤーの番号（入室順）を入力してください。");
         return;
     }
 
@@ -238,7 +239,8 @@ btnSetTurn?.addEventListener('click', async () => {
         inputNextTurnOrder.value = '';
         await syncAndFetchRoom();
     } catch (error) {
-        displaySystemMessage("ホスト", `手番変更失敗: ${error.message}`);
+        // ★修正: DBに永続化するため insertSystemMessage に変更
+        await insertSystemMessage(supabase, "ホスト", `手番変更失敗: ${error.message}`);
     }
 });
 
@@ -257,12 +259,14 @@ btnForceGameEnd?.addEventListener('click', async () => {
             .eq('id', roomId);
             
         if (updateError) {
-            displaySystemMessage("ホスト", `部屋の状態リセットに失敗しました: ${updateError.message}`);
+            // ★修正: DBに永続化するため insertSystemMessage に変更
+            await insertSystemMessage(supabase, "ホスト", `部屋の状態リセットに失敗しました: ${updateError.message}`);
         } else {
             window.location.reload();
         }
     } else {
-        displaySystemMessage("ホスト", `参加者の退室処理に失敗しました: ${deleteError.message}`);
+        // ★修正: DBに永続化するため insertSystemMessage に変更
+        await insertSystemMessage(supabase, "ホスト", `参加者の退室処理に失敗しました: ${deleteError.message}`);
     }
 });
 
