@@ -1,9 +1,7 @@
 // index_actions_finance.js
 import { roomId } from './common_config.js';
 import { SEL_G } from './common_dom_selectors.js'; 
-import { callRpcWithDebug, displaySystemMessage, getLocalPlayerName } from './common_utils.js'; // ★修正: getLocalPlayerName をインポートに追加
-
-// ★修正: ここにあった getLocalPlayerName() のローカル定義を削除しました
+import { callRpcWithDebug, displaySystemMessage, insertSystemMessage, getLocalPlayerName } from './common_utils.js'; // ★修正: insertSystemMessage をインポートに追加
 
 export async function actionClaimPaycheck(supabase, currentUserId) {
     if (!supabase || !currentUserId) return;
@@ -18,7 +16,8 @@ export async function actionClaimPaycheck(supabase, currentUserId) {
             p_user_id: currentUserId 
         });
     } catch (error) {
-        displaySystemMessage(playerName, `エラー: ${error.message}`);
+        // ★修正: DBに永続化するため insertSystemMessage に変更
+        await insertSystemMessage(supabase, playerName, `エラー: ${error.message}`);
         if (claimButton) claimButton.disabled = false;
     }
 }
@@ -34,7 +33,8 @@ export async function actionCheckCalculations(supabase, currentUserId) {
     const rawCashflow = inputCashflowEl ? inputCashflowEl.value.replace(/,/g, '').trim() : "";
 
     if (!/^-?\d+$/.test(rawIncome) || !/^-?\d+$/.test(rawCashflow)) {
-        displaySystemMessage(playerName, "総収入とキャッシュフローに【半角数字】を入力してください。");
+        // ★修正: DBに永続化するため insertSystemMessage に変更
+        await insertSystemMessage(supabase, playerName, "総収入とキャッシュフローに【半角数字】を入力してください。");
         return;
     }
 
@@ -50,13 +50,15 @@ export async function actionCheckCalculations(supabase, currentUserId) {
         });
 
         if (data && data.status === 'error') {
-            displaySystemMessage(playerName, `エラー: ${data.message}`);
+            // ★修正: DBに永続化するため insertSystemMessage に変更
+            await insertSystemMessage(supabase, playerName, `エラー: ${data.message}`);
         } else {
             if (inputIncomeEl) inputIncomeEl.value = '';
             if (inputCashflowEl) inputCashflowEl.value = '';
         }
     } catch (error) {
-        displaySystemMessage(playerName, `エラー: ${error.message}`);
+        // ★修正: DBに永続化するため insertSystemMessage に変更
+        await insertSystemMessage(supabase, playerName, `エラー: ${error.message}`);
     }
 }
 
