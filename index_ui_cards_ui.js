@@ -1,8 +1,7 @@
 // index_ui_cards_ui.js
-import { setButtonActive, setMultipleButtonsActive } from './common_utils.js';
-import {
-    SEL_G, CELLS_OPPORTUNITY, CELLS_MARKET, CELLS_DOODAD, CELLS_CHARITY, CELLS_DOWNSIZED
-} from './index_ui_cards_utils.js';
+import { setButtonActive, setMultipleButtonsActive, CELLS_OPPORTUNITY, CELLS_MARKET, CELLS_DOODAD, CELLS_CHARITY, CELLS_DOWNSIZED } from './common_utils.js'; // ★修正: マス目定数をインポートに追加
+import { SEL_G } from './common_dom_selectors.js'; // ★修正: SEL_G を直接インポート
+// ★修正: index_ui_cards_utils.js からのインポートを削除
 
 export function updateCardPhaseUI(position, flags = {}, currentCard = null, playerName = "現在のプレイヤー") {
     const drawButtons = [
