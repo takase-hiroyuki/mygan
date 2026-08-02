@@ -241,3 +241,5 @@ export function initCardEventListeners(supabase, currentUserId) {
     document.getElementById(SEL_G.CARD.BTN_BUY_REALESTATE)?.addEventListener('click', completeActionRpc);
     document.getElementById(SEL_G.CARD.BTN_SELL_STOCK)?.addEventListener('click', completeActionRpc);
 }
+
+console.log("[デバッグ] index_ui_cards.js が正常にロードされました。");
