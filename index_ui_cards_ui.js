@@ -1,7 +1,6 @@
 // index_ui_cards_ui.js
-import { setButtonActive, setMultipleButtonsActive, CELLS_OPPORTUNITY, CELLS_MARKET, CELLS_DOODAD, CELLS_CHARITY, CELLS_DOWNSIZED } from './common_utils.js'; // ★修正: マス目定数をインポートに追加
-import { SEL_G } from './common_dom_selectors.js'; // ★修正: SEL_G を直接インポート
-// ★修正: index_ui_cards_utils.js からのインポートを削除
+import { setButtonActive, setMultipleButtonsActive, CELLS_OPPORTUNITY, CELLS_MARKET, CELLS_DOODAD, CELLS_CHARITY, CELLS_DOWNSIZED } from './common_utils.js';
+import { SEL_G } from './common_dom_selectors.js';
 
 export function updateCardPhaseUI(position, flags = {}, currentCard = null, playerName = "現在のプレイヤー") {
     const drawButtons = [
@@ -46,7 +45,9 @@ export function updateCardPhaseUI(position, flags = {}, currentCard = null, play
     } else if (CELLS_DOODAD.includes(position)) {
         setButtonActive(SEL_G.CARD.BTN_DRAW_DOODAD, true);
     } else if (CELLS_CHARITY.includes(position)) {
-        setButtonActive(SEL_G.CARD.BTN_EXECUTE_PAYMENT, true);
+        // ★修正: いきなり支払いではなく「寄付アクション」ボタンと「パス」ボタンを有効にする
+        setButtonActive(SEL_G.CARD.BTN_ACTION_DONATE, true);
+        setButtonActive(SEL_G.CARD.BTN_PASS, true);
     } else if (CELLS_DOWNSIZED.includes(position)) {
         setButtonActive(SEL_G.CARD.BTN_ACTION_DOWNSIZED, true);
     }
