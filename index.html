@@ -132,7 +132,7 @@
 
                 <table border="1" cellspacing="0" cellpadding="5">
                 <tr><td>
-                    <button id="btn-draw-small-deal" disabled>X 細かい商売をする</button><br />
+                    <button id="btn-draw-small-deal" disabled>X 普通の商売をする</button><br />
                     <button id="btn-draw-big-deal" disabled>X 大きい商売をする</button><br />
                     <button id="btn-draw-market" disabled>X 市場の様子をみる</button><br />
                     <button id="btn-draw-doodad" disabled>X 個人的に、楽しむ</button><br />
@@ -148,6 +148,12 @@
                 </td></tr>
             </table>
 
+                <fieldset id="bank-loan-control">
+                    <legend>銀行ローン操作 (手番中の財務変動前に利用可能)</legend>
+                    <button id="btn-borrow-loan" disabled>銀行ローン借入 (+$1,000単位)</button>
+                    <button id="btn-payback-loan" disabled>銀行ローン返済 (-$1,000単位)</button>
+                </fieldset>
+                
         </div>
 
         <br>
@@ -156,8 +162,6 @@
         <h2>財務諸表</h2>
         <div id="financials-container">
             <fieldset>
-                <legend>財務計算：<span id="calc-phase-name">確認中</span>）</legend>
-                <p>現在の状態: <span id="calc-lock-status">データを読み込み中...</span></p>
                 <table border="1" cellspacing="0" cellpadding="5">
                     <tbody>
                         <tr>
@@ -200,14 +204,6 @@
         <div id="portfolio-container">
             <fieldset>
                 <legend>資産・負債状況</legend>
-                
-                <fieldset id="bank-loan-control">
-                    <legend>銀行ローン操作 (手番中の財務変動前に利用可能)</legend>
-                    <button id="btn-borrow-loan" disabled>銀行ローン借入 (+$1,000単位)</button>
-                    <button id="btn-payback-loan" disabled>銀行ローン返済 (-$1,000単位)</button>
-                </fieldset>
-                
-                <br>
                 
                 <p>■ 資産 (Assets)</p>
                 <ul>
