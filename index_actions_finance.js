@@ -21,8 +21,9 @@ export async function actionClaimPaycheck(supabase, currentUserId) {
             p_room_id: roomId, 
             p_user_id: currentUserId 
         });
+        // 正常終了時は game_logs 経由で通知されるためローカル表示は行わない
     } catch (error) {
-        displaySystemMessage(playerName, `エラー: ${error.message}`);
+        displaySystemMessage(playerName, `[エラー] 処理エラー: ${error.message}`);
         if (claimButton) claimButton.disabled = false;
     }
 }
@@ -38,7 +39,7 @@ export async function actionCheckCalculations(supabase, currentUserId) {
     const rawCashflow = inputCashflowEl ? inputCashflowEl.value.replace(/,/g, '').trim() : "";
 
     if (!/^-?\d+$/.test(rawIncome) || !/^-?\d+$/.test(rawCashflow)) {
-        displaySystemMessage(playerName, "総収入とキャッシュフローに【半角数字】を入力してください。");
+        displaySystemMessage(playerName, "[入力エラー] 総収入とキャッシュフローに【半角数字】を入力してください。");
         return;
     }
 
@@ -54,12 +55,14 @@ export async function actionCheckCalculations(supabase, currentUserId) {
         });
 
         if (data && data.status === 'error') {
-            displaySystemMessage(playerName, "エラー", data.message);
+            // 2引数仕様に修正
+            displaySystemMessage(playerName, `[エラー] ${data.message}`);
         } else {
+            // 正常終了時は game_logs 経由で通知されるためローカル表示は行わない
             if (inputIncomeEl) inputIncomeEl.value = '';
             if (inputCashflowEl) inputCashflowEl.value = '';
         }
     } catch (error) {
-        displaySystemMessage(playerName, `エラー: ${error.message}`);
+        displaySystemMessage(playerName, `[エラー] 実行エラー: ${error.message}`);
     }
 }
