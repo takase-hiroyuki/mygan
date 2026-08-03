@@ -27,7 +27,7 @@ export const DOM_SELECTORS = {
         MESSAGE: {
             TITLE: 'system-message-title',
             BODY: 'system-message-body',
-            TABLE_BODY: 'message-table-body' // 動的メッセージ表示用のtbody
+            TABLE_BODY: 'message-table-body'
         },
 
         // あなたのステータス表示エリア
@@ -73,8 +73,8 @@ export const DOM_SELECTORS = {
             BTN_BUY_REALESTATE: 'btn-card-buy-realestate', 
             BTN_BUY_STOCK: 'btn-card-buy-stock',            
             BTN_SELL_STOCK: 'btn-card-sell-stock',          
-            INPUT_PAYMENT_AMOUNT: 'input-payment-amount', // ★追加: 汎用支払い金額入力
-            BTN_EXECUTE_PAYMENT: 'btn-execute-payment'    // ★追加: 汎用支払いボタン（「支払いを実行」用）
+            INPUT_PAYMENT_AMOUNT: 'input-payment-amount',
+            BTN_EXECUTE_PAYMENT: 'btn-execute-payment'
         },
 
         // 財務諸表（PL/BS）手動計算エリア
@@ -191,5 +191,6 @@ export const DOM_SELECTORS = {
 };
 
 export const SEL_G = DOM_SELECTORS.GUEST;
+export const SEL_H = DOM_SELECTORS.HOST;
 
 console.log("【デバッグ】common_dom_selectors.js が読み込まれました。");
