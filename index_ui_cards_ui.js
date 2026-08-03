@@ -28,12 +28,14 @@ export function updateCardPhaseUI(position, flags = {}, currentCard = null, play
     setMultipleButtonsActive(drawButtons, false);
     setMultipleButtonsActive(actionButtons, false);
 
-    // マイナスキャッシュフローの「支払い義務」がある時のみ汎用支払いボタンを強制し、入金ボタンはOFFにする
+    /* マイナスキャッシュフローの「支払い義務」がある時のみ汎用支払いボタンを強制し、入金ボタンはOFFにする
     if (flags.is_negative_cash_flow && (flags.pending_paydays || 0) > 0) {
         setButtonActive(SEL_G.CARD.BTN_EXECUTE_PAYMENT, true);
         setButtonActive(SEL_G.CARD.BTN_CLAIM_PAYCHECK, false);
         return;
     }
+    */
+        
     if (flags.is_action_completed) return;
 
     if (flags.is_card_drawn) {
