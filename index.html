@@ -20,20 +20,14 @@
     </div>
 
     <div id="section-guest">
-        <fieldset>
-            <legend>メッセージ</legend>
-            <!-- ログが縦に長くなることを想定し、スクロール可能なコンテナでラップ -->
-            <div style="max-height: 150px; overflow-y: auto;">
+            <div style="max-height: 250px; overflow-y: auto;">
                 <table border="1" style="width: 100%; border-collapse: collapse;">
                     <tbody id="message-table-body">
                         <!-- JavaScript (index_state.js) によって動的に <tr> が追加されます -->
                     </tbody>
                 </table>
             </div>
-        </fieldset>
-
         <br>
-
         <!-- サイコロ・手番制御エリア -->
         <fieldset>
             <legend>名前: <span id="guest-name">未定</span> 手番・サイコロ制御</legend>
@@ -50,7 +44,6 @@
         </fieldset>
 
         <br>
-
         <table border="1">
             <tbody>
                 <tr>
