@@ -2,6 +2,7 @@ Doodadカード「誕生日」を引きました。 - 子供の遊園地費用�
 は、子どもの人数によって支払い金額が変わるので注意
 
 - https://mygan-six.vercel.app/
+- https://mygan-six.vercel.app/index2.html
 - https://mygan-six.vercel.app/host.html
 
 【supabase 現在のテーブル確認SQL】
