@@ -4,33 +4,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>mygan guest</title>
+    <title>mygan index2</title>
     <link rel="icon" href="data:,">
 </head>
 <body>
 
-    <h1>mygan guest</h1>
-
     <div id="section-login">
-        <fieldset>
-            <legend>プレイヤー登録</legend>
-            <input type="text" id="input-username" placeholder="あなたの名前を入力">
-            <button id="btn-login">入室する</button>
-        </fieldset>
+        プレイヤー登録
+        <input type="text" id="input-username" placeholder="あなたの名前を入力">
+        <button id="btn-login">入室する</button>
     </div>
 
     <div id="section-guest">
-            <div style="max-height: 250px; overflow-y: auto;">
-                <table border="1" style="width: 100%; border-collapse: collapse;">
                     <tbody id="message-table-body">
                         <!-- JavaScript (index_state.js) によって動的に <tr> が追加されます -->
                     </tbody>
-                </table>
-            </div>
         <br>
         <!-- サイコロ・手番制御エリア -->
-        <fieldset>
-            <legend>名前: <span id="guest-name">未定</span> 手番・サイコロ制御</legend>
+            名前: <span id="guest-name">未定</span> 手番・サイコロ制御
             現金: $<span id="display-current-cash">0</span> / 
             <span id="guest-dice-result">現在地</span> / 
             <span id="dice-status-area">手番</span>
@@ -38,65 +29,84 @@
                 <button id="btn-roll-dice" disabled>X サイコロ１個</button>
                 <button id="btn-roll-dice-2" disabled>X サイコロ２個</button>
                 <button id="btn-claim-paycheck" disabled>X 入金日</button>
-                <button id="btn-end-turn" disabled>X 手番終了</button>
-                <button id="btn-escape-rat-race" disabled>X ラットレース脱出</button>
+                <button id="btn-end-turn" disabled>X 次の人へ</button>
             </p>
-        </fieldset>
 
         <br>
         <table border="1">
             <tbody>
                 <tr>
-                    <td align="center" valign="middle" data-position="0">
-                        00入金<div id="rat-cell-0" class="player-occupants"></div>
-                    </td><td align="center" valign="middle" data-position="1">
-                        01娯楽<div id="rat-cell-1" class="player-occupants"></div>
+                    <td>00入金<span id="rat-cell-0" class="player-occupants"></span></td>
+                    <td><span id="rat-cell-0" class="player-occupants"></span></td>
+                        01娯楽
                     </td><td align="center" valign="middle" data-position="2">
-                        02商売<div id="rat-cell-2" class="player-occupants"></div>
+                        02商売
+                        <div id="rat-cell-2" class="player-occupants"></div>
                     </td><td align="center" valign="middle" data-position="3">
-                        03寄付<div id="rat-cell-3" class="player-occupants"></div>
+                        03寄付
+                        <div id="rat-cell-3" class="player-occupants"></div>
                     </td><td align="center" valign="middle" data-position="4">
-                        04商売<div id="rat-cell-4" class="player-occupants"></div>
+                        04商売
+                        <div id="rat-cell-4" class="player-occupants"></div>
                     </td><td align="center" valign="middle" data-position="5">
-                        05入金<div id="rat-cell-5" class="player-occupants"></div>
+                        05入金
+                        <div id="rat-cell-5" class="player-occupants"></div>
                     </td><td align="center" valign="middle" data-position="6">
-                        06商売<div id="rat-cell-6" class="player-occupants"></div>
+                        06商売
+                        <div id="rat-cell-6" class="player-occupants"></div>
                     </td><td align="center" valign="middle" data-position="7">
-                        07娯楽<div id="rat-cell-7" class="player-occupants"></div>
+                        07娯楽
+                        <div id="rat-cell-7" class="player-occupants"></div>
                     </td><td align="center" valign="middle" data-position="8">
-                        08商売<div id="rat-cell-8" class="player-occupants"></div>
+                        08商売
+                        <div id="rat-cell-8" class="player-occupants"></div>
                     </td><td align="center" valign="middle" data-position="9">
-                        09子供<div id="rat-cell-9" class="player-occupants"></div>
+                        09子供
+                        <div id="rat-cell-9" class="player-occupants"></div>
                     </td><td align="center" valign="middle" data-position="10">
-                        10商売<div id="rat-cell-10" class="player-occupants"></div>
+                        10商売
+                        <div id="rat-cell-10" class="player-occupants"></div>
                     </td><td align="center" valign="middle" data-position="11">
-                        11入金<div id="rat-cell-11" class="player-occupants"></div>
+                        11入金
+                        <div id="rat-cell-11" class="player-occupants"></div>
                     </td>
                 </tr><tr>
                     <td align="center" valign="middle" data-position="12">
-                        12市場<div id="rat-cell-12" class="player-occupants"></div>
+                        12市場
+                        <div id="rat-cell-12" class="player-occupants"></div>
                     </td><td align="center" valign="middle" data-position="13">
-                        13商売<div id="rat-cell-13" class="player-occupants"></div>
+                        13商売
+                        <div id="rat-cell-13" class="player-occupants"></div>
                     </td><td align="center" valign="middle" data-position="14">
-                        14娯楽<div id="rat-cell-14" class="player-occupants"></div>
+                        14娯楽
+                        <div id="rat-cell-14" class="player-occupants"></div>
                     </td><td align="center" valign="middle" data-position="15">
-                        15商売<div id="rat-cell-15" class="player-occupants"></div>
+                        15商売
+                        <div id="rat-cell-15" class="player-occupants"></div>
                     </td><td align="center" valign="middle" data-position="16">
-                        16寄付<div id="rat-cell-16" class="player-occupants"></div>
+                        16寄付
+                        <div id="rat-cell-16" class="player-occupants"></div>
                     </td><td align="center" valign="middle" data-position="17">
-                        17商売<div id="rat-cell-17" class="player-occupants"></div>
+                        17商売
+                        <div id="rat-cell-17" class="player-occupants"></div>
                     </td><td align="center" valign="middle" data-position="18">
-                        18入金<div id="rat-cell-18" class="player-occupants"></div>
+                        18入金
+                        <div id="rat-cell-18" class="player-occupants"></div>
                     </td><td align="center" valign="middle" data-position="19">
-                        19商売<div id="rat-cell-19" class="player-occupants"></div>
+                        19商売
+                        <div id="rat-cell-19" class="player-occupants"></div>
                     </td><td align="center" valign="middle" data-position="20">
-                        20解雇<div id="rat-cell-20" class="player-occupants"></div>
+                        20解雇
+                        <div id="rat-cell-20" class="player-occupants"></div>
                     </td><td align="center" valign="middle" data-position="21">
-                        21商売<div id="rat-cell-21" class="player-occupants"></div>
+                        21商売
+                        <div id="rat-cell-21" class="player-occupants"></div>
                     </td><td align="center" valign="middle" data-position="22">
-                        22市場<div id="rat-cell-22" class="player-occupants"></div>
+                        22市場
+                        <div id="rat-cell-22" class="player-occupants"></div>
                     </td><td align="center" valign="middle" data-position="23">
-                        23商売<div id="rat-cell-23" class="player-occupants"></div>
+                        23商売
+                        <div id="rat-cell-23" class="player-occupants"></div>
                     </td>
                 </tr>
             </tbody>
