@@ -3,9 +3,6 @@ import { roomId } from './common_config.js';
 import { SEL_G } from './common_dom_selectors.js'; 
 import { toggleScreen } from './index_ui.js';
 
-import { initCardEventListeners } from './index_ui_cards_events.js'; 
-import { executeGenericPayment } from './index_ui_cards_payment.js';
-
 import { initSupabaseClient, checkExistingLogin, loginUser } from './index_auth.js';
 import { startSubscriptions } from './index_state.js'; 
 import { insertSystemMessage } from './common_utils.js'; 
@@ -14,12 +11,13 @@ import { actionClaimPaycheck, actionCheckCalculations } from './index_actions_fi
 import { actionBorrowBankLoan, actionRepayBankLoan } from './index_actions_loan.js';
 
 let supabase = null;
+let currentUserId = null;
 
 // DOM要素の取得
 const inputUsername = document.getElementById(SEL_G.LOGIN.INPUT_USERNAME);
 const btnLogin = document.getElementById(SEL_G.LOGIN.BTN_LOGIN);
 
-// セレクターを新しい定義に更新
+// コントロールボタン群
 const btnRollDice = document.getElementById(SEL_G.CONTROLS.BTN_DICE1);
 const btnRollDice2 = document.getElementById(SEL_G.CONTROLS.BTN_DICE_2); 
 const btnClaimPaycheck = document.getElementById(SEL_G.CONTROLS.BTN_PAYCHECK);
@@ -30,25 +28,11 @@ const btnCheckCalculations = document.getElementById(SEL_G.FINANCIALS.BTN_C_CASH
 const btnBorrowLoan = document.getElementById(SEL_G.LOAN.BTN_BORROW_LOAN);
 const btnPaybackLoan = document.getElementById(SEL_G.LOAN.BTN_PAYBACK_LOAN);
 
-// 処理用の入力欄とボタンを新しいHTML構造に合わせて更新
-const inputPaymentAmount = document.getElementById(SEL_G.FINANCIALS.INPUT_CASHFLOW);
-const btnExecutePayment = document.getElementById(SEL_G.FINANCIALS.BTN_OPERATE);
-
-// 新しく追加されたトレード関連のボタン取得
+// 新しい取引・処理用のボタン
+const btnOperate = document.getElementById(SEL_G.FINANCIALS.BTN_OPERATE);
 const btnSellCard = document.getElementById(SEL_G.TRADE.BTN_SELL);
 const btnTradeAccept = document.getElementById(SEL_G.TRADE.BTN_ACCEPT);
 const btnTradeReject = document.getElementById(SEL_G.TRADE.BTN_REJECT);
-
-let currentUserId = null;
-let isCardListenersReady = false; 
-
-function setupCardListeners() {
-    if (!isCardListenersReady && supabase && currentUserId) {
-        initCardEventListeners(supabase, currentUserId);
-        isCardListenersReady = true;
-        console.log("[DEBUG] カードイベントリスナーを登録しました。");
-    }
-}
 
 (async function init() {
     console.log("[DEBUG] アプリケーションの初期化を開始します...");
@@ -60,7 +44,6 @@ function setupCardListeners() {
 
     if (currentUserId) {
         console.log(`[DEBUG] 既存のログインセッションを検出しました: user_id=${currentUserId}`);
-        setupCardListeners();
         toggleScreen(true);
         startSubscriptions(supabase, roomId, currentUserId);
     } else {
@@ -84,7 +67,6 @@ btnLogin?.addEventListener('click', async () => {
     
     if (newUserId) {
         currentUserId = newUserId;
-        setupCardListeners();
         toggleScreen(true);
         startSubscriptions(supabase, roomId, currentUserId);
     } else {
@@ -93,68 +75,51 @@ btnLogin?.addEventListener('click', async () => {
 });
 
 btnRollDice?.addEventListener('click', () => {
-    console.log("[DEBUG-UI] 「サイコロ１個」ボタンが押下されました");
     actionRollDice(supabase, currentUserId, 1);
 });
 
 btnRollDice2?.addEventListener('click', () => {
-    console.log("[DEBUG-UI] 「サイコロ２個」ボタンが押下されました");
     actionRollDice(supabase, currentUserId, 2);
 });
 
 btnClaimPaycheck?.addEventListener('click', () => {
-    console.log("[DEBUG-UI] 「Paycheck請求」ボタンが押下されました");
     actionClaimPaycheck(supabase, currentUserId);
 });
 
 btnEndTurn?.addEventListener('click', () => {
-    console.log("[DEBUG-UI] 「手番終了」ボタンが押下されました");
     actionEndTurn(supabase, currentUserId);
 });
 
 btnCheckCalculations?.addEventListener('click', () => {
-    console.log("[DEBUG-UI] 「計算チェック」ボタンが押下されました");
     actionCheckCalculations(supabase, currentUserId);
 });
 
 btnBorrowLoan?.addEventListener('click', () => {
-    console.log("[DEBUG-UI] 「銀行ローンを借り入れる」ボタンが押下されました");
     actionBorrowBankLoan(supabase, currentUserId);
 });
 
 btnPaybackLoan?.addEventListener('click', () => {
-    console.log("[DEBUG-UI] 「銀行ローンを返済する」ボタンが押下されました");
     actionRepayBankLoan(supabase, currentUserId);
 });
 
-btnExecutePayment?.addEventListener('click', () => {
-    console.log("[DEBUG-UI] 「支払いを実行」ボタンが押下されました");
-    if (!supabase || !currentUserId) return;
-    
-    const amountStr = inputPaymentAmount ? inputPaymentAmount.value.trim() : "";
-    if (typeof executeGenericPayment === 'function') {
-        executeGenericPayment(supabase, currentUserId, amountStr);
-    } else {
-        console.warn("[DEBUG-UI] executeGenericPayment がまだ実装されていません。");
-    }
+// ============================================================================
+// 以降は今回新設した「アイテム処理」および「トレード」用の仮リスナー
+// ============================================================================
+
+btnOperate?.addEventListener('click', () => {
+    console.log("[DEBUG-UI] 「X 処理する」ボタンが押下されました（現在準備中）");
+    // TODO: ここで選択されたアイテムの売却や返済を行うRPCを呼び出す
 });
 
-// 新しいトレード関連のイベントリスナー
 btnSellCard?.addEventListener('click', async () => {
-    console.log("[DEBUG-UI] 「売る」ボタンが押下されました");
-    if (!supabase || !currentUserId) return;
     await insertSystemMessage(supabase, "システム", "カードの売却提案機能は現在準備中です。");
 });
 
 btnTradeAccept?.addEventListener('click', async () => {
-    console.log("[DEBUG-UI] 「承諾」ボタンが押下されました");
-    if (!supabase || !currentUserId) return;
     await insertSystemMessage(supabase, "システム", "トレードの承諾機能は現在準備中です。");
 });
 
 btnTradeReject?.addEventListener('click', async () => {
-    console.log("[DEBUG-UI] 「拒否」ボタンが押下されました");
-    if (!supabase || !currentUserId) return;
     await insertSystemMessage(supabase, "システム", "トレードの拒否機能は現在準備中です。");
 });
 
