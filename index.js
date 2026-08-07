@@ -18,15 +18,21 @@ let supabase = null;
 // DOM要素の取得
 const inputUsername = document.getElementById(SEL_G.LOGIN.INPUT_USERNAME);
 const btnLogin = document.getElementById(SEL_G.LOGIN.BTN_LOGIN);
-const btnRollDice = document.getElementById(SEL_G.CONTROLS.BTN_ROLL_DICE);
-const btnRollDice2 = document.getElementById(SEL_G.CONTROLS.BTN_ROLL_DICE_2); 
-const btnClaimPaycheck = document.getElementById(SEL_G.CONTROLS.BTN_CLAIM_PAYCHECK);
+
+// セレクターを新しい定義に更新
+const btnRollDice = document.getElementById(SEL_G.CONTROLS.BTN_DICE1);
+const btnRollDice2 = document.getElementById(SEL_G.CONTROLS.BTN_DICE_2); 
+const btnClaimPaycheck = document.getElementById(SEL_G.CONTROLS.BTN_PAYCHECK);
 const btnEndTurn = document.getElementById(SEL_G.CONTROLS.BTN_END_TURN);
-const btnCheckCalculations = document.getElementById(SEL_G.FINANCIALS.BTN_CHECK_CALCULATIONS);
-const btnBorrowLoan = document.getElementById(SEL_G.PORTFOLIO.BTN_BORROW_LOAN);
-const btnPaybackLoan = document.getElementById(SEL_G.PORTFOLIO.BTN_PAYBACK_LOAN);
-const inputPaymentAmount = document.getElementById(SEL_G.CARD.INPUT_PAYMENT_AMOUNT);
-const btnExecutePayment = document.getElementById(SEL_G.CARD.BTN_EXECUTE_PAYMENT);
+
+const btnCheckCalculations = document.getElementById(SEL_G.FINANCIALS.BTN_C_CASHFLOW);
+
+const btnBorrowLoan = document.getElementById(SEL_G.LOAN.BTN_BORROW_LOAN);
+const btnPaybackLoan = document.getElementById(SEL_G.LOAN.BTN_PAYBACK_LOAN);
+
+// 処理用の入力欄とボタンを新しいHTML構造に合わせて更新
+const inputPaymentAmount = document.getElementById(SEL_G.FINANCIALS.INPUT_CASHFLOW);
+const btnExecutePayment = document.getElementById(SEL_G.FINANCIALS.BTN_OPERATE);
 
 let currentUserId = null;
 let isCardListenersReady = false; 
