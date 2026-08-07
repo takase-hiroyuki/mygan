@@ -104,11 +104,9 @@ export async function loginUser(supabase, username) {
     }
         
 
-/*
     const logBody = `${username} が入室しました。ホストがゲームを開始するまでお待ちください。`;
     await insertSystemMessage(supabase, username, logBody);
     console.log("[DEBUG_AUTH] 入室ログの書き込みリクエストを送信しました。");
-*/
         
     console.log(`[DEBUG_AUTH] ログイン(INSERT)完了: user_id=${newUserId}`);
     return newUserId;
