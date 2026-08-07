@@ -8,7 +8,6 @@
     <link rel="icon" href="data:,">
 </head>
 <body>
-
     <div id="section-login">
         プレイヤー登録
         <input type="text" id="input-username" placeholder="あなたの名前を入力">
@@ -16,23 +15,23 @@
     </div>
 
     <div id="section-guest">
-                    <tbody id="message-table-body">
-                        <!-- JavaScript (index_state.js) によって動的に <tr> が追加されます -->
-                    </tbody>
+        <span id="message-body"></span>
         <br>
-        <!-- サイコロ・手番制御エリア -->
-            名前: <span id="guest-name">未定</span> 手番・サイコロ制御
-            現金: $<span id="display-current-cash">0</span> / 
-            <span id="guest-dice-result">現在地</span> / 
-            <span id="dice-status-area">手番</span>
-            <p id="manual-action-area">
-                <button id="btn-roll-dice" disabled>X サイコロ１個</button>
-                <button id="btn-roll-dice-2" disabled>X サイコロ２個</button>
-                <button id="btn-claim-paycheck" disabled>X 入金日</button>
-                <button id="btn-end-turn" disabled>X 次の人へ</button>
-            </p>
+        名前: <span id="guest-name">未定</span><br>
+        現金: $<span id="display-current-cash">0</span> / 
+        <span id="guest-dice-result">現在地</span> / 
+        <span id="dice-status-area">手番</span><br>
 
+        <button id="btn-roll-dice" disabled>X サイコロ１個</button>
+        <button id="btn-roll-dice-2" disabled>X サイコロ２個</button>
+        <button id="btn-end-turn" disabled>X 次の人へ</button><br>
+        <button id="btn-draw-small-deal" disabled>X 普通の商売</button>
+        <button id="btn-draw-big-deal" disabled>X 大きい商売</button>
+        <button id="btn-borrow-loan" disabled>x 銀行借入</button>
+        <button id="btn-payback-loan" disabled>x 銀行返済</button>
+        <button id="btn-claim-paycheck" disabled>X 入金日</button>
         <br>
+
         <table border="1" cellspacing="0" cellpadding="2">
             <tbody>
                 <tr>
@@ -68,30 +67,9 @@
         </table>
 
         <br>
-        <div id="card-display-container">
-                <div id="card-numerical-details" style="display: none; margin-bottom: 15px;">
-                    <table border="1" cellspacing="0" cellpadding="5">
-                        <tbody>
-                            <tr>
-                                <td>価格 (Cost)</td>
-                                <td>$<span id="card-detail-cost">0</span></td>
-                            </tr>
-                            <tr>
-                                <td>頭金 (Down Payment)</td>
-                                <td>$<span id="card-detail-downpayment">0</span></td>
-                            </tr>
-                            <tr>
-                                <td>キャッシュフロー (Cash Flow)</td>
-                                <td>$<span id="card-detail-cashflow">0</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
 
                 <table border="1" cellspacing="0" cellpadding="5">
                 <tr><td>
-                    <button id="btn-draw-small-deal" disabled>X 普通の商売をする</button><br />
-                    <button id="btn-draw-big-deal" disabled>X 大きい商売をする</button><br />
                 </td><td>
                     <button id="btn-card-pass" disabled>カードパス</button><br />
                     <input type="number" id="input-payment-amount" placeholder="金額を入力"><br />
@@ -99,8 +77,6 @@
                 </td></tr>
             </table>
 
-                    <button id="btn-borrow-loan" disabled>銀行ローン借入 (+$1,000単位)</button>
-                    <button id="btn-payback-loan" disabled>銀行ローン返済 (-$1,000単位)</button>
                 
         </div>
 
