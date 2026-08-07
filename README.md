@@ -4,6 +4,8 @@ Doodadカード「誕生日」を引きました。 - 子供の遊園地費用�
 - https://mygan-six.vercel.app/
 - https://mygan-six.vercel.app/index2.html
 - https://mygan-six.vercel.app/host.html
+- https://mygan-six.vercel.app/cards/
+
 
 【supabase 現在のテーブル確認SQL】
 
