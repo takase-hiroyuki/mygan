@@ -1,101 +1,19 @@
-<!DOCTYPE html>
-<!-- index.html -->
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>mygan index2</title>
-    <link rel="icon" href="data:,">
-</head>
-<body>
-    <div id="section-login">
-        プレイヤー登録
-        <input type="text" id="input-username" placeholder="あなたの名前を入力">
-        <button id="btn-login">入室する</button>
-    </div>
-
-    <div id="section-guest">
-        <span id="message-body"></span>
+財務諸表
         <p>
-        名前: <span id="guest-name">未定</span> / 
-        子供: <span id="">0</span>人 / 養育費 $<span id="">0</span>(1人あたり)<br>
-        職業: <span id=""></span>
-        </p>
-
-        <p>
-        現金: $<span id="display-current-cash">0</span> / 
-        <span id="guest-dice-result">現在地</span> / 
-        <span id="dice-status-area">手番</span><br>
-        </p>
-
-        <p>
-        <button id="btn-roll-dice" disabled>X サイコロ１個</button>
-        <button id="btn-roll-dice-2" disabled>X サイコロ２個</button>
-        <button id="btn-end-turn" disabled>X 次の人へ</button>
-        </p>
-        <p>
-        <button id="btn-draw-small-deal" disabled>X 普通の商売</button>
-        <button id="btn-draw-big-deal" disabled>X 大きい商売</button>
-        <button id="btn-borrow-loan" disabled>x 銀行借入</button>
-        <button id="btn-payback-loan" disabled>x 銀行返済</button>
-        <button id="btn-claim-paycheck" disabled>X 入金日</button>
-        </p>
-
-        <table border="1" cellspacing="0" cellpadding="2">
-            <tbody>
-                <tr>
-                    <td>00入金<span id="rat-cell-0" class="player-occupants"></span>
-                    </td><td>01娯楽<span id="rat-cell-1" class="player-occupants"></span>
-                    </td><td>02商売<span id="rat-cell-2" class="player-occupants"></span>
-                    </td><td>03寄付<span id="rat-cell-3" class="player-occupants"></span>
-                    </td><td>04商売<span id="rat-cell-4" class="player-occupants"></span>
-                    </td><td>05入金<span id="rat-cell-5" class="player-occupants"></span>
-                    </td><td>06商売<span id="rat-cell-6" class="player-occupants"></span>
-                    </td><td>07娯楽<span id="rat-cell-7" class="player-occupants"></span>
-                    </td><td>08商売<span id="rat-cell-8" class="player-occupants"></span>
-                    </td><td>09子供<span id="rat-cell-9" class="player-occupants"></span>
-                    </td><td>10商売<span id="rat-cell-10" class="player-occupants"></span>
-                    </td><td>11入金<span id="rat-cell-11" class="player-occupants"></span>
-                    </td>
-                </tr><tr>
-                    <td>12市場<span id="rat-cell-12" class="player-occupants"></span>
-                    </td><td>13商売<span id="rat-cell-13" class="player-occupants"></span>
-                    </td><td>14娯楽<span id="rat-cell-14" class="player-occupants"></span>
-                    </td><td>15商売<span id="rat-cell-15" class="player-occupants"></span>
-                    </td><td>16寄付<span id="rat-cell-16" class="player-occupants"></span>
-                    </td><td>17商売<span id="rat-cell17" class="player-occupants"></span>
-                    </td><td>18入金<span id="rat-cell-18" class="player-occupants"></span>
-                    </td><td>19商売<span id="rat-cell-19" class="player-occupants"></span>
-                    </td><td>20解雇<span id="rat-cell-20" class="player-occupants"></span>
-                    </td><td>21商売<span id="rat-cell-21" class="player-occupants"></span>
-                    </td><td>22市場<span id="rat-cell-22" class="player-occupants"></span>
-                    </td><td>23商売<span id="rat-cell-23" class="player-occupants"></span>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-        <hr>
-
-        財務諸表
-        <p>
-            <span id="">給料</span>
+            <span id="display-salary">給料</span>
         </p><p>
-            <span id="">資産 table </span>
+            <span id="portfolio-container">資産 table </span>
         </p><p>
-            <span id="">負債 table </span>              
+            <!-- 負債を一括表示する単一IDはJSにないため、ひとまずローン操作コンテナのIDを割り当てています -->
+            <span id="bank-loan-control">負債 table </span>              
         </p><p>
-            <span is="">キャッシュフロー： xxx</span>
-            <input type="number" placeholder="金額">
-            <button id="">計算</button>
+            <span id="display-monthly-cashflow">キャッシュフロー： xxx</span>
+            <!-- 計算ボタンと連動する入力欄としてIDを追加 -->
+            <input type="number" id="input-net-cashflow" placeholder="金額">
+            <button id="btn-check-calculations">計算</button>
         </p><p>
             <span>資産・負債のプルダウン</span><br>
             <span>処理の内容のプルダウン</span><br>
-            <button id="">X 処理する</button>
+            <!-- 支払い等のアクション実行ボタン -->
+            <button id="btn-execute-payment">X 処理する</button>
         </p>
-                
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <s cript type="module" src="./index.js"></script>
-</body>
-</html>
