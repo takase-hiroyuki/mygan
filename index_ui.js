@@ -8,7 +8,7 @@ import { updateCardPhaseUI } from './index_ui_cards_ui.js';
 
 const sectionLogin = document.getElementById(SEL_G.LOGIN.SECTION);
 const sectionGuest = document.getElementById(SEL_G.STATUS.SECTION);
-const diceStatusArea = document.getElementById(SEL_G.CONTROLS.STATUS_AREA);
+const diceStatusArea = document.getElementById(SEL_G.CONTROLS.DICE_USER);
 const guestDiceResult = document.getElementById(SEL_G.CONTROLS.DICE_RESULT);
 
 let previousTurnUserId = null;
@@ -51,14 +51,14 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
         }
     };
 
+    // ステータス表示の更新
     safeUpdate(SEL_G.STATUS.NAME, state.name || "");
-    safeUpdate(SEL_G.STATUS.DISPLAY_CURRENT_CASH, toCurrency(financials.cash));
+    safeUpdate(SEL_G.STATUS.CURRENT_CASH, toCurrency(financials.cash));
     safeUpdate(SEL_G.STATUS.PROFESSION, state.profession || "未定");
-    safeUpdate(SEL_G.STATUS.ROLE, state.role || "general");
-    
     safeUpdate(SEL_G.STATUS.CHILDREN_COUNT, state.children_count || 0);
     safeUpdate(SEL_G.STATUS.PER_CHILD_EXPENSE, toCurrency(financials.per_child_expense));
 
+    // 盤面（すごろく）の更新
     for (let i = 0; i < 24; i++) {
         const cell = document.getElementById(`${SEL_G.BOARD.RAT_PREFIX}${i}`);
         if (cell) cell.innerHTML = "";
@@ -75,32 +75,14 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
         }
     });
 
+    // 財務諸表エリアの更新（シンプル化）
     if (Object.keys(financials).length > 0) {
-        const liab = financials.liabilities || {};
-        const exp = financials.expenses || {};
-        const calcPhaseMsg = flags.is_calculating ? "計算せよ" : "計算不要";
-
-        safeUpdate(SEL_G.FINANCIALS.CALC_LOCK_STATUS, calcPhaseMsg);
-        safeUpdate(SEL_G.FINANCIALS.DISPLAY_SALARY, toCurrency(financials.salary));
-        safeUpdate(SEL_G.FINANCIALS.DISPLAY_PASSIVE_INCOME, toCurrency(financials.passive_income));
-        safeUpdate(SEL_G.FINANCIALS.DISPLAY_TOTAL_INCOME, toCurrency(financials.total_income));
-        safeUpdate(SEL_G.FINANCIALS.DISPLAY_TOTAL_EXPENSES, toCurrency(financials.total_expenses));
-        safeUpdate(SEL_G.FINANCIALS.DISPLAY_MONTHLY_CASHFLOW, toCurrency(financials.net_cash_flow));
-        safeUpdate(SEL_G.PORTFOLIO.LIABILITY_MORTGAGE, toCurrency(liab.mortgage));
-        safeUpdate(SEL_G.PORTFOLIO.LIABILITY_CAR_LOAN, toCurrency(liab.car_loans)); 
-        safeUpdate(SEL_G.PORTFOLIO.LIABILITY_RETAIL, toCurrency(liab.retail_debt)); 
-        safeUpdate(SEL_G.PORTFOLIO.DISPLAY_LIABILITY_BANKLOAN, toCurrency(liab.bank_loan));        
-        safeUpdate(SEL_G.PORTFOLIO.LIABILITY_SCHOOL_LOAN, toCurrency(liab.school_loans));
-        safeUpdate(SEL_G.PORTFOLIO.LIABILITY_CREDIT_CARD, toCurrency(liab.credit_card_debt));
-        safeUpdate(SEL_G.PORTFOLIO.DISPLAY_EXPENSE_LOANINTEREST, toCurrency(exp.bank_loan_payment));
-        safeUpdate(SEL_G.PORTFOLIO.DISPLAY_EXPENSE_CHILD, toCurrency(exp.child_expense));        
-        safeUpdate(SEL_G.PORTFOLIO.DISPLAY_EXPENSE_TAXES, toCurrency(exp.taxes));
-        safeUpdate(SEL_G.PORTFOLIO.DISPLAY_EXPENSE_MORTGAGE, toCurrency(exp.mortgage_payment));
-        safeUpdate(SEL_G.PORTFOLIO.DISPLAY_EXPENSE_SCHOOL, toCurrency(exp.school_loan_payment));
-        safeUpdate(SEL_G.PORTFOLIO.DISPLAY_EXPENSE_CAR, toCurrency(exp.car_loan_payment));
-        safeUpdate(SEL_G.PORTFOLIO.DISPLAY_EXPENSE_CREDIT, toCurrency(exp.credit_card_payment));
-        safeUpdate(SEL_G.PORTFOLIO.DISPLAY_EXPENSE_RETAIL, toCurrency(exp.retail_payment));
-        safeUpdate(SEL_G.PORTFOLIO.DISPLAY_EXPENSE_OTHER, toCurrency(exp.other_expenses));
+        safeUpdate(SEL_G.FINANCIALS.D_SALARY, toCurrency(financials.salary));
+        safeUpdate(SEL_G.FINANCIALS.D_CASHFLOW, `キャッシュフロー： ${toCurrency(financials.net_cash_flow)}`);
+        
+        // 削除された細かなIDの代わりに、大枠コンテナをプレースホルダーとして更新
+        safeUpdate(SEL_G.FINANCIALS.D_PROFIT, "資産 table (とりあえず機能なし)");
+        safeUpdate(SEL_G.FINANCIALS.D_LOSS, "負債 table (とりあえず機能なし)");
     }
 
     if (!isPlaying) {
@@ -113,6 +95,7 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
 
         if (isMyTurn) {
             if (state.last_dice > 0) {
+                // ※ index_ui_cards_ui.js 側の修正が完了するまでは、ここでエラーが出る可能性があります
                 updateCardPhaseUI(state.position, flags, currentCard, turnUserName);
                 
                 const pendingPaydays = parseInt(flags.pending_paydays || 0, 10);
@@ -126,20 +109,20 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
             } else {
                 if (diceStatusArea) diceStatusArea.textContent = "あなたの手番";
                 
+                // ドローボタンの無効化（存在するものだけ）
                 setMultipleButtonsActive([
-                    SEL_G.CARD.BTN_DRAW_SMALL_DEAL, SEL_G.CARD.BTN_DRAW_BIG_DEAL,
-                    SEL_G.CARD.BTN_DRAW_MARKET, SEL_G.CARD.BTN_DRAW_DOODAD
+                    SEL_G.CARD.BTN_SMALL_DEAL, 
+                    SEL_G.CARD.BTN_BIG_DEAL
                 ], false);
             }
             
-            setButtonActive(SEL_G.CONTROLS.BTN_ESCAPE_RAT_RACE, false);
-            setButtonActive(SEL_G.FINANCIALS.BTN_CHECK_CALCULATIONS, !!flags.is_calculating);
-            setButtonActive(SEL_G.PORTFOLIO.BTN_BORROW_LOAN, true);
+            setButtonActive(SEL_G.FINANCIALS.BTN_C_CASHFLOW, !!flags.is_calculating);
+            setButtonActive(SEL_G.LOAN.BTN_BORROW_LOAN, true);
 
             const currentCash = parseInt(financials.cash || 0, 10);
             const currentBankLoan = parseInt(financials.liabilities?.bank_loan || 0, 10);
             const canRepay = (currentCash >= 1000) && (currentBankLoan >= 1000);
-            setButtonActive(SEL_G.PORTFOLIO.BTN_PAYBACK_LOAN, canRepay);
+            setButtonActive(SEL_G.LOAN.BTN_PAYBACK_LOAN, canRepay);
             
         } else {
             if (diceStatusArea) diceStatusArea.textContent = `[${turnUserName}] がプレイ中`;
@@ -156,27 +139,24 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
 }
 
 export function disableAllActionButtons() {
-    const { CONTROLS, CARD, PORTFOLIO, FINANCIALS } = SEL_G; 
+    const { CONTROLS, CARD, LOAN, FINANCIALS } = SEL_G; 
+    
+    // 現在の common_dom_selectors.js に定義されているボタンIDのみを指定
     const actionButtonIds = [
-        CONTROLS.BTN_ROLL_DICE,
-        CONTROLS.BTN_ROLL_DICE_2,
-        CONTROLS.BTN_CLAIM_PAYCHECK, 
+        CONTROLS.BTN_DICE1,
+        CONTROLS.BTN_DICE_2,
+        CONTROLS.BTN_PAYCHECK, 
         CONTROLS.BTN_END_TURN,
-        CONTROLS.BTN_ESCAPE_RAT_RACE,
-        CARD.BTN_DRAW_SMALL_DEAL,
-        CARD.BTN_DRAW_BIG_DEAL,
-        CARD.BTN_DRAW_MARKET,
-        CARD.BTN_DRAW_DOODAD,
-        CARD.BTN_BUY_REALESTATE,
-        CARD.BTN_BUY_STOCK,
-        CARD.BTN_SELL_STOCK,
-        CARD.BTN_PASS,
-        CARD.BTN_EXECUTE_PAYMENT, 
-        PORTFOLIO.BTN_BORROW_LOAN,
-        PORTFOLIO.BTN_PAYBACK_LOAN, 
-        FINANCIALS.BTN_CHECK_CALCULATIONS
+        CARD.BTN_SMALL_DEAL,
+        CARD.BTN_BIG_DEAL,
+        LOAN.BTN_BORROW_LOAN,
+        LOAN.BTN_PAYBACK_LOAN, 
+        FINANCIALS.BTN_C_CASHFLOW,
+        FINANCIALS.BTN_OPERATE
     ];
-    setMultipleButtonsActive(actionButtonIds, false);
+    
+    // null や undefined が混ざっていてもエラーにならないようにフィルターして無効化
+    setMultipleButtonsActive(actionButtonIds.filter(Boolean), false);
 }
 
 console.log("【デバッグ】index_ui.js が読み込まれました。");
