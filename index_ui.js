@@ -1,4 +1,23 @@
 // index_ui.js
+
+/*
+変更のポイントとJavaScript側の役割
+このように id="select-player-statement" を付けたプルダウンを用意しておくことで、JavaScript側で以下の3つの連携が非常にスムーズに行えます。
+
+リストの自動生成
+ゲームに参加しているプレイヤーのデータ（名前とID）を取得し、この <select> の中に <option> として自動的に追加します。最初は「自分」が選択された状態にしておきます。
+
+切り替え時の表示更新
+このプルダウンが変更された時（change イベント）に、選ばれたプレイヤーのデータ（state->items など）を読み込み、下の「資産 table」と「負債 table」を描画し直します。
+
+「自分だけが操作可能」の制御（重要）
+選ばれているプレイヤーIDが 「自分のID」と一致するかどうか を判定します。
+
+一致する（自分）場合：一番下の「処理する」ボタン（b-operate）や入力欄を表示（または有効化）します。
+一致しない（他人）場合：他人の資産を勝手に売れないように、「処理する」部分のHTMLをごっそり非表示（または disabled）にします。
+*/
+
+
 import { SEL_G } from './common_dom_selectors.js'; 
 import { setButtonActive,
         setMultipleButtonsActive,
