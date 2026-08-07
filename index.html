@@ -80,7 +80,9 @@
         <!-- 追加されたカード取引エリア -->
         <p>
             <span id="thiscard">場に出たカード</span>
-            <span id="sell-target">だれに</span>
+            <select id="sell-target">
+                <option value="">だれに</option>
+            </select>
             <input type="number" id="sell-price" placeholder="いくらで">
             <button id="btn-sell-card">売る</button>
             <span id="trade-message">受け取るメッセージ</span>
@@ -106,8 +108,14 @@
         </p>
         
         <p>
-            <span id="profit_loss">資産・負債のプルダウン</span><br>
-            <span id="pl-operate">処理の内容のプルダウン</span><br>
+            <select id="profit_loss">
+                <option value="">対象の資産・負債を選択</option>
+            </select><br>
+            <select id="pl-operate">
+                <option value="">処理の内容を選択</option>
+                <option value="sell">売却する</option>
+                <option value="payoff">一括返済する</option>
+            </select><br>
             <button id="b-operate">X 処理する</button>
         </p>
 
