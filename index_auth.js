@@ -19,9 +19,6 @@ export async function checkExistingLogin(supabase, guestSelectors) {
     const storedName = localStorage.getItem('player_name');
     
     const elRoomId = document.getElementById(guestSelectors.STATUS.ROOM_ID);
-
-    if (elStorageId) elStorageId.textContent = currentUserId || "未定義";
-    if (elStorageName) elStorageName.textContent = storedName || "未定義";
     if (elRoomId) elRoomId.textContent = roomId;
 
     if (!currentUserId) {
