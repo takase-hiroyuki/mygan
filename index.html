@@ -16,61 +16,63 @@
 
     <div id="section-guest">
         <span id="message-body"></span>
+        
         <p>
-        名前: <span id="g-name">未定</span> / 
-        子供: <span id="g-child-count">0</span>人 / 養育費 $<span id="g-child-expense">0</span>(1人あたり)<br>
-        職業: <span id="g-profession"></span>
+            名前: <span id="g-name">未定</span> / 
+            子供: <span id="g-child-count">0</span>人 / 
+            養育費 $<span id="g-child-expense">0</span>(1人あたり)<br>
+            職業: <span id="g-profession"></span>
         </p>
 
         <p>
-        現金: $<span id="current-cash">0</span> / 
-        <span id="dice-result">現在地</span> / 
-        <span id="dice-user">手番</span><br>
+            現金: $<span id="current-cash">0</span> / 
+            <span id="dice-result">現在地</span> / 
+            <span id="dice-user">手番</span><br>
         </p>
 
         <p>
-        <button id="btn-dice1" disabled>X サイコロ１個</button>
-        <button id="btn-dice2" disabled>X サイコロ２個</button>
-        <button id="btn-end-turn" disabled>X 次の人へ</button>
+            <button id="btn-dice1" disabled>X サイコロ１個</button>
+            <button id="btn-dice2" disabled>X サイコロ２個</button>
+            <button id="btn-end-turn" disabled>X 次の人へ</button>
         </p>
+        
         <p>
-        <button id="btn-small-deal" disabled>X 普通の商売</button>
-        <button id="btn-big-deal" disabled>X 大きい商売</button>
-        <button id="btn-borrow-loan" disabled>x 銀行借入</button>
-        <button id="btn-payback-loan" disabled>x 銀行返済</button>
-        <button id="btn-paycheck" disabled>X 入金日</button>
+            <button id="btn-small-deal" disabled>X 普通の商売</button>
+            <button id="btn-big-deal" disabled>X 大きい商売</button>
+            <button id="btn-borrow-loan" disabled>x 銀行借入</button>
+            <button id="btn-payback-loan" disabled>x 銀行返済</button>
+            <button id="btn-paycheck" disabled>X 入金日</button>
         </p>
 
         <table border="1" cellspacing="0" cellpadding="2">
             <tbody>
                 <tr>
-                    <td>00入金<span id="cell-0" class="occupants"></span>
-                    </td><td>01娯楽<span id="cell-1" class="occupants"></span>
-                    </td><td>02商売<span id="cell-2" class="occupants"></span>
-                    </td><td>03寄付<span id="cell-3" class="occupants"></span>
-                    </td><td>04商売<span id="cell-4" class="occupants"></span>
-                    </td><td>05入金<span id="cell-5" class="occupants"></span>
-                    </td><td>06商売<span id="cell-6" class="occupants"></span>
-                    </td><td>07娯楽<span id="cell-7" class="occupants"></span>
-                    </td><td>08商売<span id="cell-8" class="occupants"></span>
-                    </td><td>09子供<span id="cell-9" class="occupants"></span>
-                    </td><td>10商売<span id="cell-10" class="occupants"></span>
-                    </td><td>11入金<span id="cell-11" class="occupants"></span>
-                    </td>
-                </tr><tr>
-                    <td>12市場<span id="cell-12" class="occupants"></span>
-                    </td><td>13商売<span id="cell-13" class="occupants"></span>
-                    </td><td>14娯楽<span id="cell-14" class="occupants"></span>
-                    </td><td>15商売<span id="cell-15" class="occupants"></span>
-                    </td><td>16寄付<span id="cell-16" class="occupants"></span>
-                    </td><td>17商売<span id="cell-17" class="occupants"></span>
-                    </td><td>18入金<span id="cell-18" class="occupants"></span>
-                    </td><td>19商売<span id="cell-19" class="occupants"></span>
-                    </td><td>20解雇<span id="cell-20" class="occupants"></span>
-                    </td><td>21商売<span id="cell-21" class="occupants"></span>
-                    </td><td>22市場<span id="cell-22" class="occupants"></span>
-                    </td><td>23商売<span id="cell-23" class="occupants"></span>
-                    </td>
+                    <td>00入金<span id="cell-0" class="occupants"></span></td>
+                    <td>01娯楽<span id="cell-1" class="occupants"></span></td>
+                    <td>02商売<span id="cell-2" class="occupants"></span></td>
+                    <td>03寄付<span id="cell-3" class="occupants"></span></td>
+                    <td>04商売<span id="cell-4" class="occupants"></span></td>
+                    <td>05入金<span id="cell-5" class="occupants"></span></td>
+                    <td>06商売<span id="cell-6" class="occupants"></span></td>
+                    <td>07娯楽<span id="cell-7" class="occupants"></span></td>
+                    <td>08商売<span id="cell-8" class="occupants"></span></td>
+                    <td>09子供<span id="cell-9" class="occupants"></span></td>
+                    <td>10商売<span id="cell-10" class="occupants"></span></td>
+                    <td>11入金<span id="cell-11" class="occupants"></span></td>
+                </tr>
+                <tr>
+                    <td>12市場<span id="cell-12" class="occupants"></span></td>
+                    <td>13商売<span id="cell-13" class="occupants"></span></td>
+                    <td>14娯楽<span id="cell-14" class="occupants"></span></td>
+                    <td>15商売<span id="cell-15" class="occupants"></span></td>
+                    <td>16寄付<span id="cell-16" class="occupants"></span></td>
+                    <td>17商売<span id="cell-17" class="occupants"></span></td>
+                    <td>18入金<span id="cell-18" class="occupants"></span></td>
+                    <td>19商売<span id="cell-19" class="occupants"></span></td>
+                    <td>20解雇<span id="cell-20" class="occupants"></span></td>
+                    <td>21商売<span id="cell-21" class="occupants"></span></td>
+                    <td>22市場<span id="cell-22" class="occupants"></span></td>
+                    <td>23商売<span id="cell-23" class="occupants"></span></td>
                 </tr>
             </tbody>
         </table>
@@ -87,24 +89,27 @@
         </p>
 
         <p>
-    <select id="select-player-statement">
-        <!-- JavaScriptで参加者が追加されます。例: <option value="274">あさ</option> -->
-    </select>
-    の財務諸表
-</p>
-<p><span id="salary">給料</span></p>
-<p> <span id="l-profit">資産 table </span></p>
-<p><span id="l-loss">負債 table </span></p>
-<p>
-    <span id="ncashflow">キャッシュフロー： xxx</span>
-    <input type="number" id="icashflow" placeholder="金額">
-    <button id="bcashflow">計算</button>
-</p>
-<p>
-     <span id="profit_loss">資産・負債のプルダウン</span><br>
-     <span id="pl-operate">処理の内容のプルダウン</span><br>
-     <button id="b-operate">X 処理する</button>
-</p>
+            <select id="select-player-statement">
+                <!-- JavaScriptで参加者が追加されます。例: <option value="274">あさ</option> -->
+            </select>
+            の財務諸表
+        </p>
+        
+        <p><span id="salary">給料</span></p>
+        <p><span id="l-profit">資産 table</span></p>
+        <p><span id="l-loss">負債 table</span></p>
+        
+        <p>
+            <span id="ncashflow">キャッシュフロー： xxx</span>
+            <input type="number" id="icashflow" placeholder="金額">
+            <button id="bcashflow">計算</button>
+        </p>
+        
+        <p>
+            <span id="profit_loss">資産・負債のプルダウン</span><br>
+            <span id="pl-operate">処理の内容のプルダウン</span><br>
+            <button id="b-operate">X 処理する</button>
+        </p>
 
     </div>
 
@@ -112,3 +117,4 @@
     <script type="module" src="./index.js"></script>
 </body>
 </html>
+<!-- ここで index.html は終わり。host.html と区別するためにこの行を残す -->
