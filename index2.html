@@ -16,25 +16,30 @@
 
     <div id="section-guest">
         <span id="message-body"></span>
-        <hr>
+        <p>
         名前: <span id="guest-name">未定</span> / 
         子供: <span id="">0</span>人 / 養育費 $<span id="">0</span>(1人あたり)<br>
-        職業: <span id=""></span><br>
-    
+        職業: <span id=""></span>
+        </p>
+
+        <p>
         現金: $<span id="display-current-cash">0</span> / 
         <span id="guest-dice-result">現在地</span> / 
         <span id="dice-status-area">手番</span><br>
-        <hr>
+        </p>
 
+        <p>
         <button id="btn-roll-dice" disabled>X サイコロ１個</button>
         <button id="btn-roll-dice-2" disabled>X サイコロ２個</button>
-        <button id="btn-end-turn" disabled>X 次の人へ</button><br>
+        <button id="btn-end-turn" disabled>X 次の人へ</button>
+        </p>
+        <p>
         <button id="btn-draw-small-deal" disabled>X 普通の商売</button>
         <button id="btn-draw-big-deal" disabled>X 大きい商売</button>
         <button id="btn-borrow-loan" disabled>x 銀行借入</button>
         <button id="btn-payback-loan" disabled>x 銀行返済</button>
         <button id="btn-claim-paycheck" disabled>X 入金日</button>
-        <hr>
+        </p>
 
         <table border="1" cellspacing="0" cellpadding="2">
             <tbody>
@@ -71,33 +76,23 @@
         </table>
         <hr>
 
-        <!-- 財務諸表（PL/BS）手動計算コンテナ -->
         財務諸表
+        <p>
+            給料
+        </p>
 
-        <table border="1">
-            <tr>
-                <td>
-                    <span id="">資産</span></td>
-                <td>
-                    <span id="">プラスのキャッシュフロー</span><br>
-                    <input type="number" placeholder="金額"><br>
-                    <button id="">計算</button>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <span id="">負債</span>              
-                </td>
-                <td>
+        <p>
+            <span id="">資産</span>
+        </p><p>
+            <span id="">負債</span>              
+        </p><p>
                     <span is="">マイナスのキャッシュフロー</span>
                     <input type="number" placeholder="金額"><br>
                     <button id="">計算</button>
-                </td>
-            </tr>
-        </table>
-
-        <span>資産・負債のプルダウン</span><br>
-        <button id="" placeholder"X 処理する">
+        </p><p>
+            <span>資産・負債のプルダウン</span><br>
+            <button id="">X 処理する</button>
+        </p>
                 
     </div>
 
