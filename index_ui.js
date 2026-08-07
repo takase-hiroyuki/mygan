@@ -17,80 +17,15 @@
 一致しない（他人）場合：他人の資産を勝手に売れないように、「処理する」部分のHTMLをごっそり非表示（または disabled）にします。
 */
 
-
 import { SEL_G } from './common_dom_selectors.js'; 
 import { setButtonActive,
-        setMultipleButtonsActive,
-        BOARD_CELL_NAMES,
-        insertSystemMessage } from './common_utils.js'; 
+         setMultipleButtonsActive,
+         BOARD_CELL_NAMES } from './common_utils.js'; 
 
 const sectionLogin = document.getElementById(SEL_G.LOGIN.SECTION);
 const sectionGuest = document.getElementById(SEL_G.STATUS.SECTION);
 const diceStatusArea = document.getElementById(SEL_G.CONTROLS.DICE_USER);
 const guestDiceResult = document.getElementById(SEL_G.CONTROLS.DICE_RESULT);
-
-// index_ui_cards_ui.js
-import { SEL_G } from './common_dom_selectors.js';
-import { setButtonActive,
-        setMultipleButtonsActive,
-        CELLS_OPPORTUNITY,
-        CELLS_MARKET,
-        CELLS_DOODAD,
-        CELLS_CHARITY,
-        CELLS_DOWNSIZED } from './common_utils.js';
-
-export function updateCardPhaseUI(position, flags = {}, currentCard = null, playerName = "現在のプレイヤー") {
-    const drawButtons = [
-        SEL_G.CARD.BTN_DRAW_SMALL_DEAL,
-        SEL_G.CARD.BTN_DRAW_BIG_DEAL,
-        SEL_G.CARD.BTN_DRAW_MARKET,
-        SEL_G.CARD.BTN_DRAW_DOODAD,
-        SEL_G.CARD.BTN_ACTION_DONATE,
-        SEL_G.CARD.BTN_ACTION_DOWNSIZED
-    ];
-    const actionButtons = [
-        SEL_G.CARD.BTN_BUY_REALESTATE,
-        SEL_G.CARD.BTN_BUY_STOCK,
-        SEL_G.CARD.BTN_SELL_STOCK,
-        SEL_G.CARD.BTN_PASS,
-        SEL_G.CARD.BTN_EXECUTE_PAYMENT 
-    ];
-    
-    setMultipleButtonsActive(drawButtons, false);
-    setMultipleButtonsActive(actionButtons, false);
-
-    if (flags.is_action_completed) return;
-
-    if (flags.is_card_drawn) {
-        if (CELLS_OPPORTUNITY.includes(position)) {
-            setButtonActive(SEL_G.CARD.BTN_BUY_STOCK, true);
-            setButtonActive(SEL_G.CARD.BTN_BUY_REALESTATE, true);
-            setButtonActive(SEL_G.CARD.BTN_PASS, true);
-        } else if (CELLS_MARKET.includes(position)) {
-            setButtonActive(SEL_G.CARD.BTN_SELL_STOCK, true);
-            setButtonActive(SEL_G.CARD.BTN_PASS, true);
-        } else if (CELLS_DOODAD.includes(position)) {
-            setButtonActive(SEL_G.CARD.BTN_EXECUTE_PAYMENT, true);
-        }
-        return;
-    }
-
-    if (CELLS_OPPORTUNITY.includes(position)) {
-        setButtonActive(SEL_G.CARD.BTN_DRAW_SMALL_DEAL, true);
-        setButtonActive(SEL_G.CARD.BTN_DRAW_BIG_DEAL, true);
-    } else if (CELLS_MARKET.includes(position)) {
-        setButtonActive(SEL_G.CARD.BTN_DRAW_MARKET, true);
-    } else if (CELLS_DOODAD.includes(position)) {
-        setButtonActive(SEL_G.CARD.BTN_DRAW_DOODAD, true);
-    } else if (CELLS_CHARITY.includes(position)) {
-        setButtonActive(SEL_G.CARD.BTN_ACTION_DONATE, true);
-        setButtonActive(SEL_G.CARD.BTN_PASS, true);
-    } else if (CELLS_DOWNSIZED.includes(position)) {
-        setButtonActive(SEL_G.CARD.BTN_ACTION_DOWNSIZED, true);
-    }
-}
-
-console.log("【デバッグ】index_ui_cards_ui.js が読み込まれました。");
 
 let previousTurnUserId = null;
 
@@ -118,10 +53,9 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
         const currentTurnUser = cachedParticipants.find(p => p.user_id === turnUserId);
         const targetName = currentTurnUser?.state?.name || "プレイヤー";
         
-        const client = supabaseInstance || window.supabaseClient || window.supabase;
-        if (client) {
-            await insertSystemMessage(client, targetName, `${targetName} はサイコロを振って下さい`);
-        }
+        // ダミーのRPC関数を呼び出す（システムメッセージ送信の代替）
+        await dummyRpcCall('insertSystemMessage', { targetName, message: `${targetName} はサイコロを振って下さい` });
+        
         previousTurnUserId = turnUserId;
     }
 
@@ -175,13 +109,9 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
     } else {
         const turnUser = cachedParticipants.find(p => p.user_id === turnUserId);
         const turnUserName = turnUser ? turnUser.state.name : "他のプレイヤー";        
-        const currentCard = cachedRoom?.game_state?.current_card || null;
 
         if (isMyTurn) {
             if (state.last_dice > 0) {
-                // ※ index_ui_cards_ui.js 側の修正が完了するまでは、ここでエラーが出る可能性があります
-                updateCardPhaseUI(state.position, flags, currentCard, turnUserName);
-                
                 const pendingPaydays = parseInt(flags.pending_paydays || 0, 10);
                 if (diceStatusArea) {
                     if (pendingPaydays > 0) {
@@ -201,12 +131,10 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
             }
             
             setButtonActive(SEL_G.FINANCIALS.BTN_C_CASHFLOW, !!flags.is_calculating);
+            
+            // アイテム化に伴い、一旦ローンボタンは常に押せるようにしておく（後ほどプルダウン操作に統合）
             setButtonActive(SEL_G.LOAN.BTN_BORROW_LOAN, true);
-
-            const currentCash = parseInt(financials.cash || 0, 10);
-            const currentBankLoan = parseInt(financials.liabilities?.bank_loan || 0, 10);
-            const canRepay = (currentCash >= 1000) && (currentBankLoan >= 1000);
-            setButtonActive(SEL_G.LOAN.BTN_PAYBACK_LOAN, canRepay);
+            setButtonActive(SEL_G.LOAN.BTN_PAYBACK_LOAN, true);
             
         } else {
             if (diceStatusArea) diceStatusArea.textContent = `[${turnUserName}] がプレイ中`;
@@ -236,13 +164,20 @@ export function disableAllActionButtons() {
         LOAN.BTN_PAYBACK_LOAN, 
         FINANCIALS.BTN_C_CASHFLOW,
         FINANCIALS.BTN_OPERATE,
-        // 新しく追加された取引関連のボタン
         TRADE.BTN_SELL,
         TRADE.BTN_ACCEPT,
         TRADE.BTN_REJECT
     ];
     
     setMultipleButtonsActive(actionButtonIds.filter(Boolean), false);
+}
+
+// ============================================================================
+// ダミーRPC関数群
+// ============================================================================
+export async function dummyRpcCall(rpcName, payload) {
+    console.log(`[Dummy RPC] 実行されました: ${rpcName}`, payload);
+    return { data: null, error: null };
 }
 
 console.log("【デバッグ】index_ui.js が読み込まれました。");
