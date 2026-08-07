@@ -34,6 +34,11 @@ const btnPaybackLoan = document.getElementById(SEL_G.LOAN.BTN_PAYBACK_LOAN);
 const inputPaymentAmount = document.getElementById(SEL_G.FINANCIALS.INPUT_CASHFLOW);
 const btnExecutePayment = document.getElementById(SEL_G.FINANCIALS.BTN_OPERATE);
 
+// 新しく追加されたトレード関連のボタン取得
+const btnSellCard = document.getElementById(SEL_G.TRADE.BTN_SELL);
+const btnTradeAccept = document.getElementById(SEL_G.TRADE.BTN_ACCEPT);
+const btnTradeReject = document.getElementById(SEL_G.TRADE.BTN_REJECT);
+
 let currentUserId = null;
 let isCardListenersReady = false; 
 
@@ -132,6 +137,25 @@ btnExecutePayment?.addEventListener('click', () => {
     } else {
         console.warn("[DEBUG-UI] executeGenericPayment がまだ実装されていません。");
     }
+});
+
+// 新しいトレード関連のイベントリスナー
+btnSellCard?.addEventListener('click', async () => {
+    console.log("[DEBUG-UI] 「売る」ボタンが押下されました");
+    if (!supabase || !currentUserId) return;
+    await insertSystemMessage(supabase, "システム", "カードの売却提案機能は現在準備中です。");
+});
+
+btnTradeAccept?.addEventListener('click', async () => {
+    console.log("[DEBUG-UI] 「承諾」ボタンが押下されました");
+    if (!supabase || !currentUserId) return;
+    await insertSystemMessage(supabase, "システム", "トレードの承諾機能は現在準備中です。");
+});
+
+btnTradeReject?.addEventListener('click', async () => {
+    console.log("[DEBUG-UI] 「拒否」ボタンが押下されました");
+    if (!supabase || !currentUserId) return;
+    await insertSystemMessage(supabase, "システム", "トレードの拒否機能は現在準備中です。");
 });
 
 // デバッグ機能
