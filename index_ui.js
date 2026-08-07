@@ -23,7 +23,6 @@ import { setButtonActive,
         setMultipleButtonsActive,
         BOARD_CELL_NAMES,
         insertSystemMessage } from './common_utils.js'; 
-import { updateCardPhaseUI } from './index_ui_cards_ui.js'; 
 
 const sectionLogin = document.getElementById(SEL_G.LOGIN.SECTION);
 const sectionGuest = document.getElementById(SEL_G.STATUS.SECTION);
