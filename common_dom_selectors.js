@@ -34,17 +34,28 @@ export const DOM_SELECTORS = {
         // 手番・サイコロ制御エリア
         CONTROLS: {
             DICE_RESULT: 'dice-result',
-            DICE_USER: 'dice-user', // STATUS_AREA: 
+            DICE_USER: 'dice-user', 
             BTN_DICE1: 'btn-dice1',
             BTN_DICE_2: 'btn-dice2',
             BTN_END_TURN: 'btn-end-turn',
             BTN_PAYCHECK: 'btn-paycheck'
         },
 
-        // カードドロー・取引エリア
+        // カードドローエリア
         CARD: {
             BTN_SMALL_DEAL: 'btn-small-deal',    
             BTN_BIG_DEAL: 'btn-big-deal'
+        },
+
+        // 他プレイヤーとの取引（トレード）エリア
+        TRADE: {
+            THIS_CARD: 'thiscard',
+            SELECT_TARGET: 'sell-target',
+            INPUT_PRICE: 'sell-price',
+            BTN_SELL: 'btn-sell-card',
+            TRADE_MESSAGE: 'trade-message',
+            BTN_ACCEPT: 'btn-trade-accept',
+            BTN_REJECT: 'btn-trade-reject'
         },
 
         // 銀行ローン操作
