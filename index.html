@@ -74,7 +74,17 @@
                 </tr>
             </tbody>
         </table>
-        <hr>
+        
+        <!-- 追加されたカード取引エリア -->
+        <p>
+            <span id="thiscard">場に出たカード</span>
+            <span id="sell-target">だれに</span>
+            <input type="number" id="sell-price" placeholder="いくらで">
+            <button id="btn-sell-card">売る</button>
+            <span id="trade-message">受け取るメッセージ</span>
+            <button id="btn-trade-accept">承諾</button>
+            <button id="btn-trade-reject">拒否</button>
+        </p>
 
         財務諸表
         <p>
@@ -98,4 +108,3 @@
     <script type="module" src="./index.js"></script>
 </body>
 </html>
-<!-- index.html -->
