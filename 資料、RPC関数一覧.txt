@@ -13,18 +13,129 @@ ORDER BY p.proname;
 [
   {
     "function_name": "add_participant_item",
-    "function_definition": "CREATE OR REPLACE FUNCTION public.add_participant_item(p_participant_id bigint, p_type_id text, p_title text, p_cost numeric, p_liability numeric, p_cashflow numeric, p_quantity numeric)\n RETURNS integer\n LANGUAGE plpgsql\nAS $function$\nDECLARE\n    v_state jsonb;\n    v_items jsonb;\n    v_new_id integer;\n    v_new_item jsonb;\nBEGIN\n    -- 現在のデータ（state）を取得（他と処理が被らないようロックをかける）\n    SELECT state INTO v_state FROM public.participants WHERE id = p_participant_id FOR UPDATE;\n    \n    IF v_state IS NULL OR v_state->'items' IS NULL THEN\n        RAISE EXCEPTION '参加者のデータが見つからないか、構造が不正です。';\n    END IF;\n\n    -- 現在の通し番号の最大値を探して +1 する（データが空なら 1 になる）\n    SELECT COALESCE(MAX((elem->>'id')::integer), 0) + 1 INTO v_new_id\n    FROM jsonb_array_elements(v_state->'items') AS elem;\n\n    -- 新しいアイテムのJSONを作成\n    v_new_item := jsonb_build_object(\n        'id', v_new_id,\n        'type_id', p_type_id,\n        'title', p_title,\n        'cost', p_cost,\n        'liability', p_liability,\n        'cashflow', p_cashflow,\n        'quantity', p_quantity\n    );\n\n    -- 配列に追加して保存\n    v_items := (v_state->'items') || v_new_item;\n    v_state := jsonb_set(v_state, '{items}', v_items);\n    UPDATE public.participants SET state = v_state WHERE id = p_participant_id;\n\n    -- 割り当てた通し番号を返す\n    RETURN v_new_id;\nEND;\n$function$\n"
+    "function_definition": "CREATE OR REPLACE FUNCTION public.add_participant_item(p_participant_id bigint, p_type_id text, p_title text, p_cost numeric, p_liability numeric, p_cashflow numeric, p_quantity numeric)
+ RETURNS integer
+ LANGUAGE plpgsql
+AS $function$
+DECLARE
+    v_state jsonb;
+    v_items jsonb;
+    v_new_id integer;
+    v_new_item jsonb;
+BEGIN
+    -- 現在のデータ（state）を取得（他と処理が被らないようロックをかける）
+    SELECT state INTO v_state FROM public.participants WHERE id = p_participant_id FOR UPDATE;
+    
+    IF v_state IS NULL OR v_state->'items' IS NULL THEN
+        RAISE EXCEPTION '参加者のデータが見つからないか、構造が不正です。';
+    END IF;
+
+    -- 現在の通し番号の最大値を探して +1 する（データが空なら 1 になる）
+    SELECT COALESCE(MAX((elem->>'id')::integer), 0) + 1 INTO v_new_id
+    FROM jsonb_array_elements(v_state->'items') AS elem;
+
+    -- 新しいアイテムのJSONを作成
+    v_new_item := jsonb_build_object(
+        'id', v_new_id,
+        'type_id', p_type_id,
+        'title', p_title,
+        'cost', p_cost,
+        'liability', p_liability,
+        'cashflow', p_cashflow,
+        'quantity', p_quantity
+    );
+
+    -- 配列に追加して保存
+    v_items := (v_state->'items') || v_new_item;
+    v_state := jsonb_set(v_state, '{items}', v_items);
+    UPDATE public.participants SET state = v_state WHERE id = p_participant_id;
+
+    -- 割り当てた通し番号を返す
+    RETURN v_new_id;
+END;
+$function$
+"
   },
   {
     "function_name": "fn_insert_game_log",
-    "function_definition": "CREATE OR REPLACE FUNCTION public.fn_insert_game_log(p_room_id text, p_target text, p_title text, p_body text)\n RETURNS void\n LANGUAGE plpgsql\nAS $function$\nBEGIN\n    INSERT INTO public.game_logs (room_id, target, title, body)\n    VALUES (p_room_id, p_target, p_title, p_body);\nEND;\n$function$\n"
+    "function_definition": "CREATE OR REPLACE FUNCTION public.fn_insert_game_log(p_room_id text, p_target text, p_title text, p_body text)
+ RETURNS void
+ LANGUAGE plpgsql
+AS $function$
+BEGIN
+    INSERT INTO public.game_logs (room_id, target, title, body)
+    VALUES (p_room_id, p_target, p_title, p_body);
+END;
+$function$
+"
   },
   {
     "function_name": "remove_participant_item",
-    "function_definition": "CREATE OR REPLACE FUNCTION public.remove_participant_item(p_participant_id bigint, p_item_id integer)\n RETURNS void\n LANGUAGE plpgsql\nAS $function$\nDECLARE\n    v_state jsonb;\n    v_items jsonb;\nBEGIN\n    SELECT state INTO v_state FROM public.participants WHERE id = p_participant_id FOR UPDATE;\n\n    -- 指定された通し番号（p_item_id）「以外」の要素だけで新しい配列を作り直す\n    SELECT COALESCE(jsonb_agg(elem), '[]'::jsonb) INTO v_items\n    FROM jsonb_array_elements(v_state->'items') AS elem\n    WHERE (elem->>'id')::integer != p_item_id;\n\n    -- データを上書き保存\n    v_state := jsonb_set(v_state, '{items}', v_items);\n    UPDATE public.participants SET state = v_state WHERE id = p_participant_id;\nEND;\n$function$\n"
+    "function_definition": "CREATE OR REPLACE FUNCTION public.remove_participant_item(p_participant_id bigint, p_item_id integer)
+ RETURNS void
+ LANGUAGE plpgsql
+AS $function$
+DECLARE
+    v_state jsonb;
+    v_items jsonb;
+BEGIN
+    SELECT state INTO v_state FROM public.participants WHERE id = p_participant_id FOR UPDATE;
+
+    -- 指定された通し番号（p_item_id）「以外」の要素だけで新しい配列を作り直す
+    SELECT COALESCE(jsonb_agg(elem), '[]'::jsonb) INTO v_items
+    FROM jsonb_array_elements(v_state->'items') AS elem
+    WHERE (elem->>'id')::integer != p_item_id;
+
+    -- データを上書き保存
+    v_state := jsonb_set(v_state, '{items}', v_items);
+    UPDATE public.participants SET state = v_state WHERE id = p_participant_id;
+END;
+$function$
+"
   },
   {
     "function_name": "validate_participant_state",
-    "function_definition": "CREATE OR REPLACE FUNCTION public.validate_participant_state()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\nDECLARE\n    item jsonb;\n    valid_type boolean;\nBEGIN\n    -- state が空の場合は初期構造をセットして許可する\n    IF NEW.state IS NULL THEN\n        NEW.state := '{\"cash\": 0, \"items\": []}'::jsonb;\n        RETURN NEW;\n    END IF;\n\n    -- items が配列（リスト）であることを確認\n    IF jsonb_typeof(NEW.state->'items') IS DISTINCT FROM 'array' THEN\n        RAISE EXCEPTION '不正なデータ構造です: state.items は配列である必要があります。';\n    END IF;\n\n    -- items 配列の中身を1つずつループしてチェック\n    FOR item IN SELECT * FROM jsonb_array_elements(NEW.state->'items')\n    LOOP\n        -- ① 必須キーが全て存在するかチェック\n        IF NOT (item ? 'id' AND item ? 'type_id' AND item ? 'title' AND \n                item ? 'cost' AND item ? 'liability' AND item ? 'cashflow' AND item ? 'quantity') THEN\n            RAISE EXCEPTION '必須データが欠損しています: %', item;\n        END IF;\n\n        -- ② マスターテーブル(asset_types)に type_id が存在するかチェック\n        SELECT EXISTS (\n            SELECT 1 FROM public.asset_types WHERE id = (item->>'type_id')\n        ) INTO valid_type;\n\n        IF NOT valid_type THEN\n            RAISE EXCEPTION 'マスターテーブルに存在しない不正なタイプです (type_id): %', item->>'type_id';\n        END IF;\n    END LOOP;\n\n    RETURN NEW;\nEND;\n$function$\n"
+    "function_definition": "CREATE OR REPLACE FUNCTION public.validate_participant_state()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+DECLARE
+    item jsonb;
+    valid_type boolean;
+BEGIN
+    -- state が空の場合は初期構造をセットして許可する
+    IF NEW.state IS NULL THEN
+        NEW.state := '{\"cash\": 0, \"items\": []}'::jsonb;
+        RETURN NEW;
+    END IF;
+
+    -- items が配列（リスト）であることを確認
+    IF jsonb_typeof(NEW.state->'items') IS DISTINCT FROM 'array' THEN
+        RAISE EXCEPTION '不正なデータ構造です: state.items は配列である必要があります。';
+    END IF;
+
+    -- items 配列の中身を1つずつループしてチェック
+    FOR item IN SELECT * FROM jsonb_array_elements(NEW.state->'items')
+    LOOP
+        -- ① 必須キーが全て存在するかチェック
+        IF NOT (item ? 'id' AND item ? 'type_id' AND item ? 'title' AND 
+                item ? 'cost' AND item ? 'liability' AND item ? 'cashflow' AND item ? 'quantity') THEN
+            RAISE EXCEPTION '必須データが欠損しています: %', item;
+        END IF;
+
+        -- ② マスターテーブル(asset_types)に type_id が存在するかチェック
+        SELECT EXISTS (
+            SELECT 1 FROM public.asset_types WHERE id = (item->>'type_id')
+        ) INTO valid_type;
+
+        IF NOT valid_type THEN
+            RAISE EXCEPTION 'マスターテーブルに存在しない不正なタイプです (type_id): %', item->>'type_id';
+        END IF;
+    END LOOP;
+
+    RETURN NEW;
+END;
+$function$
+"
   }
 ]
