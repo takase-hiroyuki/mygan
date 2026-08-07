@@ -80,10 +80,13 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
         safeUpdate(SEL_G.FINANCIALS.D_SALARY, toCurrency(financials.salary));
         safeUpdate(SEL_G.FINANCIALS.D_CASHFLOW, `キャッシュフロー： ${toCurrency(financials.net_cash_flow)}`);
         
-        // 削除された細かなIDの代わりに、大枠コンテナをプレースホルダーとして更新
         safeUpdate(SEL_G.FINANCIALS.D_PROFIT, "資産 table (とりあえず機能なし)");
         safeUpdate(SEL_G.FINANCIALS.D_LOSS, "負債 table (とりあえず機能なし)");
     }
+
+    // 取引（トレード）エリアのプレースホルダー更新
+    safeUpdate(SEL_G.TRADE.THIS_CARD, "場に出たカード (とりあえず機能なし)");
+    safeUpdate(SEL_G.TRADE.TRADE_MESSAGE, "受け取るメッセージ (とりあえず機能なし)");
 
     if (!isPlaying) {
         if (diceStatusArea) diceStatusArea.textContent = "ホストがゲームを開始するまでお待ちください。";
@@ -109,7 +112,7 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
             } else {
                 if (diceStatusArea) diceStatusArea.textContent = "あなたの手番";
                 
-                // ドローボタンの無効化（存在するものだけ）
+                // ドローボタンの無効化
                 setMultipleButtonsActive([
                     SEL_G.CARD.BTN_SMALL_DEAL, 
                     SEL_G.CARD.BTN_BIG_DEAL
@@ -139,9 +142,8 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
 }
 
 export function disableAllActionButtons() {
-    const { CONTROLS, CARD, LOAN, FINANCIALS } = SEL_G; 
+    const { CONTROLS, CARD, LOAN, FINANCIALS, TRADE } = SEL_G; 
     
-    // 現在の common_dom_selectors.js に定義されているボタンIDのみを指定
     const actionButtonIds = [
         CONTROLS.BTN_DICE1,
         CONTROLS.BTN_DICE_2,
@@ -152,10 +154,13 @@ export function disableAllActionButtons() {
         LOAN.BTN_BORROW_LOAN,
         LOAN.BTN_PAYBACK_LOAN, 
         FINANCIALS.BTN_C_CASHFLOW,
-        FINANCIALS.BTN_OPERATE
+        FINANCIALS.BTN_OPERATE,
+        // 新しく追加された取引関連のボタン
+        TRADE.BTN_SELL,
+        TRADE.BTN_ACCEPT,
+        TRADE.BTN_REJECT
     ];
     
-    // null や undefined が混ざっていてもエラーにならないようにフィルターして無効化
     setMultipleButtonsActive(actionButtonIds.filter(Boolean), false);
 }
 
