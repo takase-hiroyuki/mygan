@@ -16,11 +16,11 @@
 
     <div id="section-guest">
         <span id="message-body"></span>
-        <br>
         名前: <span id="guest-name">未定</span><br>
         現金: $<span id="display-current-cash">0</span> / 
         <span id="guest-dice-result">現在地</span> / 
         <span id="dice-status-area">手番</span><br>
+        <hr>
 
         <button id="btn-roll-dice" disabled>X サイコロ１個</button>
         <button id="btn-roll-dice-2" disabled>X サイコロ２個</button>
@@ -30,7 +30,7 @@
         <button id="btn-borrow-loan" disabled>x 銀行借入</button>
         <button id="btn-payback-loan" disabled>x 銀行返済</button>
         <button id="btn-claim-paycheck" disabled>X 入金日</button>
-        <br>
+        <hr>
 
         <table border="1" cellspacing="0" cellpadding="2">
             <tbody>
@@ -65,37 +65,39 @@
                 </tr>
             </tbody>
         </table>
+        <hr>
 
-        <br>
+        <!-- 財務諸表（PL/BS）手動計算コンテナ -->
+        財務諸表
 
-                <table border="1" cellspacing="0" cellpadding="5">
-                <tr><td>
-                </td><td>
-                    <button id="btn-card-pass" disabled>カードパス</button><br />
-                    <input type="number" id="input-payment-amount" placeholder="金額を入力"><br />
-                    <button id="btn-execute-payment" disabled>支払いを実行</button><br />
-                </td></tr>
-            </table>
+        <table border="1">
+            <tr>
+                <td>
+                    <span id="">資産</span></td>
+                <td>
+                    <span id="">プラスのキャッシュフロー</span><br>
+                    <input type="number" placeholder="金額"><br>
+                    <button id="">計算</button>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <span id="">負債</span>              
+                </td>
+                <td>
+                    <span is="">マイナスのキャッシュフロー</span>
+                    <input type="number" placeholder="金額"><br>
+                    <button id="">計算</button>
+                </td>
+            </tr>
 
+            <span>資産・負債のプルダウン</span>
+            <button id="" placeholder"X 処理する">
                 
         </div>
 
-        <br>
-
-        <!-- 財務諸表（PL/BS）手動計算コンテナ -->
-        <h2>財務諸表</h2>
-        <div id="financials-container">
-            <span id="">資産</span>
-            <span id="">プラスのキャッシュフロー</span>
-            <span id="">負債</span>
-            <span is="">マイナスのキャッシュフロー</span>
-        </div>
-
-    </div>
-
-    部屋: <span id="guest-room-id">未定</span><br>
-    職業: <span id="guest-profession">確認中</span><br>
-    子供: <span id="guest-children-count">0</span>人 / 1人につき $<span id="guest-per-child-expense">0</span><br>
+    職業: <span id="guest-profession"></span><br>
+    子供: <span id="">0</span>人 / 養育費 $<span id="guest-per-child-expense">0</span>/1人あたり<br>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <s cript type="module" src="./index.js"></script>
