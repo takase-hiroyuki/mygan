@@ -2,12 +2,12 @@
 import { renderGuestUI } from './index_ui.js';
 import { SEL_G } from './common_dom_selectors.js'; 
 import { setButtonActive,
-        CELLS_OPPORTUNITY,
-        CELLS_DOODAD,
-        CELLS_MARKET,
-        displaySystemMessage,
-        getLocalPlayerName,
-        insertSystemMessage } from './common_utils.js';
+         CELLS_OPPORTUNITY,
+         CELLS_DOODAD,
+         CELLS_MARKET,
+         displaySystemMessage,
+         getLocalPlayerName,
+         insertSystemMessage } from './common_utils.js';
 
 let cachedParticipants = [];
 let cachedRoom = null;
@@ -28,9 +28,6 @@ function updateActionButtonsState(playerState, isMyTurn) {
     const isDownsized = downsizedTurnsLeft > 0;
     const SEL = SEL_G.CONTROLS; 
 
-    const isCardCell = CELLS_OPPORTUNITY.includes(position) || CELLS_DOODAD.includes(position) || CELLS_MARKET.includes(position);
-    const isDownsizedCell = (position === 20); // 解雇マス
-
     // 1. サイコロ1個を振るボタンの制御
     const canRollDice1 = isMyTurn && !hasRolledDice && !isCalculating && !isDownsized;
     setButtonActive(SEL.BTN_ROLL_DICE, canRollDice1);
@@ -43,21 +40,16 @@ function updateActionButtonsState(playerState, isMyTurn) {
     const canClaimPaycheck = isMyTurn && (pendingPaydays > 0);
     setButtonActive(SEL.BTN_CLAIM_PAYCHECK, canClaimPaycheck);
 
-    // マイナスキャッシュフロー時の支払い義務判定
-    const hasMandatoryPaycheck = (pendingPaydays > 0) && isNegativeCashFlow;
-
     // 4. ターン終了ボタンの制御
-    // 解雇マス(20)の場合、アクション完了まで手番終了をブロックする
+    // サイコロを振った後（または休み期間中）であり、未処理の入金請求がなければ、無条件でターン終了を許可するよう簡略化
     const canEndTurn = isMyTurn && 
                        (hasRolledDice || isDownsized) && 
-                       !isCalculating && 
-                       (!isCardCell || isActionCompleted) &&
-                       (!isDownsizedCell || isActionCompleted) &&
-                       !hasMandatoryPaycheck;
+                       !isCalculating &&
+                       (pendingPaydays === 0);
                        
     setButtonActive(SEL.BTN_END_TURN, canEndTurn);
     
-    console.log(`[DEBUG_STATE] Buttons Update: isMyTurn=${isMyTurn}, Roll1=${canRollDice1}, Roll2=${canRollDice2}, Paycheck=${canClaimPaycheck}, End=${canEndTurn}, Downsized=${isDownsized}, isCardCell=${isCardCell}, isDownsizedCell=${isDownsizedCell}, isActionCompleted=${isActionCompleted}, hasMandatoryPaycheck=${hasMandatoryPaycheck}`);
+    console.log(`[DEBUG_STATE] Buttons Update: isMyTurn=${isMyTurn}, Roll1=${canRollDice1}, Roll2=${canRollDice2}, Paycheck=${canClaimPaycheck}, End=${canEndTurn}`);
 }
 
 // Supabase Realtimeの購読を開始する
