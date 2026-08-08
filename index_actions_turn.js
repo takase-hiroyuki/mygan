@@ -3,11 +3,11 @@ import { roomId } from './common_config.js';
 import { SEL_G } from './common_dom_selectors.js'; 
 import { disableAllActionButtons } from './index_ui.js';
 import { callRpcWithDebug,
-        CELLS_OPPORTUNITY,
-        CELLS_DOODAD,
-        CELLS_MARKET,
-        insertSystemMessage,
-        getLocalPlayerName } from './common_utils.js';
+         CELLS_OPPORTUNITY,
+         CELLS_DOODAD,
+         CELLS_MARKET,
+         insertSystemMessage,
+         getLocalPlayerName } from './common_utils.js';
 
 async function updatePlayerFlag(supabase, userId, flagName, value) {
     const { data, error: fetchError } = await supabase
@@ -83,21 +83,8 @@ export async function actionEndTurn(supabase, currentUserId) {
     if (!state) return;
     
     const playerName = state.name || getLocalPlayerName();
-    const flags = state.flags || {};
-    const position = state.position || 0;
     const financials = state.financials || {};
-    
-    const hasRolledDice = !!flags.has_rolled_dice;
-    const isCalculating = !!flags.is_calculating;
-    const isActionCompleted = !!flags.is_action_completed;
-    const isNegativeCashFlow = !!flags.is_negative_cash_flow;
-    const downsizedTurnsLeft = parseInt(flags.downsized_turns_left || 0, 10);
-    const pendingPaydays = parseInt(flags.pending_paydays || 0, 10);
-    const isDownsized = downsizedTurnsLeft > 0;
     const cash = parseInt(financials.cash || 0, 10);
-
-    const isCardCell = CELLS_OPPORTUNITY.includes(position) || CELLS_DOODAD.includes(position) || CELLS_MARKET.includes(position);
-    const hasMandatoryPaycheck = (pendingPaydays > 0) && isNegativeCashFlow;
 
     disableAllActionButtons();
 
@@ -118,15 +105,7 @@ export async function actionEndTurn(supabase, currentUserId) {
         }
     }
 
-    if (
-        (!hasRolledDice && !isDownsized) || 
-        isCalculating || 
-        (isCardCell && !isActionCompleted) || 
-        hasMandatoryPaycheck
-    ) {
-        return;
-    }
-    
+    // ターン終了を阻害するすべての条件分岐（if文）を削除し、無条件で次の人に手番を移行する
     try {
         await callRpcWithDebug(supabase, 'pass_and_end_turn_v2', { 
             p_room_id: roomId, 
