@@ -90,6 +90,9 @@ export function getInitialRegistrationState(username) {
         calculation_phase: "none",
         children_count: 0,
 
+        // すべての資産・負債・固定費・給料はここにアイテムとして入る
+        items: [], 
+
         flags: {
             has_rolled_dice: false,
             is_card_drawn: false,
@@ -102,27 +105,14 @@ export function getInitialRegistrationState(username) {
         },
         
         financials: {
-            cash: 0, total_income: 0, total_expenses: 0, passive_income: 0, net_cash_flow: 0, per_child_expense: 0,
-            expenses: { 
-                taxes: 0, 
-                mortgage_payment: 0, 
-                school_loan_payment: 0,
-                car_loan_payment: 0, 
-                credit_card_payment: 0,
-                retail_payment: 0,
-                bank_loan_payment: 0,
-                other_expenses: 0,
-                child_expense: 0 
-            },
-            assets: { stocks: {}, real_estate: [] },
-            liabilities: { 
-                mortgage: 0, 
-                school_loans: 0,
-                car_loans: 0, 
-                credit_card_debt: 0,
-                retail_debt: 0, 
-                bank_loan: 0 
-            }
+            // お財布の状況（現金）や、キャッシュフローの合計値など、
+            // 「アイテムの計算結果」や「現在の状態」を入れる場所だけ残す
+            cash: 0, 
+            total_income: 0, 
+            total_expenses: 0, 
+            passive_income: 0, 
+            net_cash_flow: 0, 
+            per_child_expense: 0
         }
     };
 }
