@@ -123,25 +123,15 @@ export function getLocalPlayerName() {
     return (nameEl && nameEl.textContent !== '未定') ? nameEl.textContent : 'プレイヤー';
 }
 
-// システムメッセージ（エラー含む）をデータベース(game_logs)に書き込む汎用関数
-export async function insertSystemMessage(supabase, target, message) {
-    try {
-        await supabase.rpc('fn_insert_game_log', {
-            p_room_id: roomId, 
-            p_target: target,
-            p_title: 'システム',
-            p_body: message
-        });
-    } catch (err) {
-        console.error("システムメッセージ保存失敗:", err);
-    }
+export async function insertSystemMessage(supabase, targetName, message) {
+    // ログ保存機能を削除したため、通信を行わず何もしない
+    return { data: null, error: null };
 }
 
 /**
  * システムメッセージをDOMのテーブルに追記する関数
  * @param {string} target - メッセージの宛先（1番目のtd用）
  * @param {string} body - メッセージ本文（2番目のtd用）
- */
 export function displaySystemMessage(target, body) {
     const tbody = document.getElementById(SEL_G.MESSAGE.TABLE_BODY); // ★修正: DOM_SELECTORS.GUEST を SEL_G に変更
     if (!tbody) {
@@ -168,5 +158,6 @@ export function displaySystemMessage(target, body) {
 
     console.log(`[game_logs] ${target} / ${body}`);
 }
+*/
 
 console.log("【デバッグ】common_utils.js が読み込まれました。");
