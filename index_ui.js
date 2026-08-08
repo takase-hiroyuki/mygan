@@ -199,9 +199,11 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
             } else {
                 if (diceStatusArea) diceStatusArea.textContent = "あなたの手番";
                 
-                // まだサイコロを振っていない場合はサイコロボタンを有効化する
+                const charityTurnsLeft = parseInt(flags.charity_turns_left || 0, 10);
+                
+                // まだサイコロを振っていない場合、寄付状態に応じてサイコロボタンを有効化する
                 setButtonActive(SEL_G.CONTROLS.BTN_DICE1, true);
-                setButtonActive(SEL_G.CONTROLS.BTN_DICE_2, true);
+                setButtonActive(SEL_G.CONTROLS.BTN_DICE_2, charityTurnsLeft > 0);
                 setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, false);
                 
                 setMultipleButtonsActive([
