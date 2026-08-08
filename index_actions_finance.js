@@ -58,4 +58,41 @@ export async function actionCheckCalculations(supabase, currentUserId) {
     }
 }
 
+// ★ 追加：資産・負債の処理（売却・一括返済）を実行する関数
+export async function actionOperateItem(supabase, currentUserId) {
+    if (!supabase || !currentUserId) return;
+    const playerName = getLocalPlayerName();
+
+    const itemSelect = document.getElementById(SEL_G.FINANCIALS.PROFIT_LOSS_SELECT);
+    const operateSelect = document.getElementById(SEL_G.FINANCIALS.PL_OPERATE_SELECT);
+    
+    if (!itemSelect || !operateSelect) return;
+
+    const itemId = parseInt(itemSelect.value, 10);
+    const operation = operateSelect.value;
+
+    if (isNaN(itemId) || !operation) {
+        await insertSystemMessage(supabase, playerName, "対象のアイテムと処理内容の両方を選択してください。");
+        return;
+    }
+
+    try {
+        // 先ほど作成したSQLの関数を呼び出す
+        await callRpcWithDebug(supabase, 'operate_participant_item_v2', {
+            p_room_id: roomId,
+            p_user_id: currentUserId,
+            p_item_id: itemId,
+            p_operation: operation
+        });
+        
+        await insertSystemMessage(supabase, playerName, "資産・負債の処理が完了しました。");
+        
+        // 処理後はプルダウンの選択をリセットする
+        itemSelect.value = "";
+        operateSelect.value = "";
+    } catch (error) {
+        await insertSystemMessage(supabase, playerName, `処理エラー: ${error.message}`);
+    }
+}
+
 console.log("[デバッグ] index_actions_finance.js が正常にロードされました。");
