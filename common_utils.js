@@ -161,6 +161,5 @@ export function displaySystemMessage(target, body) {
     console.log(`[game_logs] ${target} / ${body}`);
     */
 }
-*/
 
 console.log("【デバッグ】common_utils.js が読み込まれました。");
