@@ -16,7 +16,6 @@ let previousTurnUserId = null;
 let _cachedParticipantsForSelect = [];
 let _currentUserIdForSelect = null;
 let _cachedRoomForSelect = null;
-let _isPlayerSelectEventAttached = false;
 
 export function toggleScreen(isLoggedIn) {
     if (sectionLogin) sectionLogin.hidden = isLoggedIn;
@@ -87,12 +86,12 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
     // =========================================================================
     // 財務諸表エリアの更新（参加者プルダウンの生成と連動）
     // =========================================================================
-    const playerSelect = document.getElementById(SEL_G.FINANCIALS.PLAYER_SELECT || 'player-select');
+    const playerSelect = document.getElementById(SEL_G.FINANCIALS.PLAYER_SELECT);
     if (playerSelect) {
-        const currentValue = playerSelect.value; // 現在選ばれている人を記憶
-        playerSelect.innerHTML = ''; // 一旦リストを空にする
+        const currentValue = playerSelect.value; 
         
-        // 参加者全員をリストに追加
+        playerSelect.innerHTML = ''; 
+        
         cachedParticipants.forEach(p => {
             if (p.state && p.state.name) {
                 const option = document.createElement('option');
@@ -102,29 +101,23 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
             }
         });
         
-        // 記憶していた選択状態を復元（なければ「自分」を選択）
         if (currentValue && cachedParticipants.some(p => p.user_id === currentValue)) {
             playerSelect.value = currentValue;
         } else {
             playerSelect.value = currentUserId;
         }
 
-        // ★プルダウンが変更されたら、画面を描画し直すイベントを追加（1回だけ登録）
-        if (!_isPlayerSelectEventAttached) {
-            playerSelect.addEventListener('change', () => {
-                renderGuestUI(_currentUserIdForSelect, _cachedParticipantsForSelect, _cachedRoomForSelect, supabaseInstance);
-            });
-            _isPlayerSelectEventAttached = true;
-        }
+        playerSelect.onchange = () => {
+            renderGuestUI(_currentUserIdForSelect, _cachedParticipantsForSelect, _cachedRoomForSelect, supabaseInstance);
+        };
     }
 
     // =========================================================================
-    // 財務諸表エリアの更新（テーブル動的生成）
+    // 財務諸表エリアの更新（テーブルとプルダウンの動的生成）
     // =========================================================================
     if (Object.keys(financials).length > 0 || state.items) {
-        safeUpdate(SEL_G.FINANCIALS.D_CASHFLOW || 'ncashflow', `キャッシュフロー： ${toCurrency(financials.net_cash_flow)}`);
+        safeUpdate(SEL_G.FINANCIALS.D_CASHFLOW, `キャッシュフロー： ${toCurrency(financials.net_cash_flow)}`);
         
-        // 選択されているプレイヤーのデータとアイテム配列を取得
         const selectedUserId = playerSelect ? playerSelect.value : currentUserId;
         const selectedRecord = cachedParticipants.find(p => p.user_id === selectedUserId);
         const selectedState = selectedRecord?.state || {};
@@ -132,36 +125,47 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
         const selectedItems = selectedState.items || [];
         const selectedName = selectedState.name || "不明";
         
-        // ★新設された「職業」と「所持金」の更新（セレクタ未定義対策で直接IDも指定）
-        safeUpdate(SEL_G.FINANCIALS?.D_PROFESSION || 'l-profession', `${selectedName}の職業：${selectedState.profession || '未定'}`);
-        safeUpdate(SEL_G.FINANCIALS?.D_CASH || 'l-cash', `${selectedName}の所持金：$${toCurrency(selectedFinancials.cash)}`);
+        safeUpdate(SEL_G.FINANCIALS.D_PROFESSION, `${selectedName}の職業：${selectedState.profession || '未定'}`);
+        safeUpdate(SEL_G.FINANCIALS.D_CASH, `${selectedName}の所持金：$${toCurrency(selectedFinancials.cash)}`);
 
-        // テーブルの枠組みを作る
         let assetsHTML = "<table border='1' width='100%' style='font-size: 0.9em; text-align: left;'><tr><th>資産名</th><th>コスト</th><th>CF</th></tr>";
-        let liabHTML = "<table border='1' width='100%' style='font-size: 0.9em; text-align: left;'><tr><th>負債/支出名</th><th>負債残高</th><th>CF</th></tr>";
+        let liabHTML = "<table border='1' width='100%' style='font-size: 0.9em; text-align: left;'><tr><th>負債名</th><th>負債残高</th><th>CF</th></tr>";
+        
+        // ★ 操作対象を選択するプルダウンの選択肢（初期値）
+        let optionsHTML = '<option value="">対象の資産・負債を選択</option>';
 
-        // アイテムを1つずつ判定して振り分ける
         selectedItems.forEach(item => {
-            // ★修正：負債残高(liability)がある、またはキャッシュフロー(cashflow)がマイナスの場合は負債・支出へ
             if (item.liability > 0 || item.cashflow < 0) {
-                // ★修正：マイナス値には + を付けない
                 const cfStr = item.cashflow < 0 ? toCurrency(item.cashflow) : `+${toCurrency(item.cashflow)}`;
-                liabHTML += `<tr><td>${item.title}</td><td>${toCurrency(item.liability)}</td><td style="color:red;">${cfStr}</td></tr>`;
+                liabHTML += `<tr><td>${item.title}</td><td>${item.liability > 0 ? toCurrency(item.liability) : '0'}</td><td style="color:red;">${cfStr}</td></tr>`;
+                
+                // ★ 負債残高があるものだけを「返済」の選択肢としてプルダウンに追加
+                if (item.liability > 0) {
+                    optionsHTML += `<option value="${item.id}">【返済】${item.title} (残高: $${toCurrency(item.liability)})</option>`;
+                }
             } else {
                 const cfStr = item.cashflow <= 0 ? toCurrency(item.cashflow) : `+${toCurrency(item.cashflow)}`;
-                assetsHTML += `<tr><td>${item.title}</td><td>${toCurrency(item.cost)}</td><td style="color:blue;">${cfStr}</td></tr>`;
+                assetsHTML += `<tr><td>${item.title}</td><td>${item.cost > 0 ? toCurrency(item.cost) : '0'}</td><td style="color:blue;">${cfStr}</td></tr>`;
+                
+                // ★ コスト（価値）があるものだけを「売却」の選択肢としてプルダウンに追加
+                if (item.cost > 0) {
+                    optionsHTML += `<option value="${item.id}">【売却】${item.title} (コスト: $${toCurrency(item.cost)})</option>`;
+                }
             }
         });
         
         assetsHTML += "</table>";
         liabHTML += "</table>";
 
-        // 画面にテーブルを流し込む
-        const elProfit = document.getElementById(SEL_G.FINANCIALS.D_PROFIT || 'l-profit');
+        const elProfit = document.getElementById(SEL_G.FINANCIALS.D_PROFIT);
         if (elProfit) elProfit.innerHTML = assetsHTML;
 
-        const elLoss = document.getElementById(SEL_G.FINANCIALS.D_LOSS || 'l-loss');
+        const elLoss = document.getElementById(SEL_G.FINANCIALS.D_LOSS);
         if (elLoss) elLoss.innerHTML = liabHTML;
+        
+        // ★ 画面下の「対象の資産・負債を選択」プルダウンに選択肢を流し込む
+        const elProfitLossSelect = document.getElementById(SEL_G.FINANCIALS.PROFIT_LOSS_SELECT);
+        if (elProfitLossSelect) elProfitLossSelect.innerHTML = optionsHTML;
     }
 
     // 取引（トレード）エリアのプレースホルダー更新
@@ -188,7 +192,6 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
             } else {
                 if (diceStatusArea) diceStatusArea.textContent = "あなたの手番";
                 
-                // ドローボタンの無効化
                 setMultipleButtonsActive([
                     SEL_G.CARD.BTN_SMALL_DEAL, 
                     SEL_G.CARD.BTN_BIG_DEAL
@@ -197,7 +200,6 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
             
             setButtonActive(SEL_G.FINANCIALS.BTN_C_CASHFLOW, !!flags.is_calculating);
             
-            // アイテム化に伴い、一旦ローンボタンは常に押せるようにしておく（後ほどプルダウン操作に統合）
             setButtonActive(SEL_G.LOAN.BTN_BORROW_LOAN, true);
             setButtonActive(SEL_G.LOAN.BTN_PAYBACK_LOAN, true);
             
