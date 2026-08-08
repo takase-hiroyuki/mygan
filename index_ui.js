@@ -180,7 +180,8 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
         const turnUserName = turnUser ? turnUser.state.name : "他のプレイヤー";        
 
         if (isMyTurn) {
-            if (state.last_dice > 0) {
+            // データベースのフラグでサイコロを振ったかを厳密に判定
+            if (flags.has_rolled_dice) {
                 const pendingPaydays = parseInt(flags.pending_paydays || 0, 10);
                 if (diceStatusArea) {
                     if (pendingPaydays > 0) {
@@ -189,8 +190,19 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
                         diceStatusArea.textContent = `結果:【${state.last_dice}】`;
                     }
                 }
+                
+                // サイコロを振った後はサイコロボタンを無効化し、ターン終了ボタンを有効化する
+                setButtonActive(SEL_G.CONTROLS.BTN_DICE1, false);
+                setButtonActive(SEL_G.CONTROLS.BTN_DICE_2, false);
+                setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, true);
+
             } else {
                 if (diceStatusArea) diceStatusArea.textContent = "あなたの手番";
+                
+                // まだサイコロを振っていない場合はサイコロボタンを有効化する
+                setButtonActive(SEL_G.CONTROLS.BTN_DICE1, true);
+                setButtonActive(SEL_G.CONTROLS.BTN_DICE_2, true);
+                setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, false);
                 
                 setMultipleButtonsActive([
                     SEL_G.CARD.BTN_SMALL_DEAL, 
