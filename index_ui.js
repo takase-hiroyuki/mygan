@@ -90,6 +90,32 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
         }
     });
 
+    // =========================================================================
+    // 財務諸表エリアの更新（参加者プルダウンの生成）
+    // =========================================================================
+    const playerSelect = document.getElementById(SEL_G.FINANCIALS.PLAYER_SELECT);
+    if (playerSelect) {
+        const currentValue = playerSelect.value; // 現在選ばれている人を記憶
+        playerSelect.innerHTML = ''; // 一旦リストを空にする
+        
+        // 参加者全員をリストに追加
+        cachedParticipants.forEach(p => {
+            if (p.state && p.state.name) {
+                const option = document.createElement('option');
+                option.value = p.user_id;
+                option.textContent = p.state.name + ' の財務諸表';
+                playerSelect.appendChild(option);
+            }
+        });
+        
+        // 記憶していた選択状態を復元（なければ「自分」を選択）
+        if (currentValue && cachedParticipants.some(p => p.user_id === currentValue)) {
+            playerSelect.value = currentValue;
+        } else {
+            playerSelect.value = currentUserId;
+        }
+    }
+
     // 財務諸表エリアの更新（シンプル化）
     if (Object.keys(financials).length > 0) {
         safeUpdate(SEL_G.FINANCIALS.D_SALARY, toCurrency(financials.salary));
