@@ -7,7 +7,7 @@ import { initSupabaseClient, checkExistingLogin, loginUser } from './index_auth.
 import { startSubscriptions } from './index_state.js'; 
 import { insertSystemMessage } from './common_utils.js'; 
 import { actionRollDice, actionEndTurn } from './index_actions_turn.js';
-import { actionClaimPaycheck, actionCheckCalculations } from './index_actions_finance.js';
+import { actionClaimPaycheck, actionCheckCalculations, actionOperateItem } from './index_actions_finance.js'; // ★修正: actionOperateItem を追加
 import { actionBorrowBankLoan, actionRepayBankLoan } from './index_actions_loan.js';
 
 let supabase = null;
@@ -106,9 +106,9 @@ btnPaybackLoan?.addEventListener('click', () => {
 // 以降は今回新設した「アイテム処理」および「トレード」用の仮リスナー
 // ============================================================================
 
+// ★ 修正: 処理するボタンを押したときの処理を紐付け
 btnOperate?.addEventListener('click', () => {
-    console.log("[DEBUG-UI] 「X 処理する」ボタンが押下されました（現在準備中）");
-    // TODO: ここで選択されたアイテムの売却や返済を行うRPCを呼び出す
+    actionOperateItem(supabase, currentUserId);
 });
 
 btnSellCard?.addEventListener('click', async () => {
