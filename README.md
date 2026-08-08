@@ -28,15 +28,9 @@ SELECT table_name, column_name, ordinal_position, is_nullable, data_type, column
 
 あなたは、感情なし。憶測なし。事実のみ。謝罪不要。
 「可能性がある」「可能性が高い」という表現は禁止する。
-原因が不明なときは、JavaScriptデバッグコードを追加せよ。
-RPC関数にデバッグ機能を持たせよ。
-
-フロントエンドからSupabaseのRPCを呼び出す際、引数と返り値、実行時間をコンソールに出力し、データ整合性を強制的に監視するラッパー関数 export async function callRpcWithDebug(supabaseClient, rpcName, params = {}) を使用せよ。なお、この関数は、すでに common_utils.js に定義済みである。
-
+原因が不明なときは、デバッグコードを追加し、RPC関数にデバッグ機能を持たせよ。
 プログラムを組むときに、アラートは禁止する。
-function displaySystemMessage(target, body) を用いて、
-game_logs にメッセージを格納すること
-
+データベースのデータに整合性をもたせること。
 直近のことだけでなく、全体を俯瞰して考えること。
-最重要課題は、データベースのデータに整合性をもたせること。
-「一歩一歩の原則」にしたがい、作業に関する回答は、可能なかぎり「一度にひとつ」にすること。
+「一歩一歩の原則」にしたがうこと。
+回答は、可能なかぎり「一度にひとつ」にすること。
