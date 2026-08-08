@@ -24,6 +24,7 @@
             職業: <span id="g-profession"></span>
         </p>
 
+        <!-- ★上部は常に「自分」の現金を表示するための current-cash -->
         <p>
             現金: $<span id="current-cash">0</span> / 
             <span id="dice-result">現在地</span> / 
@@ -99,9 +100,10 @@
             の財務諸表
         </p>
         
+        <!-- ★下部は「プルダウンで選ばれた人」の情報を表示するための l-profession と l-cash -->
         <p>
             <span id="l-profession">◯◯の職業：★★★</span> / 
-            <span id="current-cash">◯◯の所持金：★★★</span>
+            <span id="l-cash">◯◯の所持金：★★★</span>
         </p>
         <p><span id="l-profit">資産 table</span></p>
         <p><span id="l-loss">負債 table</span></p>
@@ -130,4 +132,3 @@
     <script type="module" src="./index.js"></script>
 </body>
 </html>
-<!-- ここで index.html は終わり。host.html と区別するためにこの行を残す -->
