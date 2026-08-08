@@ -180,9 +180,13 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
         const turnUserName = turnUser ? turnUser.state.name : "他のプレイヤー";        
 
         if (isMyTurn) {
+            const pendingPaydays = parseInt(flags.pending_paydays || 0, 10);
+            
+            // 未処理の入金がある場合のみ、入金請求ボタンを有効化する
+            setButtonActive(SEL_G.CONTROLS.BTN_PAYCHECK, pendingPaydays > 0);
+
             // データベースのフラグでサイコロを振ったかを厳密に判定
             if (flags.has_rolled_dice) {
-                const pendingPaydays = parseInt(flags.pending_paydays || 0, 10);
                 if (diceStatusArea) {
                     if (pendingPaydays > 0) {
                         diceStatusArea.textContent = `結果:【${state.last_dice}】 入金請求（${pendingPaydays}回分）`;
@@ -191,9 +195,10 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
                     }
                 }
                 
-                // サイコロを振った後はサイコロボタンを無効化し、ターン終了ボタンを有効化する
+                // サイコロを振った後はサイコロボタンを無効化する
                 setButtonActive(SEL_G.CONTROLS.BTN_DICE1, false);
                 setButtonActive(SEL_G.CONTROLS.BTN_DICE_2, false);
+                
                 setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, true);
 
             } else {
@@ -204,6 +209,8 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
                 // まだサイコロを振っていない場合、寄付状態に応じてサイコロボタンを有効化する
                 setButtonActive(SEL_G.CONTROLS.BTN_DICE1, true);
                 setButtonActive(SEL_G.CONTROLS.BTN_DICE_2, charityTurnsLeft > 0);
+                
+                // ターン終了は不可
                 setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, false);
                 
                 setMultipleButtonsActive([
