@@ -48,6 +48,9 @@ function updateActionButtonsState(playerState, isMyTurn) {
                        
     setButtonActive(SEL.BTN_END_TURN, canEndTurn);
     
+    // ★追加: 自分の手番なら、資産・負債の処理ボタンを常に有効にする
+    setButtonActive(SEL_G.FINANCIALS.BTN_OPERATE, isMyTurn);
+    
     console.log(`[DEBUG_STATE] Buttons Update: isMyTurn=${isMyTurn}, Roll1=${canRollDice1}, Roll2=${canRollDice2}, Paycheck=${canClaimPaycheck}, End=${canEndTurn}`);
 }
 
