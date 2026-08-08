@@ -132,7 +132,9 @@ export async function insertSystemMessage(supabase, targetName, message) {
  * システムメッセージをDOMのテーブルに追記する関数
  * @param {string} target - メッセージの宛先（1番目のtd用）
  * @param {string} body - メッセージ本文（2番目のtd用）
+ */
 export function displaySystemMessage(target, body) {
+    /*
     const tbody = document.getElementById(SEL_G.MESSAGE.TABLE_BODY); // ★修正: DOM_SELECTORS.GUEST を SEL_G に変更
     if (!tbody) {
         console.warn("[WARNING] message-table-body が見つかりません。メッセージの表示をスキップします。");
@@ -157,6 +159,7 @@ export function displaySystemMessage(target, body) {
     }
 
     console.log(`[game_logs] ${target} / ${body}`);
+    */
 }
 */
 
