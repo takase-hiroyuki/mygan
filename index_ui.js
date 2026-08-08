@@ -116,13 +116,41 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
         }
     }
 
-    // 財務諸表エリアの更新（シンプル化）
-    if (Object.keys(financials).length > 0) {
+    // =========================================================================
+    // 財務諸表エリアの更新（テーブル動的生成）
+    // =========================================================================
+    if (Object.keys(financials).length > 0 || state.items) {
         safeUpdate(SEL_G.FINANCIALS.D_SALARY, toCurrency(financials.salary));
         safeUpdate(SEL_G.FINANCIALS.D_CASHFLOW, `キャッシュフロー： ${toCurrency(financials.net_cash_flow)}`);
         
-        safeUpdate(SEL_G.FINANCIALS.D_PROFIT, "資産 table (とりあえず機能なし)");
-        safeUpdate(SEL_G.FINANCIALS.D_LOSS, "負債 table (とりあえず機能なし)");
+        // 選択されているプレイヤーのアイテム配列を取得
+        const selectedUserId = playerSelect ? playerSelect.value : currentUserId;
+        const selectedRecord = cachedParticipants.find(p => p.user_id === selectedUserId);
+        const selectedItems = selectedRecord?.state?.items || [];
+        
+        // テーブルの枠組みを作る
+        let assetsHTML = "<table border='1' width='100%' style='font-size: 0.9em; text-align: left;'><tr><th>資産名</th><th>コスト</th><th>CF</th></tr>";
+        let liabHTML = "<table border='1' width='100%' style='font-size: 0.9em; text-align: left;'><tr><th>負債名</th><th>負債残高</th><th>CF</th></tr>";
+
+        // アイテムを1つずつ判定して振り分ける
+        selectedItems.forEach(item => {
+            // 簡易判定：負債残高(liability)が0より大きいものを「負債」、それ以外を「資産」とする
+            if (item.liability > 0) {
+                liabHTML += `<tr><td>${item.title}</td><td>${toCurrency(item.liability)}</td><td style="color:red;">${toCurrency(item.cashflow)}</td></tr>`;
+            } else {
+                assetsHTML += `<tr><td>${item.title}</td><td>${toCurrency(item.cost)}</td><td style="color:blue;">+${toCurrency(item.cashflow)}</td></tr>`;
+            }
+        });
+        
+        assetsHTML += "</table>";
+        liabHTML += "</table>";
+
+        // 画面にテーブルを流し込む
+        const elProfit = document.getElementById(SEL_G.FINANCIALS.D_PROFIT);
+        if (elProfit) elProfit.innerHTML = assetsHTML;
+
+        const elLoss = document.getElementById(SEL_G.FINANCIALS.D_LOSS);
+        if (elLoss) elLoss.innerHTML = liabHTML;
     }
 
     // 取引（トレード）エリアのプレースホルダー更新
