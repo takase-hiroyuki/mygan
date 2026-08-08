@@ -41,11 +41,10 @@ function updateActionButtonsState(playerState, isMyTurn) {
     setButtonActive(SEL.BTN_CLAIM_PAYCHECK, canClaimPaycheck);
 
     // 4. ターン終了ボタンの制御
-    // サイコロを振った後（または休み期間中）であり、未処理の入金請求がなければ、無条件でターン終了を許可するよう簡略化
+    // サイコロを振った後（または休み期間中）であれば、入金請求の有無に関わらずターン終了を許可する
     const canEndTurn = isMyTurn && 
                        (hasRolledDice || isDownsized) && 
-                       !isCalculating &&
-                       (pendingPaydays === 0);
+                       !isCalculating;
                        
     setButtonActive(SEL.BTN_END_TURN, canEndTurn);
     
