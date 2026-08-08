@@ -172,6 +172,25 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
     safeUpdate(SEL_G.TRADE.THIS_CARD, "場に出たカード (とりあえず機能なし)");
     safeUpdate(SEL_G.TRADE.TRADE_MESSAGE, "受け取るメッセージ (とりあえず機能なし)");
 
+    // ★追加: トレード相手（自分以外）のプルダウンを生成
+    const sellTargetSelect = document.getElementById(SEL_G.TRADE.SELECT_TARGET);
+    if (sellTargetSelect) {
+        const currentTarget = sellTargetSelect.value; 
+        sellTargetSelect.innerHTML = '<option value="">だれに</option>';
+        cachedParticipants.forEach(p => {
+            if (p.user_id !== currentUserId && p.state && p.state.name) {
+                const option = document.createElement('option');
+                option.value = p.user_id;
+                option.textContent = p.state.name;
+                sellTargetSelect.appendChild(option);
+            }
+        });
+        // 再描画前の選択を復元（もしあれば）
+        if (currentTarget && cachedParticipants.some(p => p.user_id === currentTarget)) {
+            sellTargetSelect.value = currentTarget;
+        }
+    }
+
     if (!isPlaying) {
         if (diceStatusArea) diceStatusArea.textContent = "ホストがゲームを開始するまでお待ちください。";
         disableAllActionButtons();
@@ -223,6 +242,9 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
             
             setButtonActive(SEL_G.LOAN.BTN_BORROW_LOAN, true);
             setButtonActive(SEL_G.LOAN.BTN_PAYBACK_LOAN, true);
+
+            // ★追加: 自分の手番なら、資産・負債の処理ボタンを常に有効にする
+            setButtonActive(SEL_G.FINANCIALS.BTN_OPERATE, true);
             
         } else {
             if (diceStatusArea) diceStatusArea.textContent = `[${turnUserName}] がプレイ中`;
