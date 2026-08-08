@@ -1,22 +1,5 @@
 // index_ui.js
 
-/*
-変更のポイントとJavaScript側の役割
-このように id="select-player-statement" を付けたプルダウンを用意しておくことで、JavaScript側で以下の3つの連携が非常にスムーズに行えます。
-
-リストの自動生成
-ゲームに参加しているプレイヤーのデータ（名前とID）を取得し、この <select> の中に <option> として自動的に追加します。最初は「自分」が選択された状態にしておきます。
-
-切り替え時の表示更新
-このプルダウンが変更された時（change イベント）に、選ばれたプレイヤーのデータ（state->items など）を読み込み、下の「資産 table」と「負債 table」を描画し直します。
-
-「自分だけが操作可能」の制御（重要）
-選ばれているプレイヤーIDが 「自分のID」と一致するかどうか を判定します。
-
-一致する（自分）場合：一番下の「処理する」ボタン（b-operate）や入力欄を表示（または有効化）します。
-一致しない（他人）場合：他人の資産を勝手に売れないように、「処理する」部分のHTMLをごっそり非表示（または disabled）にします。
-*/
-
 import { SEL_G } from './common_dom_selectors.js'; 
 import { setButtonActive,
          setMultipleButtonsActive,
@@ -29,6 +12,12 @@ const guestDiceResult = document.getElementById(SEL_G.CONTROLS.DICE_RESULT);
 
 let previousTurnUserId = null;
 
+// ★ プルダウン変更時の再描画のために、最新のデータを保持しておく変数
+let _cachedParticipantsForSelect = [];
+let _currentUserIdForSelect = null;
+let _cachedRoomForSelect = null;
+let _isPlayerSelectEventAttached = false;
+
 export function toggleScreen(isLoggedIn) {
     if (sectionLogin) sectionLogin.hidden = isLoggedIn;
     if (sectionGuest) sectionGuest.hidden = !isLoggedIn;
@@ -39,6 +28,11 @@ function toCurrency(value) {
 }
 
 export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoom, supabaseInstance = null) {
+    // 再描画用に最新状態を保持
+    _currentUserIdForSelect = currentUserId;
+    _cachedParticipantsForSelect = cachedParticipants;
+    _cachedRoomForSelect = cachedRoom;
+
     const record = cachedParticipants.find(p => p.user_id === currentUserId);
     if (!record || !record.state) return;
 
@@ -66,7 +60,7 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
         }
     };
 
-    // ステータス表示の更新
+    // ご自身のステータス表示の更新
     safeUpdate(SEL_G.STATUS.NAME, state.name || "");
     safeUpdate(SEL_G.STATUS.CURRENT_CASH, toCurrency(financials.cash));
     safeUpdate(SEL_G.STATUS.PROFESSION, state.profession || "未定");
@@ -91,9 +85,9 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
     });
 
     // =========================================================================
-    // 財務諸表エリアの更新（参加者プルダウンの生成）
+    // 財務諸表エリアの更新（参加者プルダウンの生成と連動）
     // =========================================================================
-    const playerSelect = document.getElementById(SEL_G.FINANCIALS.PLAYER_SELECT);
+    const playerSelect = document.getElementById(SEL_G.FINANCIALS.PLAYER_SELECT || 'player-select');
     if (playerSelect) {
         const currentValue = playerSelect.value; // 現在選ばれている人を記憶
         playerSelect.innerHTML = ''; // 一旦リストを空にする
@@ -114,31 +108,48 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
         } else {
             playerSelect.value = currentUserId;
         }
+
+        // ★プルダウンが変更されたら、画面を描画し直すイベントを追加（1回だけ登録）
+        if (!_isPlayerSelectEventAttached) {
+            playerSelect.addEventListener('change', () => {
+                renderGuestUI(_currentUserIdForSelect, _cachedParticipantsForSelect, _cachedRoomForSelect, supabaseInstance);
+            });
+            _isPlayerSelectEventAttached = true;
+        }
     }
 
     // =========================================================================
     // 財務諸表エリアの更新（テーブル動的生成）
     // =========================================================================
     if (Object.keys(financials).length > 0 || state.items) {
-        safeUpdate(SEL_G.FINANCIALS.D_SALARY, toCurrency(financials.salary));
-        safeUpdate(SEL_G.FINANCIALS.D_CASHFLOW, `キャッシュフロー： ${toCurrency(financials.net_cash_flow)}`);
+        safeUpdate(SEL_G.FINANCIALS.D_CASHFLOW || 'ncashflow', `キャッシュフロー： ${toCurrency(financials.net_cash_flow)}`);
         
-        // 選択されているプレイヤーのアイテム配列を取得
+        // 選択されているプレイヤーのデータとアイテム配列を取得
         const selectedUserId = playerSelect ? playerSelect.value : currentUserId;
         const selectedRecord = cachedParticipants.find(p => p.user_id === selectedUserId);
-        const selectedItems = selectedRecord?.state?.items || [];
+        const selectedState = selectedRecord?.state || {};
+        const selectedFinancials = selectedState.financials || {};
+        const selectedItems = selectedState.items || [];
+        const selectedName = selectedState.name || "不明";
         
+        // ★新設された「職業」と「所持金」の更新（セレクタ未定義対策で直接IDも指定）
+        safeUpdate(SEL_G.FINANCIALS?.D_PROFESSION || 'l-profession', `${selectedName}の職業：${selectedState.profession || '未定'}`);
+        safeUpdate(SEL_G.FINANCIALS?.D_CASH || 'l-cash', `${selectedName}の所持金：$${toCurrency(selectedFinancials.cash)}`);
+
         // テーブルの枠組みを作る
         let assetsHTML = "<table border='1' width='100%' style='font-size: 0.9em; text-align: left;'><tr><th>資産名</th><th>コスト</th><th>CF</th></tr>";
-        let liabHTML = "<table border='1' width='100%' style='font-size: 0.9em; text-align: left;'><tr><th>負債名</th><th>負債残高</th><th>CF</th></tr>";
+        let liabHTML = "<table border='1' width='100%' style='font-size: 0.9em; text-align: left;'><tr><th>負債/支出名</th><th>負債残高</th><th>CF</th></tr>";
 
         // アイテムを1つずつ判定して振り分ける
         selectedItems.forEach(item => {
-            // 簡易判定：負債残高(liability)が0より大きいものを「負債」、それ以外を「資産」とする
-            if (item.liability > 0) {
-                liabHTML += `<tr><td>${item.title}</td><td>${toCurrency(item.liability)}</td><td style="color:red;">${toCurrency(item.cashflow)}</td></tr>`;
+            // ★修正：負債残高(liability)がある、またはキャッシュフロー(cashflow)がマイナスの場合は負債・支出へ
+            if (item.liability > 0 || item.cashflow < 0) {
+                // ★修正：マイナス値には + を付けない
+                const cfStr = item.cashflow < 0 ? toCurrency(item.cashflow) : `+${toCurrency(item.cashflow)}`;
+                liabHTML += `<tr><td>${item.title}</td><td>${toCurrency(item.liability)}</td><td style="color:red;">${cfStr}</td></tr>`;
             } else {
-                assetsHTML += `<tr><td>${item.title}</td><td>${toCurrency(item.cost)}</td><td style="color:blue;">+${toCurrency(item.cashflow)}</td></tr>`;
+                const cfStr = item.cashflow <= 0 ? toCurrency(item.cashflow) : `+${toCurrency(item.cashflow)}`;
+                assetsHTML += `<tr><td>${item.title}</td><td>${toCurrency(item.cost)}</td><td style="color:blue;">${cfStr}</td></tr>`;
             }
         });
         
@@ -146,10 +157,10 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
         liabHTML += "</table>";
 
         // 画面にテーブルを流し込む
-        const elProfit = document.getElementById(SEL_G.FINANCIALS.D_PROFIT);
+        const elProfit = document.getElementById(SEL_G.FINANCIALS.D_PROFIT || 'l-profit');
         if (elProfit) elProfit.innerHTML = assetsHTML;
 
-        const elLoss = document.getElementById(SEL_G.FINANCIALS.D_LOSS);
+        const elLoss = document.getElementById(SEL_G.FINANCIALS.D_LOSS || 'l-loss');
         if (elLoss) elLoss.innerHTML = liabHTML;
     }
 
