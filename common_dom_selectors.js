@@ -72,7 +72,8 @@ export const DOM_SELECTORS = {
         // 財務諸表・資産負債手動計算・操作エリア
         FINANCIALS: {
             PLAYER_SELECT: 'player-select',
-            D_SALARY: 'salary',
+            D_PROFESSION: 'l-profession',   // ★追加: 選択された人の職業
+            D_CASH: 'l-cash',               // ★追加: 選択された人の現金
             D_PROFIT: 'l-profit',
             D_LOSS: 'l-loss',
             D_CASHFLOW: 'ncashflow', 
