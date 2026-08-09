@@ -15,7 +15,6 @@ const guestDiceResult = document.getElementById(SEL_G.CONTROLS.DICE_RESULT);
 
 let previousTurnUserId = null;
 
-// ★ プルダウン変更時の再描画のために、最新のデータを保持しておく変数
 let _cachedParticipantsForSelect = [];
 let _currentUserIdForSelect = null;
 let _cachedRoomForSelect = null;
@@ -30,7 +29,6 @@ function toCurrency(value) {
 }
 
 export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoom, supabaseInstance = null) {
-    // 再描画用に最新状態を保持
     _currentUserIdForSelect = currentUserId;
     _cachedParticipantsForSelect = cachedParticipants;
     _cachedRoomForSelect = cachedRoom;
@@ -49,7 +47,6 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
         const currentTurnUser = cachedParticipants.find(p => p.user_id === turnUserId);
         const targetName = currentTurnUser?.state?.name || "プレイヤー";
         
-        // ダミーのRPC関数を呼び出す（システムメッセージ送信の代替）
         await dummyRpcCall('insertSystemMessage', { targetName, message: `${targetName} はサイコロを振って下さい` });
         
         previousTurnUserId = turnUserId;
@@ -62,14 +59,12 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
         }
     };
 
-    // ご自身のステータス表示の更新
     safeUpdate(SEL_G.STATUS.NAME, state.name || "");
     safeUpdate(SEL_G.STATUS.CURRENT_CASH, toCurrency(financials.cash));
     safeUpdate(SEL_G.STATUS.PROFESSION, state.profession || "未定");
     safeUpdate(SEL_G.STATUS.CHILDREN_COUNT, state.children_count || 0);
     safeUpdate(SEL_G.STATUS.PER_CHILD_EXPENSE, toCurrency(financials.per_child_expense));
 
-    // 盤面（すごろく）の更新
     for (let i = 0; i < 24; i++) {
         const cell = document.getElementById(`${SEL_G.BOARD.RAT_PREFIX}${i}`);
         if (cell) cell.innerHTML = "";
@@ -85,9 +80,6 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
         }
     });
 
-    // =========================================================================
-    // 財務諸表エリアの更新（参加者プルダウンの生成と連動）
-    // =========================================================================
     const playerSelect = document.getElementById(SEL_G.FINANCIALS.PLAYER_SELECT);
     if (playerSelect) {
         const currentValue = playerSelect.value; 
@@ -114,9 +106,6 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
         };
     }
 
-    // =========================================================================
-    // 財務諸表エリアの更新（テーブルとプルダウンの動的生成）
-    // =========================================================================
     if (Object.keys(financials).length > 0 || state.items) {
         safeUpdate(SEL_G.FINANCIALS.D_CASHFLOW, `キャッシュフロー： ${toCurrency(financials.net_cash_flow)}`);
         
@@ -133,7 +122,6 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
         let assetsHTML = "<table border='1' width='100%'><tr><th>資産名</th><th>単価</th><th>数量</th><th>CF</th></tr>";
         let liabHTML = "<table border='1' width='100%'><tr><th>負債名</th><th>負債残高</th><th>CF</th></tr>";
         
-        // ★ 操作対象を選択するプルダウンの選択肢（初期値）
         let optionsHTML = '<option value="">対象の資産・負債を選択</option>';
 
         selectedItems.forEach(item => {
@@ -141,22 +129,18 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
                 const cfStr = item.cashflow < 0 ? toCurrency(item.cashflow) : `+${toCurrency(item.cashflow)}`;
                 liabHTML += `<tr><td>${item.title}</td><td>${item.liability > 0 ? toCurrency(item.liability) : '0'}</td><td>${cfStr}</td></tr>`;
                 
-                // ★ 負債残高があるものだけを「返済」の選択肢としてプルダウンに追加
                 if (item.liability > 0) {
                     optionsHTML += `<option value="${item.id}">【返済】${item.title} (残高: $${toCurrency(item.liability)})</option>`;
                 }
             } else {
                 const cfStr = item.cashflow <= 0 ? toCurrency(item.cashflow) : `+${toCurrency(item.cashflow)}`;
                 
-                // ★ 追加: 単価と数量の取得（数量データがない場合はデフォルトの1とする）
                 const unitPrice = item.cost > 0 ? toCurrency(item.cost) : '0';
                 const quantity = item.quantity !== undefined ? item.quantity : 1; 
-                const quantityStr = Number(quantity).toLocaleString(); // カンマ区切りにする
+                const quantityStr = Number(quantity).toLocaleString(); 
                 
-                // ★ 変更: 資産テーブルの行に「単価」と「数量」を組み込む
                 assetsHTML += `<tr><td>${item.title}</td><td>${unitPrice}</td><td>${quantityStr}</td><td>${cfStr}</td></tr>`;
                 
-                // ★ 変更: 売却の選択肢にも単価と数量を表示させる
                 if (item.cost > 0) {
                     optionsHTML += `<option value="${item.id}">【売却】${item.title} (単価: $${unitPrice}, 数量: ${quantityStr})</option>`;
                 }
@@ -172,12 +156,10 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
         const elLoss = document.getElementById(SEL_G.FINANCIALS.D_LOSS);
         if (elLoss) elLoss.innerHTML = liabHTML;
         
-        // ★ 画面下の「対象の資産・負債を選択」プルダウンに選択肢を流し込む
         const elProfitLossSelect = document.getElementById(SEL_G.FINANCIALS.PROFIT_LOSS_SELECT);
         if (elProfitLossSelect) elProfitLossSelect.innerHTML = optionsHTML;
     }
 
-    // ★追加: トレード相手（自分以外）のプルダウンを生成
     const sellTargetSelect = document.getElementById(SEL_G.TRADE.SELECT_TARGET);
     if (sellTargetSelect) {
         const currentTarget = sellTargetSelect.value; 
@@ -190,15 +172,11 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
                 sellTargetSelect.appendChild(option);
             }
         });
-        // 再描画前の選択を復元（もしあれば）
         if (currentTarget && cachedParticipants.some(p => p.user_id === currentTarget)) {
             sellTargetSelect.value = currentTarget;
         }
     }
 
-    // =========================================================================
-    // ★ 修正箇所：カード内容の表示と各種コントロールの動的制御
-    // =========================================================================
     const turnUserRecord = cachedParticipants.find(p => p.user_id === turnUserId);
     const turnUserState = turnUserRecord ? turnUserRecord.state : {};
     const turnUserFlags = turnUserState.flags || {};
@@ -210,17 +188,14 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
     const elSellPrice = document.getElementById(SEL_G.TRADE.INPUT_PRICE);
 
     if (turnUserDrawnCard) {
-        // カードを引いている場合（全員の画面にカード情報を描画）
         safeUpdate(SEL_G.TRADE.THIS_CARD, `【${turnUserDrawnCard.title}】\n${turnUserDrawnCard.description_jp || ''}`);
         
-        // 数量入力欄の表示制御（株、投資信託、コインなど任意数量を処理できるもののみ表示）
         if (elNumProcess) {
             const cardType = turnUserDrawnCard.type || '';
             const needsQuantity = ['stock', 'mutual_fund', 'coin'].includes(cardType);
             elNumProcess.hidden = !needsQuantity;
         }
 
-        // ボタンの文言の動的変更（止まったマスに応じて変更）
         if (elBtnProcess) {
             if (turnUserState.position !== undefined && CELLS_DOODAD.includes(parseInt(turnUserState.position, 10))) {
                 elBtnProcess.textContent = '支払う';
@@ -232,13 +207,11 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
         }
         
         if (isMyTurn) {
-            // 自分の番であれば、カードのフラグをみてボタンと入力を制御
             setButtonActive(SEL_G.TRADE.BTN_SELL, !!turnUserDrawnCard.is_resellable);
             setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, true);
             if (elSellTarget) elSellTarget.disabled = !turnUserDrawnCard.is_resellable;
             if (elSellPrice) elSellPrice.disabled = !turnUserDrawnCard.is_resellable;
         } else {
-            // 他プレイヤーの番であれば、ボタンと入力を無効化
             setButtonActive(SEL_G.TRADE.BTN_SELL, false);
             setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, false);
             if (elSellTarget) elSellTarget.disabled = true;
@@ -246,7 +219,6 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
         }
         
     } else if (turnUserFlags.has_rolled_dice && CELLS_OPPORTUNITY.includes(turnUserState.position) && !turnUserFlags.is_card_drawn) {
-        // 商売マスに止まり、まだカードを引いていない場合
         if (isMyTurn) {
             safeUpdate(SEL_G.TRADE.THIS_CARD, "普通の商売、または大きな商売、のどちらかをひいてください");
         } else {
@@ -255,27 +227,21 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
         setButtonActive(SEL_G.TRADE.BTN_SELL, false);
         setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, false);
         
-        // 初期状態へのリセット
         if (elNumProcess) elNumProcess.hidden = true;
         if (elSellTarget) elSellTarget.disabled = true;
         if (elSellPrice) elSellPrice.disabled = true;
         if (elBtnProcess) elBtnProcess.textContent = '自分で実行する / 見送る';
     } else {
-        // それ以外の場合（待ち状態など）
         safeUpdate(SEL_G.TRADE.THIS_CARD, "場に出たカード");
         setButtonActive(SEL_G.TRADE.BTN_SELL, false);
         setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, false);
         
-        // 初期状態へのリセット
         if (elNumProcess) elNumProcess.hidden = true;
         if (elSellTarget) elSellTarget.disabled = true;
         if (elSellPrice) elSellPrice.disabled = true;
         if (elBtnProcess) elBtnProcess.textContent = '自分で実行する / 見送る';
     }
     
-    safeUpdate(SEL_G.TRADE.TRADE_MESSAGE, "受け取るメッセージ (現在交渉なし)");
-
-
     if (!isPlaying) {
         if (diceStatusArea) diceStatusArea.textContent = "ホストがゲームを開始するまでお待ちください。";
         disableAllActionButtons();
@@ -286,10 +252,8 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
         if (isMyTurn) {
             const pendingPaydays = parseInt(flags.pending_paydays || 0, 10);
             
-            // 未処理の入金がある場合のみ、入金請求ボタンを有効化する
             setButtonActive(SEL_G.CONTROLS.BTN_PAYCHECK, pendingPaydays > 0);
 
-            // データベースのフラグでサイコロを振ったかを厳密に判定
             if (flags.has_rolled_dice) {
                 if (diceStatusArea) {
                     if (pendingPaydays > 0) {
@@ -299,20 +263,13 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
                     }
                 }
                 
-                // サイコロを振った後はサイコロボタンを無効化する
                 setButtonActive(SEL_G.CONTROLS.BTN_DICE1, false);
                 setButtonActive(SEL_G.CONTROLS.BTN_DICE_2, false);
                 
-                // =========================================================================
-                // ★ 追加箇所: 「次の人へ」ボタン（ターン終了）の厳格な一元管理
-                // =========================================================================
                 let canEndTurn = false;
                 
-                // 1. 手動で計算中（電卓モード等）ではないこと
                 if (!flags.is_calculating) {
-                    // 2. 現金がマイナスではないこと（マイナスならローンなどでの返済が必須）
                     if (financials.cash >= 0) {
-                        // 3. カードを引いていない、または、カードを引いたが「自分で処理する」等のアクションを完了していること
                         if (!state.drawn_card || flags.is_action_completed) {
                             canEndTurn = true;
                         }
@@ -320,18 +277,15 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
                 }
                 
                 setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, canEndTurn);
-                // =========================================================================
 
             } else {
                 if (diceStatusArea) diceStatusArea.textContent = "あなたの手番";
                 
                 const charityTurnsLeft = parseInt(flags.charity_turns_left || 0, 10);
                 
-                // まだサイコロを振っていない場合、寄付状態に応じてサイコロボタンを有効化する
                 setButtonActive(SEL_G.CONTROLS.BTN_DICE1, true);
                 setButtonActive(SEL_G.CONTROLS.BTN_DICE_2, charityTurnsLeft > 0);
                 
-                // ターン終了は不可
                 setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, false);
                 
                 setMultipleButtonsActive([
@@ -345,13 +299,49 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
             setButtonActive(SEL_G.LOAN.BTN_BORROW_LOAN, true);
             setButtonActive(SEL_G.LOAN.BTN_PAYBACK_LOAN, true);
 
-            // ★追加: 自分の手番なら、資産・負債の処理ボタンを常に有効にする
             setButtonActive(SEL_G.FINANCIALS.BTN_OPERATE, true);
             
         } else {
             if (diceStatusArea) diceStatusArea.textContent = `[${turnUserName}] がプレイ中`;
             disableAllActionButtons();
         }
+    }
+
+    // =========================================================================
+    // ★ 追加・修正箇所：交渉（トレード）状態の監視とUI反映
+    // disableAllActionButtons() の後に実行することで、非手番でもボタンを有効化する
+    // =========================================================================
+    const tradeOffer = cachedRoom?.game_state?.trade_offer;
+    
+    if (tradeOffer) {
+        if (tradeOffer.to === currentUserId) {
+            // 自分への提案が来ている場合
+            const fromUser = cachedParticipants.find(p => p.user_id === tradeOffer.from);
+            const fromName = fromUser?.state?.name || "他のプレイヤー";
+            safeUpdate(SEL_G.TRADE.TRADE_MESSAGE, `${fromName} さんから $${toCurrency(tradeOffer.price)} で権利を買う提案が来ています。`);
+            
+            // 自分の手番でなくても、承諾/拒否ボタンだけは有効にする
+            setButtonActive(SEL_G.TRADE.BTN_ACCEPT, true);
+            setButtonActive(SEL_G.TRADE.BTN_REJECT, true);
+            
+        } else if (tradeOffer.from === currentUserId) {
+            // 自分が提案中の場合
+            const toUser = cachedParticipants.find(p => p.user_id === tradeOffer.to);
+            const toName = toUser?.state?.name || "他のプレイヤー";
+            safeUpdate(SEL_G.TRADE.TRADE_MESSAGE, `${toName} さんからの返答を待っています...`);
+            setButtonActive(SEL_G.TRADE.BTN_ACCEPT, false);
+            setButtonActive(SEL_G.TRADE.BTN_REJECT, false);
+            
+        } else {
+            // 当事者以外
+            safeUpdate(SEL_G.TRADE.TRADE_MESSAGE, "他プレイヤー間で交渉中です...");
+            setButtonActive(SEL_G.TRADE.BTN_ACCEPT, false);
+            setButtonActive(SEL_G.TRADE.BTN_REJECT, false);
+        }
+    } else {
+        safeUpdate(SEL_G.TRADE.TRADE_MESSAGE, "受け取るメッセージ (現在交渉なし)");
+        setButtonActive(SEL_G.TRADE.BTN_ACCEPT, false);
+        setButtonActive(SEL_G.TRADE.BTN_REJECT, false);
     }
 
     if (guestDiceResult && state.position !== undefined) {
@@ -385,9 +375,6 @@ export function disableAllActionButtons() {
     setMultipleButtonsActive(actionButtonIds.filter(Boolean), false);
 }
 
-// ============================================================================
-// ダミーRPC関数群
-// ============================================================================
 export async function dummyRpcCall(rpcName, payload) {
     console.log(`[Dummy RPC] 実行されました: ${rpcName}`, payload);
     return { data: null, error: null };
