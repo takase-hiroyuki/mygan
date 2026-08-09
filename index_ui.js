@@ -178,13 +178,12 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
     }
 
     // =========================================================================
-    // ★ 修正箇所（ステップ6）：UI制御の基準を「カードを持っている人」に変更
+    // UI制御の基準を「カードを持っている人」に変更
     // =========================================================================
     const turnUserRecord = cachedParticipants.find(p => p.user_id === turnUserId);
     const turnUserState = turnUserRecord ? turnUserRecord.state : {};
     const turnUserFlags = turnUserState.flags || {};
 
-    // 部屋内の誰かがカードを持っているか探す
     const cardHolderRecord = cachedParticipants.find(p => p.state && p.state.drawn_card);
     const activeCard = cardHolderRecord ? cardHolderRecord.state.drawn_card : null;
     const cardHolderId = cardHolderRecord ? cardHolderRecord.user_id : null;
@@ -196,7 +195,6 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
     const elSellPrice = document.getElementById(SEL_G.TRADE.INPUT_PRICE);
 
     if (activeCard) {
-        // 誰かがカードを持っている場合
         safeUpdate(SEL_G.TRADE.THIS_CARD, `【${activeCard.title}】\n${activeCard.description_jp || ''}`);
         
         if (elNumProcess) {
@@ -217,7 +215,6 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
         }
         
         if (iAmCardHolder) {
-            // ★ 手番に関わらず、自分がカードを持っていればボタンを有効化する
             setButtonActive(SEL_G.TRADE.BTN_SELL, !!activeCard.is_resellable);
             setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, true);
             if (elSellTarget) elSellTarget.disabled = !activeCard.is_resellable;
@@ -230,7 +227,6 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
         }
         
     } else if (turnUserFlags.has_rolled_dice && CELLS_OPPORTUNITY.includes(turnUserState.position) && !turnUserFlags.is_card_drawn) {
-        // 商売マスでまだ誰もカードを引いていない場合
         if (isMyTurn) {
             safeUpdate(SEL_G.TRADE.THIS_CARD, "普通の商売、または大きな商売、のどちらかをひいてください");
         } else {
@@ -279,17 +275,18 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
                 setButtonActive(SEL_G.CONTROLS.BTN_DICE_2, false);
                 
                 // =========================================================================
-                // ★ 修正箇所（ステップ7）：ターン終了のロック制御
+                // ★ 修正箇所：ターン終了の厳密なロック制御とデバッグ出力
                 // =========================================================================
                 let canEndTurn = false;
+                const isTrading = !!cachedRoom?.game_state?.trade_offer;
+                const anyCardHolderExists = cachedParticipants.some(p => p.state && p.state.drawn_card);
                 
                 if (!flags.is_calculating) {
                     if (financials.cash >= 0) {
                         // 条件1: 部屋内の参加者の誰もカードを持っていないこと
-                        const anyCardHolderExists = cachedParticipants.some(p => p.state && p.state.drawn_card);
-                        
-                        if (!anyCardHolderExists) {
-                            // 条件2: 自分の手番のアクションが完了していること
+                        // 条件2: 交渉中（trade_offerが存在する）でないこと
+                        if (!anyCardHolderExists && !isTrading) {
+                            // 条件3: 自分の手番のアクションが完了していること
                             if (!state.drawn_card || flags.is_action_completed) {
                                 canEndTurn = true;
                             }
@@ -297,7 +294,19 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
                     }
                 }
                 
+                // 開発者用デバッグ出力
+                console.log("[DEBUG] ターン終了判定:", {
+                    playerName: state.name,
+                    is_calculating: flags.is_calculating,
+                    cash: financials.cash,
+                    isTrading: isTrading,
+                    anyCardHolderExists: anyCardHolderExists,
+                    is_action_completed: flags.is_action_completed,
+                    canEndTurn: canEndTurn
+                });
+                
                 setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, canEndTurn);
+                // =========================================================================
 
             } else {
                 if (diceStatusArea) diceStatusArea.textContent = "あなたの手番";
