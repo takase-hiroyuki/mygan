@@ -78,20 +78,27 @@
             </tbody>
         </table>
         
-        <!-- 追加されたカード取引エリア -->
-        <p>
-            <span id="thiscard">カードの内容</span><br>
-            <select id="sell-target">
-                <option value="">だれに</option>
-            </select>
-            <input type="number" id="sell-price" placeholder="いくらで">
-            <button id="btn-sell-card">売る</button><br> 
-            <input type="number" id="num-process-self" placeholder="数量">
-            <button id="btn-process-self">自分で買う、処理する</button><br>
-            <span id="trade-message">買う側のメッセージ</span> : 
-            <button id="btn-trade-accept">承諾</button> /
-            <button id="btn-trade-reject">拒否</button>
-        </p>
+<!-- 修正されたカード取引エリア -->
+<div id="card-trade-area">
+    <span id="thiscard">場に出たカード</span>
+    <!-- 自分用アクションエリア -->
+        <label for="num-process-self">数量:</label>
+        <input type="number" id="num-process-self" placeholder="任意の場合のみ入力">
+        <button id="btn-process-self">自分で実行する / 見送る</button>
+<br>
+    <!-- 交渉・売買エリア -->
+        <label>権利を売る:</label>
+        <select id="sell-target">
+            <option value="">だれに</option>
+        </select>
+        <input type="number" id="sell-price" placeholder="いくらで ($)">
+        <button id="btn-sell-card">交渉を持ちかける</button>
+<br>
+    <!-- メッセージ応答エリア -->
+        <span id="trade-message">受け取るメッセージ (現在交渉なし)</span> 
+        <button id="btn-trade-accept">承諾</button>
+        <button id="btn-trade-reject">拒否</button>
+</div>
 
         <p>
             <select id="player-select"></select> <!-- 以下、財務諸表 -->
