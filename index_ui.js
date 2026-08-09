@@ -4,7 +4,7 @@ import { SEL_G } from './common_dom_selectors.js';
 import { setButtonActive,
          setMultipleButtonsActive,
          BOARD_CELL_NAMES,
-         CELLS_OPPORTUNITY } from './common_utils.js'; // ★修正: CELLS_OPPORTUNITY を追加インポート
+         CELLS_OPPORTUNITY } from './common_utils.js';
 
 const sectionLogin = document.getElementById(SEL_G.LOGIN.SECTION);
 const sectionGuest = document.getElementById(SEL_G.STATUS.SECTION);
@@ -199,20 +199,33 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
     // =========================================================================
     // ★ 修正箇所：カード内容の表示と「売る」ボタンのアクティブ制御
     // =========================================================================
-    if (isMyTurn && state.drawn_card) {
-        // カードを引いている場合
-        const card = state.drawn_card;
-        safeUpdate(SEL_G.TRADE.THIS_CARD, `【${card.title}】\n${card.description_jp || ''}`);
+    // 現在手番のプレイヤーのデータを取得する
+    const turnUserRecord = cachedParticipants.find(p => p.user_id === turnUserId);
+    const turnUserState = turnUserRecord ? turnUserRecord.state : {};
+    const turnUserFlags = turnUserState.flags || {};
+    const turnUserDrawnCard = turnUserState.drawn_card;
+
+    if (turnUserDrawnCard) {
+        // カードを引いている場合（全員の画面にカード情報を描画）
+        safeUpdate(SEL_G.TRADE.THIS_CARD, `【${turnUserDrawnCard.title}】\n${turnUserDrawnCard.description_jp || ''}`);
         
-        // カードの is_resellable フラグをみて「売る」ボタンを制御
-        setButtonActive(SEL_G.TRADE.BTN_SELL, !!card.is_resellable);
+        if (isMyTurn) {
+            // 自分の番であれば、カードのフラグをみてボタンを制御
+            setButtonActive(SEL_G.TRADE.BTN_SELL, !!turnUserDrawnCard.is_resellable);
+            setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, true);
+        } else {
+            // 他プレイヤーの番であれば、ボタンを無効化
+            setButtonActive(SEL_G.TRADE.BTN_SELL, false);
+            setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, false);
+        }
         
-        // 「自分で処理する」ボタンはカードを引いていれば常にアクティブ
-        setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, true);
-        
-    } else if (isMyTurn && flags.has_rolled_dice && CELLS_OPPORTUNITY.includes(state.position) && !flags.is_card_drawn) {
+    } else if (turnUserFlags.has_rolled_dice && CELLS_OPPORTUNITY.includes(turnUserState.position) && !turnUserFlags.is_card_drawn) {
         // 商売マスに止まり、まだカードを引いていない場合
-        safeUpdate(SEL_G.TRADE.THIS_CARD, "普通の商売、または大きな商売、のどちらかをひいてください");
+        if (isMyTurn) {
+            safeUpdate(SEL_G.TRADE.THIS_CARD, "普通の商売、または大きな商売、のどちらかをひいてください");
+        } else {
+            safeUpdate(SEL_G.TRADE.THIS_CARD, `${turnUserState.name || '他のプレイヤー'} が商売カードを選択中です...`);
+        }
         setButtonActive(SEL_G.TRADE.BTN_SELL, false);
         setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, false);
     } else {
@@ -313,7 +326,7 @@ export function disableAllActionButtons() {
         TRADE.BTN_SELL,
         TRADE.BTN_ACCEPT,
         TRADE.BTN_REJECT,
-        TRADE.BTN_PROCESS_SELF // ★追加
+        TRADE.BTN_PROCESS_SELF
     ];
     
     setMultipleButtonsActive(actionButtonIds.filter(Boolean), false);
