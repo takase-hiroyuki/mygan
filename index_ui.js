@@ -128,7 +128,8 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
         safeUpdate(SEL_G.FINANCIALS.D_PROFESSION, `${selectedName}の職業：${selectedState.profession || '未定'}`);
         safeUpdate(SEL_G.FINANCIALS.D_CASH, `${selectedName}の所持金：$${toCurrency(selectedFinancials.cash)}`);
 
-        let assetsHTML = "<table border='1' width='100%' style='font-size: 0.9em; text-align: left;'><tr><th>資産名</th><th>コスト</th><th>CF</th></tr>";
+        // ★ 変更: assetsHTML のヘッダーを「単価」「数量」に変更
+        let assetsHTML = "<table border='1' width='100%' style='font-size: 0.9em; text-align: left;'><tr><th>資産名</th><th>単価</th><th>数量</th><th>CF</th></tr>";
         let liabHTML = "<table border='1' width='100%' style='font-size: 0.9em; text-align: left;'><tr><th>負債名</th><th>負債残高</th><th>CF</th></tr>";
         
         // ★ 操作対象を選択するプルダウンの選択肢（初期値）
@@ -145,11 +146,18 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
                 }
             } else {
                 const cfStr = item.cashflow <= 0 ? toCurrency(item.cashflow) : `+${toCurrency(item.cashflow)}`;
-                assetsHTML += `<tr><td>${item.title}</td><td>${item.cost > 0 ? toCurrency(item.cost) : '0'}</td><td style="color:blue;">${cfStr}</td></tr>`;
                 
-                // ★ コスト（価値）があるものだけを「売却」の選択肢としてプルダウンに追加
+                // ★ 追加: 単価と数量の取得（数量データがない場合はデフォルトの1とする）
+                const unitPrice = item.cost > 0 ? toCurrency(item.cost) : '0';
+                const quantity = item.quantity !== undefined ? item.quantity : 1; 
+                const quantityStr = Number(quantity).toLocaleString(); // カンマ区切りにする
+                
+                // ★ 変更: 資産テーブルの行に「単価」と「数量」を組み込む
+                assetsHTML += `<tr><td>${item.title}</td><td>${unitPrice}</td><td>${quantityStr}</td><td style="color:blue;">${cfStr}</td></tr>`;
+                
+                // ★ 変更: 売却の選択肢にも単価と数量を表示させる
                 if (item.cost > 0) {
-                    optionsHTML += `<option value="${item.id}">【売却】${item.title} (コスト: $${toCurrency(item.cost)})</option>`;
+                    optionsHTML += `<option value="${item.id}">【売却】${item.title} (単価: $${unitPrice}, 数量: ${quantityStr})</option>`;
                 }
             }
         });
