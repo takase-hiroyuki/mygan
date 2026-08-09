@@ -1,75 +1,10 @@
 // index_state.js
 import { renderGuestUI } from './index_ui.js';
 import { SEL_G } from './common_dom_selectors.js'; 
-import { setButtonActive,
-         CELLS_OPPORTUNITY,
-         CELLS_DOODAD,
-         CELLS_MARKET,
-         displaySystemMessage,
-         getLocalPlayerName,
-         insertSystemMessage } from './common_utils.js';
+import { getLocalPlayerName, insertSystemMessage, displaySystemMessage } from './common_utils.js';
 
 let cachedParticipants = [];
 let cachedRoom = null;
-
-// プレイヤーの状態（フラグなど）に基づいて、アクションボタンの有効/無効を厳格に一元管理する
-function updateActionButtonsState(playerState, isMyTurn) {
-    const flags = playerState.flags || {};
-    const position = playerState.position || 0;
-    
-    const hasRolledDice = !!flags.has_rolled_dice;
-    const isCalculating = !!flags.is_calculating;
-    const isNegativeCashFlow = !!flags.is_negative_cash_flow;
-    const isActionCompleted = !!flags.is_action_completed;
-    const charityTurnsLeft = parseInt(flags.charity_turns_left || 0, 10);
-    const downsizedTurnsLeft = parseInt(flags.downsized_turns_left || 0, 10);
-    const pendingPaydays = parseInt(flags.pending_paydays || 0, 10);
-
-    const isDownsized = downsizedTurnsLeft > 0;
-    
-    // ★追加: 既にカードを引いたかどうかのフラグを取得
-    const isCardDrawn = !!flags.is_card_drawn;
-
-    const SEL = SEL_G.CONTROLS; 
-
-    // 1. サイコロ1個を振るボタンの制御
-    const canRollDice1 = isMyTurn && !hasRolledDice && !isCalculating && !isDownsized;
-    setButtonActive(SEL.BTN_ROLL_DICE, canRollDice1);
-
-    // 2. サイコロ2個を振るボタンの制御
-    const canRollDice2 = canRollDice1 && (charityTurnsLeft > 0);
-    setButtonActive(SEL.BTN_ROLL_DICE_2, canRollDice2);
-
-    // 3. 給料を受け取る（または支払う）ボタンの制御
-    const canClaimPaycheck = isMyTurn && (pendingPaydays > 0);
-    setButtonActive(SEL.BTN_CLAIM_PAYCHECK, canClaimPaycheck);
-
-    // 4. ターン終了ボタンの制御
-    // サイコロを振った後（または休み期間中）であれば、入金請求の有無に関わらずターン終了を許可する
-    const canEndTurn = isMyTurn && 
-                       (hasRolledDice || isDownsized) && 
-                       !isCalculating;
-                       
-    setButtonActive(SEL.BTN_END_TURN, canEndTurn);
-    
-    // 5. 資産・負債の処理ボタンを常に有効にする
-    if (SEL_G.FINANCIALS && SEL_G.FINANCIALS.BTN_OPERATE) {
-        setButtonActive(SEL_G.FINANCIALS.BTN_OPERATE, isMyTurn);
-    }
-    
-    // 6. ★追加: カードを引くボタンの制御（商売マス）
-    const isOpportunityCell = CELLS_OPPORTUNITY.includes(position);
-    
-    // 自分の番 ＆ サイコロを振った ＆ 商売マスにいる ＆ まだカードを引いていない ＆ 計算中ではない
-    const canDrawOpportunity = isMyTurn && hasRolledDice && isOpportunityCell && !isCardDrawn && !isCalculating;
-    
-    if (SEL_G.CARD) {
-        setButtonActive(SEL_G.CARD.BTN_SMALL_DEAL, canDrawOpportunity);
-        setButtonActive(SEL_G.CARD.BTN_BIG_DEAL, canDrawOpportunity);
-    }
-    
-    console.log(`[DEBUG_STATE] Buttons Update: isMyTurn=${isMyTurn}, Roll1=${canRollDice1}, Roll2=${canRollDice2}, Paycheck=${canClaimPaycheck}, End=${canEndTurn}, DrawOpportunity=${canDrawOpportunity}`);
-}
 
 // Supabase Realtimeの購読を開始する
 export function startSubscriptions(supabase, roomId, currentUserId) {
@@ -160,21 +95,8 @@ export async function fetchAndRender(supabase, roomId, currentUserId) {
     if (resPart.data) cachedParticipants = resPart.data;
     if (resRoom.data) cachedRoom = resRoom.data;
     
-    const myParticipantRecord = cachedParticipants.find(p => p.user_id === currentUserId);
-    
-    if (myParticipantRecord) {
-        console.log("[DEBUG_STATE] UI描画直前: state.financials:", JSON.stringify(myParticipantRecord.state?.financials, null, 2));
-    }
-
-    // UI描画関数を呼び出し、最新のキャッシュを渡す
-    renderGuestUI(currentUserId, cachedParticipants, cachedRoom);
-
-    // 描画後にボタンの厳格な状態制御を実行
-    if (myParticipantRecord && cachedRoom) {
-        const playerState = myParticipantRecord.state || {};
-        const isMyTurn = (cachedRoom.current_turn_user_id === currentUserId);
-        updateActionButtonsState(playerState, isMyTurn);
-    }
+    // UI描画関数を呼び出し、最新のキャッシュを渡す（ここですべてのボタン制御を決定）
+    renderGuestUI(currentUserId, cachedParticipants, cachedRoom, supabase);
 }
 
 console.log("【デバッグ】index_state.js が読み込まれました。");
