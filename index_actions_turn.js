@@ -43,6 +43,25 @@ async function getCurrentPlayerState(supabase, userId) {
     return data.state || {};
 }
 
+// -----------------------------------------------------------------------------
+// ★追加：カードを引く共通関数 (RPCを呼び出す)
+// -----------------------------------------------------------------------------
+export async function actionDrawCard(supabase, currentUserId, deckType) {
+    if (!supabase || !currentUserId) return;
+    
+    try {
+        await callRpcWithDebug(supabase, 'draw_card_v2', {
+            p_room_id: roomId,
+            p_user_id: currentUserId,
+            p_deck_type: deckType
+        });
+    } catch (error) {
+        const playerName = getLocalPlayerName();
+        await insertSystemMessage(supabase, playerName, `カード取得エラー: ${error.message}`);
+    }
+}
+// -----------------------------------------------------------------------------
+
 export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
     if (!supabase || !currentUserId) return;
 
@@ -61,11 +80,24 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
     }
 
     try {
-        await callRpcWithDebug(supabase, 'roll_dice_and_move_v2', { 
+        const moveResult = await callRpcWithDebug(supabase, 'roll_dice_and_move_v2', { 
             p_room_id: roomId, 
             p_user_id: currentUserId,
             p_dice_count: diceCount
         });
+        
+        // ---------------------------------------------------------------------
+        // ★追加: 移動先のマスに応じた自動処理 (Market, Doodad は自動ドロー)
+        // ---------------------------------------------------------------------
+        if (moveResult && moveResult.new_position !== undefined) {
+            const newPos = moveResult.new_position;
+            if (CELLS_MARKET.includes(newPos)) {
+                await actionDrawCard(supabase, currentUserId, 'market');
+            } else if (CELLS_DOODAD.includes(newPos)) {
+                await actionDrawCard(supabase, currentUserId, 'doodad');
+            }
+        }
+        
     } catch (error) {
         await insertSystemMessage(supabase, playerName, `エラー: ${error.message}`);
     }
