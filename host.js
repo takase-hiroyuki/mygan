@@ -171,37 +171,14 @@ function drawHostScreen() {
     });
 }
 
-// 本物のデータベース構造（17項目）に完全一致させたダミーカード生成関数
-function generateAndShuffleDeck(deckType, count, startId) {
-    const deck = [];
-    for (let i = 1; i <= count; i++) {
-        deck.push({
-            id: startId + i,                        // 1. bigint
-            deck_type: deckType,                    // 2. text
-            title: `${deckType} ダミー ${i}`,       // 3. text
-            description: null,                      // 4. text (YES)
-            cost: 300,                              // 5. integer
-            down_payment: 0,                        // 6. integer
-            mortgage: 0,                            // 7. integer
-            passive_income: 0,                      // 8. integer
-            symbol: "DUMMY",                        // 9. text (YES)
-            asset_type: "ON2U",                     // 10. text (YES)
-            is_resellable: true,                    // 11. boolean
-            action_rule: {},                        // 12. jsonb
-            description_jp: `これは ${deckType} のテスト用カードです。`, // 13. text (YES)
-            description_en: `This is a test card for ${deckType}.`,    // 14. text (YES)
-            note: "テスト用データ",                 // 15. text (YES)
-            sell: "all",                            // 16. text (デフォルト 'all')
-            buy: "owner"                            // 17. text (デフォルト 'owner')
-        });
-    }
-    
-    // 配列のシャッフル (Fisher-Yates アルゴリズム)
-    for (let i = deck.length - 1; i > 0; i--) {
+// 配列をシャッフルするヘルパー関数 (Fisher-Yates アルゴリズム)
+function shuffleArray(array) {
+    const newArray = [...array];
+    for (let i = newArray.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
-        [deck[i], deck[j]] = [deck[j], deck[i]];
+        [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
     }
-    return deck;
+    return newArray;
 }
 
 btnInitialShuffleStart?.addEventListener('click', async () => {
@@ -212,19 +189,26 @@ btnInitialShuffleStart?.addEventListener('click', async () => {
         // 1. 職業と順番の決定
         await callRpcWithDebug(supabase, 'start_game_with_professions_v2', { p_room_id: roomId });
         
-        // 2. 構造を合わせたダミーカードデッキを生成してシャッフル（IDが重複しないようにstartIdをずらす）
+        // 2. データベースから本物のカードデータをすべて取得
+        const { data: allCards, error: cardsError } = await supabase.from('cards').select('*');
+        if (cardsError) {
+            console.error("【デバッグ】カードデータの取得失敗:", cardsError);
+            throw new Error(`カードデータの取得に失敗しました: ${cardsError.message}`);
+        }
+
+        // 3. 取得したカードを deck_type ごとに分類し、それぞれシャッフル
         const decks = {
-            small_deal: generateAndShuffleDeck("small_deal", 20, 1000),
-            big_deal: generateAndShuffleDeck("big_deal", 20, 2000),
-            market: generateAndShuffleDeck("market", 20, 3000),
-            doodad: generateAndShuffleDeck("doodad", 20, 4000)
+            small_deal: shuffleArray(allCards.filter(c => c.deck_type === 'small_deal')),
+            big_deal: shuffleArray(allCards.filter(c => c.deck_type === 'big_deal')),
+            market: shuffleArray(allCards.filter(c => c.deck_type === 'market')),
+            doodad: shuffleArray(allCards.filter(c => c.deck_type === 'doodad'))
         };
         
-        // 3. 生成したデッキを rooms テーブルの game_state に保存
+        // 4. 生成したデッキを rooms テーブルの game_state に保存
         const { data: roomData, error: roomError } = await supabase.from('rooms').select('game_state').eq('id', roomId).single();
         if (roomError) {
             console.error("【デバッグ】部屋の取得失敗:", roomError);
-            throw new Error(roomError.message);
+            throw new Error(`部屋情報の取得に失敗しました: ${roomError.message}`);
         }
 
         const currentState = roomData?.game_state || {};
@@ -233,7 +217,7 @@ btnInitialShuffleStart?.addEventListener('click', async () => {
         const { error: updateError } = await supabase.from('rooms').update({ game_state: currentState }).eq('id', roomId);
         if (updateError) {
             console.error("【デバッグ】デッキの保存失敗:", updateError);
-            throw new Error(updateError.message);
+            throw new Error(`デッキの保存に失敗しました: ${updateError.message}`);
         }
 
         await syncAndFetchRoom();
