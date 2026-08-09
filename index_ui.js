@@ -226,11 +226,20 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
             if (elSellPrice) elSellPrice.disabled = true;
         }
         
+        // カードが出ている場合はドローボタンは無効
+        setButtonActive(SEL_G.CARD.BTN_SMALL_DEAL, false);
+        setButtonActive(SEL_G.CARD.BTN_BIG_DEAL, false);
+
     } else if (turnUserFlags.has_rolled_dice && CELLS_OPPORTUNITY.includes(turnUserState.position) && !turnUserFlags.is_card_drawn) {
         if (isMyTurn) {
             safeUpdate(SEL_G.TRADE.THIS_CARD, "普通の商売、または大きな商売、のどちらかをひいてください");
+            // ★ カードを引くボタンを有効化
+            setButtonActive(SEL_G.CARD.BTN_SMALL_DEAL, true);
+            setButtonActive(SEL_G.CARD.BTN_BIG_DEAL, true);
         } else {
             safeUpdate(SEL_G.TRADE.THIS_CARD, `${turnUserState.name || '他のプレイヤー'} が商売カードを選択中です...`);
+            setButtonActive(SEL_G.CARD.BTN_SMALL_DEAL, false);
+            setButtonActive(SEL_G.CARD.BTN_BIG_DEAL, false);
         }
         setButtonActive(SEL_G.TRADE.BTN_SELL, false);
         setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, false);
@@ -243,6 +252,8 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
         safeUpdate(SEL_G.TRADE.THIS_CARD, "場に出たカード");
         setButtonActive(SEL_G.TRADE.BTN_SELL, false);
         setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, false);
+        setButtonActive(SEL_G.CARD.BTN_SMALL_DEAL, false);
+        setButtonActive(SEL_G.CARD.BTN_BIG_DEAL, false);
         
         if (elNumProcess) elNumProcess.hidden = true;
         if (elSellTarget) elSellTarget.disabled = true;
@@ -274,19 +285,13 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
                 setButtonActive(SEL_G.CONTROLS.BTN_DICE1, false);
                 setButtonActive(SEL_G.CONTROLS.BTN_DICE_2, false);
                 
-                // =========================================================================
-                // ★ 修正箇所：ターン終了の厳密なロック制御とデバッグ出力
-                // =========================================================================
                 let canEndTurn = false;
                 const isTrading = !!cachedRoom?.game_state?.trade_offer;
                 const anyCardHolderExists = cachedParticipants.some(p => p.state && p.state.drawn_card);
                 
                 if (!flags.is_calculating) {
                     if (financials.cash >= 0) {
-                        // 条件1: 部屋内の参加者の誰もカードを持っていないこと
-                        // 条件2: 交渉中（trade_offerが存在する）でないこと
                         if (!anyCardHolderExists && !isTrading) {
-                            // 条件3: 自分の手番のアクションが完了していること
                             if (!state.drawn_card || flags.is_action_completed) {
                                 canEndTurn = true;
                             }
@@ -294,19 +299,7 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
                     }
                 }
                 
-                // 開発者用デバッグ出力
-                console.log("[DEBUG] ターン終了判定:", {
-                    playerName: state.name,
-                    is_calculating: flags.is_calculating,
-                    cash: financials.cash,
-                    isTrading: isTrading,
-                    anyCardHolderExists: anyCardHolderExists,
-                    is_action_completed: flags.is_action_completed,
-                    canEndTurn: canEndTurn
-                });
-                
                 setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, canEndTurn);
-                // =========================================================================
 
             } else {
                 if (diceStatusArea) diceStatusArea.textContent = "あなたの手番";
@@ -317,11 +310,6 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
                 setButtonActive(SEL_G.CONTROLS.BTN_DICE_2, charityTurnsLeft > 0);
                 
                 setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, false);
-                
-                setMultipleButtonsActive([
-                    SEL_G.CARD.BTN_SMALL_DEAL, 
-                    SEL_G.CARD.BTN_BIG_DEAL
-                ], false);
             }
             
             setButtonActive(SEL_G.FINANCIALS.BTN_C_CASHFLOW, !!flags.is_calculating);
@@ -333,7 +321,20 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
             
         } else {
             if (diceStatusArea) diceStatusArea.textContent = `[${turnUserName}] がプレイ中`;
-            disableAllActionButtons();
+            // 手番でない場合は、手番専用の操作ボタンだけを無効化する
+            // ※ disableAllActionButtons() で全部消すと、トレードの承諾ボタンなども消えてしまうため
+            setMultipleButtonsActive([
+                SEL_G.CONTROLS.BTN_DICE1,
+                SEL_G.CONTROLS.BTN_DICE_2,
+                SEL_G.CONTROLS.BTN_PAYCHECK, 
+                SEL_G.CONTROLS.BTN_END_TURN,
+                SEL_G.CARD.BTN_SMALL_DEAL,
+                SEL_G.CARD.BTN_BIG_DEAL,
+                SEL_G.LOAN.BTN_BORROW_LOAN,
+                SEL_G.LOAN.BTN_PAYBACK_LOAN, 
+                SEL_G.FINANCIALS.BTN_C_CASHFLOW,
+                SEL_G.FINANCIALS.BTN_OPERATE
+            ], false);
         }
     }
 
