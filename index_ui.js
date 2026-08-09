@@ -1,8 +1,3 @@
-指示通り、`index_ui.js` の `renderGuestUI` 関数内で「次の人へ」ボタンの有効・無効を制御する判定ロジックを1箇所に集約し、ご要望の厳格な条件（現金マイナス時のロック、カード処理の強制）を反映させました。
-
-以下のコードで `index_ui.js` を全体上書き保存してください。
-
-```javascript
 // index_ui.js
 
 import { SEL_G } from './common_dom_selectors.js'; 
@@ -361,5 +356,3 @@ export async function dummyRpcCall(rpcName, payload) {
 }
 
 console.log("【デバッグ】index_ui.js が読み込まれました。");
-
-```
