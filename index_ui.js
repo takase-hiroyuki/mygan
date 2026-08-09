@@ -177,40 +177,51 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
         }
     }
 
+    // =========================================================================
+    // ★ 修正箇所（ステップ6）：UI制御の基準を「カードを持っている人」に変更
+    // =========================================================================
     const turnUserRecord = cachedParticipants.find(p => p.user_id === turnUserId);
     const turnUserState = turnUserRecord ? turnUserRecord.state : {};
     const turnUserFlags = turnUserState.flags || {};
-    const turnUserDrawnCard = turnUserState.drawn_card;
+
+    // 部屋内の誰かがカードを持っているか探す
+    const cardHolderRecord = cachedParticipants.find(p => p.state && p.state.drawn_card);
+    const activeCard = cardHolderRecord ? cardHolderRecord.state.drawn_card : null;
+    const cardHolderId = cardHolderRecord ? cardHolderRecord.user_id : null;
+    const iAmCardHolder = (cardHolderId === currentUserId);
 
     const elNumProcess = document.getElementById(SEL_G.TRADE.NUM_PROCESS_SELF);
     const elBtnProcess = document.getElementById(SEL_G.TRADE.BTN_PROCESS_SELF);
     const elSellTarget = document.getElementById(SEL_G.TRADE.SELECT_TARGET);
     const elSellPrice = document.getElementById(SEL_G.TRADE.INPUT_PRICE);
 
-    if (turnUserDrawnCard) {
-        safeUpdate(SEL_G.TRADE.THIS_CARD, `【${turnUserDrawnCard.title}】\n${turnUserDrawnCard.description_jp || ''}`);
+    if (activeCard) {
+        // 誰かがカードを持っている場合
+        safeUpdate(SEL_G.TRADE.THIS_CARD, `【${activeCard.title}】\n${activeCard.description_jp || ''}`);
         
         if (elNumProcess) {
-            const cardType = turnUserDrawnCard.type || '';
+            const cardType = activeCard.type || '';
             const needsQuantity = ['stock', 'mutual_fund', 'coin'].includes(cardType);
             elNumProcess.hidden = !needsQuantity;
         }
 
         if (elBtnProcess) {
-            if (turnUserState.position !== undefined && CELLS_DOODAD.includes(parseInt(turnUserState.position, 10))) {
+            const cardHolderPos = cardHolderRecord.state.position;
+            if (cardHolderPos !== undefined && CELLS_DOODAD.includes(parseInt(cardHolderPos, 10))) {
                 elBtnProcess.textContent = '支払う';
-            } else if (turnUserState.position !== undefined && CELLS_MARKET.includes(parseInt(turnUserState.position, 10))) {
+            } else if (cardHolderPos !== undefined && CELLS_MARKET.includes(parseInt(cardHolderPos, 10))) {
                 elBtnProcess.textContent = '確認して手番を進める';
             } else {
                 elBtnProcess.textContent = '自分で買う / パスする';
             }
         }
         
-        if (isMyTurn) {
-            setButtonActive(SEL_G.TRADE.BTN_SELL, !!turnUserDrawnCard.is_resellable);
+        if (iAmCardHolder) {
+            // ★ 手番に関わらず、自分がカードを持っていればボタンを有効化する
+            setButtonActive(SEL_G.TRADE.BTN_SELL, !!activeCard.is_resellable);
             setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, true);
-            if (elSellTarget) elSellTarget.disabled = !turnUserDrawnCard.is_resellable;
-            if (elSellPrice) elSellPrice.disabled = !turnUserDrawnCard.is_resellable;
+            if (elSellTarget) elSellTarget.disabled = !activeCard.is_resellable;
+            if (elSellPrice) elSellPrice.disabled = !activeCard.is_resellable;
         } else {
             setButtonActive(SEL_G.TRADE.BTN_SELL, false);
             setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, false);
@@ -219,6 +230,7 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
         }
         
     } else if (turnUserFlags.has_rolled_dice && CELLS_OPPORTUNITY.includes(turnUserState.position) && !turnUserFlags.is_card_drawn) {
+        // 商売マスでまだ誰もカードを引いていない場合
         if (isMyTurn) {
             safeUpdate(SEL_G.TRADE.THIS_CARD, "普通の商売、または大きな商売、のどちらかをひいてください");
         } else {
@@ -266,12 +278,21 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
                 setButtonActive(SEL_G.CONTROLS.BTN_DICE1, false);
                 setButtonActive(SEL_G.CONTROLS.BTN_DICE_2, false);
                 
+                // =========================================================================
+                // ★ 修正箇所（ステップ7）：ターン終了のロック制御
+                // =========================================================================
                 let canEndTurn = false;
                 
                 if (!flags.is_calculating) {
                     if (financials.cash >= 0) {
-                        if (!state.drawn_card || flags.is_action_completed) {
-                            canEndTurn = true;
+                        // 条件1: 部屋内の参加者の誰もカードを持っていないこと
+                        const anyCardHolderExists = cachedParticipants.some(p => p.state && p.state.drawn_card);
+                        
+                        if (!anyCardHolderExists) {
+                            // 条件2: 自分の手番のアクションが完了していること
+                            if (!state.drawn_card || flags.is_action_completed) {
+                                canEndTurn = true;
+                            }
                         }
                     }
                 }
@@ -308,24 +329,20 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
     }
 
     // =========================================================================
-    // ★ 追加・修正箇所：交渉（トレード）状態の監視とUI反映
-    // disableAllActionButtons() の後に実行することで、非手番でもボタンを有効化する
+    // 交渉（トレード）状態の監視とUI反映
     // =========================================================================
     const tradeOffer = cachedRoom?.game_state?.trade_offer;
     
     if (tradeOffer) {
         if (tradeOffer.to === currentUserId) {
-            // 自分への提案が来ている場合
             const fromUser = cachedParticipants.find(p => p.user_id === tradeOffer.from);
             const fromName = fromUser?.state?.name || "他のプレイヤー";
             safeUpdate(SEL_G.TRADE.TRADE_MESSAGE, `${fromName} さんから $${toCurrency(tradeOffer.price)} で権利を買う提案が来ています。`);
             
-            // 自分の手番でなくても、承諾/拒否ボタンだけは有効にする
             setButtonActive(SEL_G.TRADE.BTN_ACCEPT, true);
             setButtonActive(SEL_G.TRADE.BTN_REJECT, true);
             
         } else if (tradeOffer.from === currentUserId) {
-            // 自分が提案中の場合
             const toUser = cachedParticipants.find(p => p.user_id === tradeOffer.to);
             const toName = toUser?.state?.name || "他のプレイヤー";
             safeUpdate(SEL_G.TRADE.TRADE_MESSAGE, `${toName} さんからの返答を待っています...`);
@@ -333,7 +350,6 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
             setButtonActive(SEL_G.TRADE.BTN_REJECT, false);
             
         } else {
-            // 当事者以外
             safeUpdate(SEL_G.TRADE.TRADE_MESSAGE, "他プレイヤー間で交渉中です...");
             setButtonActive(SEL_G.TRADE.BTN_ACCEPT, false);
             setButtonActive(SEL_G.TRADE.BTN_REJECT, false);
