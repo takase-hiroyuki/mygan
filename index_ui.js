@@ -3,7 +3,8 @@
 import { SEL_G } from './common_dom_selectors.js'; 
 import { setButtonActive,
          setMultipleButtonsActive,
-         BOARD_CELL_NAMES } from './common_utils.js'; 
+         BOARD_CELL_NAMES,
+         CELLS_OPPORTUNITY } from './common_utils.js'; // ★修正: CELLS_OPPORTUNITY を追加インポート
 
 const sectionLogin = document.getElementById(SEL_G.LOGIN.SECTION);
 const sectionGuest = document.getElementById(SEL_G.STATUS.SECTION);
@@ -176,10 +177,6 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
         if (elProfitLossSelect) elProfitLossSelect.innerHTML = optionsHTML;
     }
 
-    // 取引（トレード）エリアのプレースホルダー更新
-    safeUpdate(SEL_G.TRADE.THIS_CARD, "場に出たカード (とりあえず機能なし)");
-    safeUpdate(SEL_G.TRADE.TRADE_MESSAGE, "受け取るメッセージ (とりあえず機能なし)");
-
     // ★追加: トレード相手（自分以外）のプルダウンを生成
     const sellTargetSelect = document.getElementById(SEL_G.TRADE.SELECT_TARGET);
     if (sellTargetSelect) {
@@ -198,6 +195,35 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
             sellTargetSelect.value = currentTarget;
         }
     }
+
+    // =========================================================================
+    // ★ 修正箇所：カード内容の表示と「売る」ボタンのアクティブ制御
+    // =========================================================================
+    if (isMyTurn && state.drawn_card) {
+        // カードを引いている場合
+        const card = state.drawn_card;
+        safeUpdate(SEL_G.TRADE.THIS_CARD, `【${card.title}】\n${card.description_jp || ''}`);
+        
+        // カードの is_resellable フラグをみて「売る」ボタンを制御
+        setButtonActive(SEL_G.TRADE.BTN_SELL, !!card.is_resellable);
+        
+        // 「自分で処理する」ボタンはカードを引いていれば常にアクティブ
+        setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, true);
+        
+    } else if (isMyTurn && flags.has_rolled_dice && CELLS_OPPORTUNITY.includes(state.position) && !flags.is_card_drawn) {
+        // 商売マスに止まり、まだカードを引いていない場合
+        safeUpdate(SEL_G.TRADE.THIS_CARD, "普通の商売、または大きな商売、のどちらかをひいてください");
+        setButtonActive(SEL_G.TRADE.BTN_SELL, false);
+        setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, false);
+    } else {
+        // それ以外の場合（待ち状態など）
+        safeUpdate(SEL_G.TRADE.THIS_CARD, "場に出たカード");
+        setButtonActive(SEL_G.TRADE.BTN_SELL, false);
+        setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, false);
+    }
+    
+    safeUpdate(SEL_G.TRADE.TRADE_MESSAGE, "受け取るメッセージ (とりあえず機能なし)");
+
 
     if (!isPlaying) {
         if (diceStatusArea) diceStatusArea.textContent = "ホストがゲームを開始するまでお待ちください。";
@@ -226,7 +252,9 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
                 setButtonActive(SEL_G.CONTROLS.BTN_DICE1, false);
                 setButtonActive(SEL_G.CONTROLS.BTN_DICE_2, false);
                 
-                setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, true);
+                // カードを引いている最中などはターン終了できないように制御
+                const canEndTurn = !flags.is_calculating && flags.is_action_completed;
+                setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, canEndTurn);
 
             } else {
                 if (diceStatusArea) diceStatusArea.textContent = "あなたの手番";
@@ -284,7 +312,8 @@ export function disableAllActionButtons() {
         FINANCIALS.BTN_OPERATE,
         TRADE.BTN_SELL,
         TRADE.BTN_ACCEPT,
-        TRADE.BTN_REJECT
+        TRADE.BTN_REJECT,
+        TRADE.BTN_PROCESS_SELF // ★追加
     ];
     
     setMultipleButtonsActive(actionButtonIds.filter(Boolean), false);
