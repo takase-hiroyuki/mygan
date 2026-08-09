@@ -26,6 +26,10 @@ function updateActionButtonsState(playerState, isMyTurn) {
     const pendingPaydays = parseInt(flags.pending_paydays || 0, 10);
 
     const isDownsized = downsizedTurnsLeft > 0;
+    
+    // ★追加: 既にカードを引いたかどうかのフラグを取得
+    const isCardDrawn = !!flags.is_card_drawn;
+
     const SEL = SEL_G.CONTROLS; 
 
     // 1. サイコロ1個を振るボタンの制御
@@ -48,10 +52,23 @@ function updateActionButtonsState(playerState, isMyTurn) {
                        
     setButtonActive(SEL.BTN_END_TURN, canEndTurn);
     
-    // ★追加: 自分の手番なら、資産・負債の処理ボタンを常に有効にする
-    setButtonActive(SEL_G.FINANCIALS.BTN_OPERATE, isMyTurn);
+    // 5. 資産・負債の処理ボタンを常に有効にする
+    if (SEL_G.FINANCIALS && SEL_G.FINANCIALS.BTN_OPERATE) {
+        setButtonActive(SEL_G.FINANCIALS.BTN_OPERATE, isMyTurn);
+    }
     
-    console.log(`[DEBUG_STATE] Buttons Update: isMyTurn=${isMyTurn}, Roll1=${canRollDice1}, Roll2=${canRollDice2}, Paycheck=${canClaimPaycheck}, End=${canEndTurn}`);
+    // 6. ★追加: カードを引くボタンの制御（商売マス）
+    const isOpportunityCell = CELLS_OPPORTUNITY.includes(position);
+    
+    // 自分の番 ＆ サイコロを振った ＆ 商売マスにいる ＆ まだカードを引いていない ＆ 計算中ではない
+    const canDrawOpportunity = isMyTurn && hasRolledDice && isOpportunityCell && !isCardDrawn && !isCalculating;
+    
+    if (SEL_G.CARD) {
+        setButtonActive(SEL_G.CARD.BTN_SMALL_DEAL, canDrawOpportunity);
+        setButtonActive(SEL_G.CARD.BTN_BIG_DEAL, canDrawOpportunity);
+    }
+    
+    console.log(`[DEBUG_STATE] Buttons Update: isMyTurn=${isMyTurn}, Roll1=${canRollDice1}, Roll2=${canRollDice2}, Paycheck=${canClaimPaycheck}, End=${canEndTurn}, DrawOpportunity=${canDrawOpportunity}`);
 }
 
 // Supabase Realtimeの購読を開始する
