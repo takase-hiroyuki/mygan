@@ -55,7 +55,7 @@ import { insertSystemMessage } from './common_utils.js';
 import { actionRollDice, actionEndTurn, actionDrawCard, actionPass } from './index_actions_turn.js';
 import { actionClaimPaycheck, actionCheckCalculations, actionOperateItem } from './index_actions_finance.js'; 
 import { actionBorrowBankLoan, actionRepayBankLoan } from './index_actions_loan.js';
-import { actionProposeTrade } from './index_actions_trade.js'; // ★追加: 交渉アクション
+import { actionProposeTrade, actionAcceptTrade, actionRejectTrade } from './index_actions_trade.js'; // ★修正: 承諾と拒否を追加
 
 let supabase = null;
 let currentUserId = null;
@@ -175,23 +175,21 @@ btnOperate?.addEventListener('click', () => {
     actionOperateItem(supabase, currentUserId);
 });
 
-// ★ 修正：交渉を持ちかけるボタンの実装
 btnSellCard?.addEventListener('click', () => {
     actionProposeTrade(supabase, currentUserId);
 });
 
 btnProcessSelf?.addEventListener('click', async () => {
-    // 将来的にはここでカードの購入/実行RPCを呼び出す。
-    // 今回は仮実装として、ターン終了可能フラグを立てる actionPass を呼び出す。
     await actionPass(supabase, currentUserId);
 });
 
-btnTradeAccept?.addEventListener('click', async () => {
-    await insertSystemMessage(supabase, "システム", "トレードの承諾機能は現在準備中です。");
+// ★ 修正：承諾・拒否ボタンに実際の関数を紐付け
+btnTradeAccept?.addEventListener('click', () => {
+    actionAcceptTrade(supabase, currentUserId);
 });
 
-btnTradeReject?.addEventListener('click', async () => {
-    await insertSystemMessage(supabase, "システム", "トレードの拒否機能は現在準備中です。");
+btnTradeReject?.addEventListener('click', () => {
+    actionRejectTrade(supabase, currentUserId);
 });
 
 // デバッグ機能
