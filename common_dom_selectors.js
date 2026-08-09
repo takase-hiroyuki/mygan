@@ -53,6 +53,7 @@ export const DOM_SELECTORS = {
             SELECT_TARGET: 'sell-target',
             INPUT_PRICE: 'sell-price',
             BTN_SELL: 'btn-sell-card',
+            BTN_PROCESS_SELF: 'btn-process-self', // ★追加: 自分で処理するボタン
             TRADE_MESSAGE: 'trade-message',
             BTN_ACCEPT: 'btn-trade-accept',
             BTN_REJECT: 'btn-trade-reject'
