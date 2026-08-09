@@ -56,6 +56,8 @@ action_rule の設計例:
 このアプローチであれば、今後似たような特殊カードが増えても、プログラムを一切書き直さずにデータベース（JSON）の追加だけで対応できるようになります。
 */
 
+// index.js
+
 import { roomId } from './common_config.js';
 import { SEL_G } from './common_dom_selectors.js'; 
 import { toggleScreen } from './index_ui.js';
@@ -63,8 +65,8 @@ import { toggleScreen } from './index_ui.js';
 import { initSupabaseClient, checkExistingLogin, loginUser } from './index_auth.js';
 import { startSubscriptions } from './index_state.js'; 
 import { insertSystemMessage } from './common_utils.js'; 
-import { actionRollDice, actionEndTurn } from './index_actions_turn.js';
-import { actionClaimPaycheck, actionCheckCalculations, actionOperateItem } from './index_actions_finance.js'; // ★修正: actionOperateItem を追加
+import { actionRollDice, actionEndTurn, actionDrawCard, actionPass } from './index_actions_turn.js'; // ★修正: actionDrawCard, actionPass を追加
+import { actionClaimPaycheck, actionCheckCalculations, actionOperateItem } from './index_actions_finance.js'; 
 import { actionBorrowBankLoan, actionRepayBankLoan } from './index_actions_loan.js';
 
 let supabase = null;
@@ -85,9 +87,16 @@ const btnCheckCalculations = document.getElementById(SEL_G.FINANCIALS.BTN_C_CASH
 const btnBorrowLoan = document.getElementById(SEL_G.LOAN.BTN_BORROW_LOAN);
 const btnPaybackLoan = document.getElementById(SEL_G.LOAN.BTN_PAYBACK_LOAN);
 
+// -----------------------------------------------------------------------------
+// ★追加: カードドロー用のボタン
+// -----------------------------------------------------------------------------
+const btnSmallDeal = document.getElementById(SEL_G.CARD.BTN_SMALL_DEAL);
+const btnBigDeal = document.getElementById(SEL_G.CARD.BTN_BIG_DEAL);
+
 // 新しい取引・処理用のボタン
 const btnOperate = document.getElementById(SEL_G.FINANCIALS.BTN_OPERATE);
 const btnSellCard = document.getElementById(SEL_G.TRADE.BTN_SELL);
+const btnProcessSelf = document.getElementById(SEL_G.TRADE.BTN_PROCESS_SELF); // ★追加: 自分で処理するボタン
 const btnTradeAccept = document.getElementById(SEL_G.TRADE.BTN_ACCEPT);
 const btnTradeReject = document.getElementById(SEL_G.TRADE.BTN_REJECT);
 
@@ -159,17 +168,34 @@ btnPaybackLoan?.addEventListener('click', () => {
     actionRepayBankLoan(supabase, currentUserId);
 });
 
+// -----------------------------------------------------------------------------
+// ★ 追加：商売マスのカードドロー処理
+// -----------------------------------------------------------------------------
+btnSmallDeal?.addEventListener('click', () => {
+    actionDrawCard(supabase, currentUserId, 'small_deal');
+});
+
+btnBigDeal?.addEventListener('click', () => {
+    actionDrawCard(supabase, currentUserId, 'big_deal');
+});
+
 // ============================================================================
 // 以降は今回新設した「アイテム処理」および「トレード」用の仮リスナー
 // ============================================================================
 
-// ★ 修正: 処理するボタンを押したときの処理を紐付け
 btnOperate?.addEventListener('click', () => {
     actionOperateItem(supabase, currentUserId);
 });
 
 btnSellCard?.addEventListener('click', async () => {
     await insertSystemMessage(supabase, "システム", "カードの売却提案機能は現在準備中です。");
+});
+
+// ★ 追加：自分で処理するボタン（ダミー実装として actionPass を呼ぶ）
+btnProcessSelf?.addEventListener('click', async () => {
+    // 将来的にはここでカードの購入/実行RPCを呼び出す。
+    // 今回は仮実装として、ターン終了可能フラグを立てる actionPass を呼び出す。
+    await actionPass(supabase, currentUserId);
 });
 
 btnTradeAccept?.addEventListener('click', async () => {
