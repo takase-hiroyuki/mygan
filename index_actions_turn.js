@@ -9,27 +9,6 @@ import { callRpcWithDebug,
          insertSystemMessage,
          getLocalPlayerName } from './common_utils.js';
 
-async function updatePlayerFlag(supabase, userId, flagName, value) {
-    const { data, error: fetchError } = await supabase
-        .from('participants')
-        .select('state')
-        .eq('user_id', userId)
-        .single();
-        
-    if (fetchError || !data) {
-        return;
-    }
-
-    const newState = { ...data.state };
-    newState.flags = newState.flags || {};
-    newState.flags[flagName] = value;
-
-    await supabase
-        .from('participants')
-        .update({ state: newState })
-        .eq('user_id', userId);
-}
-
 async function getCurrentPlayerState(supabase, userId) {
     const { data, error } = await supabase
         .from('participants')
@@ -43,12 +22,15 @@ async function getCurrentPlayerState(supabase, userId) {
     return data.state || {};
 }
 
-// -----------------------------------------------------------------------------
-// ★追加：カードを引く共通関数 (RPCを呼び出す)
-// -----------------------------------------------------------------------------
+// カードを引く共通関数
 export async function actionDrawCard(supabase, currentUserId, deckType) {
     if (!supabase || !currentUserId) return;
     
+    const btnSmall = document.getElementById(SEL_G.CARD.BTN_SMALL_DEAL);
+    const btnBig = document.getElementById(SEL_G.CARD.BTN_BIG_DEAL);
+    if (btnSmall) btnSmall.disabled = true;
+    if (btnBig) btnBig.disabled = true;
+
     try {
         await callRpcWithDebug(supabase, 'draw_card_v2', {
             p_room_id: roomId,
@@ -58,9 +40,10 @@ export async function actionDrawCard(supabase, currentUserId, deckType) {
     } catch (error) {
         const playerName = getLocalPlayerName();
         await insertSystemMessage(supabase, playerName, `カード取得エラー: ${error.message}`);
+        if (btnSmall) btnSmall.disabled = false;
+        if (btnBig) btnBig.disabled = false;
     }
 }
-// -----------------------------------------------------------------------------
 
 export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
     if (!supabase || !currentUserId) return;
@@ -86,16 +69,17 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
             p_dice_count: diceCount
         });
         
-        // ---------------------------------------------------------------------
-        // ★追加: 移動先のマスに応じた自動処理 (Market, Doodad は自動ドロー)
-        // ---------------------------------------------------------------------
-        if (moveResult && moveResult.new_position !== undefined) {
-            const newPos = moveResult.new_position;
-            if (CELLS_MARKET.includes(newPos)) {
-                await actionDrawCard(supabase, currentUserId, 'market');
-            } else if (CELLS_DOODAD.includes(newPos)) {
-                await actionDrawCard(supabase, currentUserId, 'doodad');
-            }
+        const postMoveState = await getCurrentPlayerState(supabase, currentUserId);
+        if (postMoveState && postMoveState.position !== undefined) {
+            const newPos = parseInt(postMoveState.position, 10);
+            
+            setTimeout(async () => {
+                if (CELLS_MARKET.includes(newPos)) {
+                    await actionDrawCard(supabase, currentUserId, 'market');
+                } else if (CELLS_DOODAD.includes(newPos)) {
+                    await actionDrawCard(supabase, currentUserId, 'doodad');
+                }
+            }, 500);
         }
         
     } catch (error) {
@@ -103,9 +87,20 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
     }
 }
 
+// ★修正: updatePlayerFlagを削除し、新規作成したRPCを呼び出す
 export async function actionPass(supabase, currentUserId) {
     if (!supabase || !currentUserId) return;
-    await updatePlayerFlag(supabase, currentUserId, 'is_action_completed', true);
+    
+    const playerName = getLocalPlayerName();
+    try {
+        await callRpcWithDebug(supabase, 'complete_action_v2', {
+            p_room_id: roomId,
+            p_user_id: currentUserId
+        });
+        await insertSystemMessage(supabase, playerName, "処理を完了しました。");
+    } catch (error) {
+        await insertSystemMessage(supabase, playerName, `エラー: ${error.message}`);
+    }
 }
 
 export async function actionEndTurn(supabase, currentUserId) {
@@ -137,7 +132,6 @@ export async function actionEndTurn(supabase, currentUserId) {
         }
     }
 
-    // ターン終了を阻害するすべての条件分岐（if文）を削除し、無条件で次の人に手番を移行する
     try {
         await callRpcWithDebug(supabase, 'pass_and_end_turn_v2', { 
             p_room_id: roomId, 
