@@ -19,7 +19,6 @@ export async function actionProposeTrade(supabase, currentUserId) {
 
     console.log("[DEBUG] actionProposeTrade 開始:", { targetUserId, price });
 
-    // バリデーション（アラート禁止のためシステムメッセージで通知）
     if (!targetUserId) {
         await insertSystemMessage(supabase, playerName, "交渉相手を選択してください。");
         return;
@@ -30,7 +29,6 @@ export async function actionProposeTrade(supabase, currentUserId) {
         return;
     }
 
-    // 連打防止のためボタンを一時的に無効化
     if (elBtnSell) elBtnSell.disabled = true;
 
     try {
@@ -46,6 +44,51 @@ export async function actionProposeTrade(supabase, currentUserId) {
         console.error("[DEBUG] 交渉エラー:", error);
         await insertSystemMessage(supabase, playerName, `交渉エラー: ${error.message}`);
         if (elBtnSell) elBtnSell.disabled = false;
+    }
+}
+
+// ★追加：交渉を承諾する関数
+export async function actionAcceptTrade(supabase, currentUserId) {
+    if (!supabase || !currentUserId) return;
+    const playerName = getLocalPlayerName();
+    const btnAccept = document.getElementById(SEL_G.TRADE.BTN_ACCEPT);
+    const btnReject = document.getElementById(SEL_G.TRADE.BTN_REJECT);
+
+    if (btnAccept) btnAccept.disabled = true;
+    if (btnReject) btnReject.disabled = true;
+
+    try {
+        await callRpcWithDebug(supabase, 'accept_trade_v2', {
+            p_room_id: roomId,
+            p_buyer_id: currentUserId
+        });
+        await insertSystemMessage(supabase, playerName, "交渉を承諾し、代金を支払いました。カードの権利を取得しました。");
+    } catch (error) {
+        await insertSystemMessage(supabase, playerName, `承諾エラー: ${error.message}`);
+        if (btnAccept) btnAccept.disabled = false;
+        if (btnReject) btnReject.disabled = false;
+    }
+}
+
+// ★追加：交渉を拒否する関数
+export async function actionRejectTrade(supabase, currentUserId) {
+    if (!supabase || !currentUserId) return;
+    const playerName = getLocalPlayerName();
+    const btnAccept = document.getElementById(SEL_G.TRADE.BTN_ACCEPT);
+    const btnReject = document.getElementById(SEL_G.TRADE.BTN_REJECT);
+
+    if (btnAccept) btnAccept.disabled = true;
+    if (btnReject) btnReject.disabled = true;
+
+    try {
+        await callRpcWithDebug(supabase, 'clear_trade_v2', {
+            p_room_id: roomId
+        });
+        await insertSystemMessage(supabase, playerName, "交渉を拒否しました。");
+    } catch (error) {
+        await insertSystemMessage(supabase, playerName, `拒否エラー: ${error.message}`);
+        if (btnAccept) btnAccept.disabled = false;
+        if (btnReject) btnReject.disabled = false;
     }
 }
 
