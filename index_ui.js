@@ -4,7 +4,9 @@ import { SEL_G } from './common_dom_selectors.js';
 import { setButtonActive,
          setMultipleButtonsActive,
          BOARD_CELL_NAMES,
-         CELLS_OPPORTUNITY } from './common_utils.js';
+         CELLS_OPPORTUNITY,
+         CELLS_DOODAD,
+         CELLS_MARKET } from './common_utils.js';
 
 const sectionLogin = document.getElementById(SEL_G.LOGIN.SECTION);
 const sectionGuest = document.getElementById(SEL_G.STATUS.SECTION);
@@ -77,7 +79,6 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
             const cell = document.getElementById(`${SEL_G.BOARD.RAT_PREFIX}${parseInt(p.state.position, 10)}`);
             if (cell) {
                 const badge = document.createElement('span');
-                badge.style = "display:inline-block; background-color:#ffc107; color:#000;";
                 badge.textContent = p.state.name;
                 cell.appendChild(badge);
             }
@@ -129,9 +130,8 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
         safeUpdate(SEL_G.FINANCIALS.D_PROFESSION, `${selectedName}の職業：${selectedState.profession || '未定'}`);
         safeUpdate(SEL_G.FINANCIALS.D_CASH, `${selectedName}の所持金：$${toCurrency(selectedFinancials.cash)}`);
 
-        // ★ 変更: assetsHTML のヘッダーを「単価」「数量」に変更
-        let assetsHTML = "<table border='1' width='100%' style='font-size: 0.9em; text-align: left;'><tr><th>資産名</th><th>単価</th><th>数量</th><th>CF</th></tr>";
-        let liabHTML = "<table border='1' width='100%' style='font-size: 0.9em; text-align: left;'><tr><th>負債名</th><th>負債残高</th><th>CF</th></tr>";
+        let assetsHTML = "<table border='1' width='100%'><tr><th>資産名</th><th>単価</th><th>数量</th><th>CF</th></tr>";
+        let liabHTML = "<table border='1' width='100%'><tr><th>負債名</th><th>負債残高</th><th>CF</th></tr>";
         
         // ★ 操作対象を選択するプルダウンの選択肢（初期値）
         let optionsHTML = '<option value="">対象の資産・負債を選択</option>';
@@ -139,7 +139,7 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
         selectedItems.forEach(item => {
             if (item.liability > 0 || item.cashflow < 0) {
                 const cfStr = item.cashflow < 0 ? toCurrency(item.cashflow) : `+${toCurrency(item.cashflow)}`;
-                liabHTML += `<tr><td>${item.title}</td><td>${item.liability > 0 ? toCurrency(item.liability) : '0'}</td><td style="color:red;">${cfStr}</td></tr>`;
+                liabHTML += `<tr><td>${item.title}</td><td>${item.liability > 0 ? toCurrency(item.liability) : '0'}</td><td>${cfStr}</td></tr>`;
                 
                 // ★ 負債残高があるものだけを「返済」の選択肢としてプルダウンに追加
                 if (item.liability > 0) {
@@ -154,7 +154,7 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
                 const quantityStr = Number(quantity).toLocaleString(); // カンマ区切りにする
                 
                 // ★ 変更: 資産テーブルの行に「単価」と「数量」を組み込む
-                assetsHTML += `<tr><td>${item.title}</td><td>${unitPrice}</td><td>${quantityStr}</td><td style="color:blue;">${cfStr}</td></tr>`;
+                assetsHTML += `<tr><td>${item.title}</td><td>${unitPrice}</td><td>${quantityStr}</td><td>${cfStr}</td></tr>`;
                 
                 // ★ 変更: 売却の選択肢にも単価と数量を表示させる
                 if (item.cost > 0) {
@@ -197,26 +197,52 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
     }
 
     // =========================================================================
-    // ★ 修正箇所：カード内容の表示と「売る」ボタンのアクティブ制御
+    // ★ 修正箇所：カード内容の表示と各種コントロールの動的制御
     // =========================================================================
-    // 現在手番のプレイヤーのデータを取得する
     const turnUserRecord = cachedParticipants.find(p => p.user_id === turnUserId);
     const turnUserState = turnUserRecord ? turnUserRecord.state : {};
     const turnUserFlags = turnUserState.flags || {};
     const turnUserDrawnCard = turnUserState.drawn_card;
 
+    const elNumProcess = document.getElementById(SEL_G.TRADE.NUM_PROCESS_SELF);
+    const elBtnProcess = document.getElementById(SEL_G.TRADE.BTN_PROCESS_SELF);
+    const elSellTarget = document.getElementById(SEL_G.TRADE.SELECT_TARGET);
+    const elSellPrice = document.getElementById(SEL_G.TRADE.INPUT_PRICE);
+
     if (turnUserDrawnCard) {
         // カードを引いている場合（全員の画面にカード情報を描画）
         safeUpdate(SEL_G.TRADE.THIS_CARD, `【${turnUserDrawnCard.title}】\n${turnUserDrawnCard.description_jp || ''}`);
         
+        // 数量入力欄の表示制御（株、投資信託、コインなど任意数量を処理できるもののみ表示）
+        if (elNumProcess) {
+            const cardType = turnUserDrawnCard.type || '';
+            const needsQuantity = ['stock', 'mutual_fund', 'coin'].includes(cardType);
+            elNumProcess.hidden = !needsQuantity;
+        }
+
+        // ボタンの文言の動的変更（止まったマスに応じて変更）
+        if (elBtnProcess) {
+            if (turnUserState.position !== undefined && CELLS_DOODAD.includes(parseInt(turnUserState.position, 10))) {
+                elBtnProcess.textContent = '支払う';
+            } else if (turnUserState.position !== undefined && CELLS_MARKET.includes(parseInt(turnUserState.position, 10))) {
+                elBtnProcess.textContent = '確認して手番を進める';
+            } else {
+                elBtnProcess.textContent = '自分で買う / パスする';
+            }
+        }
+        
         if (isMyTurn) {
-            // 自分の番であれば、カードのフラグをみてボタンを制御
+            // 自分の番であれば、カードのフラグをみてボタンと入力を制御
             setButtonActive(SEL_G.TRADE.BTN_SELL, !!turnUserDrawnCard.is_resellable);
             setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, true);
+            if (elSellTarget) elSellTarget.disabled = !turnUserDrawnCard.is_resellable;
+            if (elSellPrice) elSellPrice.disabled = !turnUserDrawnCard.is_resellable;
         } else {
-            // 他プレイヤーの番であれば、ボタンを無効化
+            // 他プレイヤーの番であれば、ボタンと入力を無効化
             setButtonActive(SEL_G.TRADE.BTN_SELL, false);
             setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, false);
+            if (elSellTarget) elSellTarget.disabled = true;
+            if (elSellPrice) elSellPrice.disabled = true;
         }
         
     } else if (turnUserFlags.has_rolled_dice && CELLS_OPPORTUNITY.includes(turnUserState.position) && !turnUserFlags.is_card_drawn) {
@@ -228,14 +254,26 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
         }
         setButtonActive(SEL_G.TRADE.BTN_SELL, false);
         setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, false);
+        
+        // 初期状態へのリセット
+        if (elNumProcess) elNumProcess.hidden = true;
+        if (elSellTarget) elSellTarget.disabled = true;
+        if (elSellPrice) elSellPrice.disabled = true;
+        if (elBtnProcess) elBtnProcess.textContent = '自分で実行する / 見送る';
     } else {
         // それ以外の場合（待ち状態など）
         safeUpdate(SEL_G.TRADE.THIS_CARD, "場に出たカード");
         setButtonActive(SEL_G.TRADE.BTN_SELL, false);
         setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, false);
+        
+        // 初期状態へのリセット
+        if (elNumProcess) elNumProcess.hidden = true;
+        if (elSellTarget) elSellTarget.disabled = true;
+        if (elSellPrice) elSellPrice.disabled = true;
+        if (elBtnProcess) elBtnProcess.textContent = '自分で実行する / 見送る';
     }
     
-    safeUpdate(SEL_G.TRADE.TRADE_MESSAGE, "受け取るメッセージ (とりあえず機能なし)");
+    safeUpdate(SEL_G.TRADE.TRADE_MESSAGE, "受け取るメッセージ (現在交渉なし)");
 
 
     if (!isPlaying) {
