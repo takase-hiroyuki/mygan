@@ -1,3 +1,8 @@
+指示通り、`index_ui.js` の `renderGuestUI` 関数内で「次の人へ」ボタンの有効・無効を制御する判定ロジックを1箇所に集約し、ご要望の厳格な条件（現金マイナス時のロック、カード処理の強制）を反映させました。
+
+以下のコードで `index_ui.js` を全体上書き保存してください。
+
+```javascript
 // index_ui.js
 
 import { SEL_G } from './common_dom_selectors.js'; 
@@ -265,9 +270,24 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
                 setButtonActive(SEL_G.CONTROLS.BTN_DICE1, false);
                 setButtonActive(SEL_G.CONTROLS.BTN_DICE_2, false);
                 
-                // カードを引いている最中などはターン終了できないように制御
-                const canEndTurn = !flags.is_calculating && flags.is_action_completed;
+                // =========================================================================
+                // ★ 追加箇所: 「次の人へ」ボタン（ターン終了）の厳格な一元管理
+                // =========================================================================
+                let canEndTurn = false;
+                
+                // 1. 手動で計算中（電卓モード等）ではないこと
+                if (!flags.is_calculating) {
+                    // 2. 現金がマイナスではないこと（マイナスならローンなどでの返済が必須）
+                    if (financials.cash >= 0) {
+                        // 3. カードを引いていない、または、カードを引いたが「自分で処理する」等のアクションを完了していること
+                        if (!state.drawn_card || flags.is_action_completed) {
+                            canEndTurn = true;
+                        }
+                    }
+                }
+                
                 setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, canEndTurn);
+                // =========================================================================
 
             } else {
                 if (diceStatusArea) diceStatusArea.textContent = "あなたの手番";
@@ -341,3 +361,5 @@ export async function dummyRpcCall(rpcName, payload) {
 }
 
 console.log("【デバッグ】index_ui.js が読み込まれました。");
+
+```
