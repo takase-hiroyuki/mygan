@@ -35,6 +35,7 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
 
     const elNumProcess = document.getElementById(SEL_G.TRADE.NUM_PROCESS_SELF);
     const elBtnProcess = document.getElementById(SEL_G.TRADE.BTN_PROCESS_SELF);
+    const elBtnPass = document.getElementById(SEL_G.TRADE.BTN_PASS_CARD); // ★追加: パスボタン
     const elSellTarget = document.getElementById(SEL_G.TRADE.SELECT_TARGET);
     const elSellPrice = document.getElementById(SEL_G.TRADE.INPUT_PRICE);
 
@@ -46,25 +47,32 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
             elNumProcess.hidden = !['stock', 'mutual_fund', 'coin'].includes(cardType);
         }
 
+        let canPass = false; // ★追加: パス可能フラグ
+
         if (elBtnProcess) {
             const cardHolderPos = cardHolderRecord.state.position;
             if (cardHolderPos !== undefined && CELLS_DOODAD.includes(parseInt(cardHolderPos, 10))) {
                 elBtnProcess.textContent = '支払う';
+                canPass = false; // Doodad(無駄遣い)はパス不可（強制支払い）
             } else if (cardHolderPos !== undefined && CELLS_MARKET.includes(parseInt(cardHolderPos, 10))) {
                 elBtnProcess.textContent = '確認して手番を進める';
+                canPass = true;
             } else {
-                elBtnProcess.textContent = '自分で買う / パスする';
+                elBtnProcess.textContent = '自分で実行する（購入・支払）';
+                canPass = true;
             }
         }
         
         if (iAmCardHolder) {
             setButtonActive(SEL_G.TRADE.BTN_SELL, !!activeCard.is_resellable);
             setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, true);
+            setButtonActive(SEL_G.TRADE.BTN_PASS_CARD, canPass); // ★フラグに基づく制御
             if (elSellTarget) elSellTarget.disabled = !activeCard.is_resellable;
             if (elSellPrice) elSellPrice.disabled = !activeCard.is_resellable;
         } else {
             setButtonActive(SEL_G.TRADE.BTN_SELL, false);
             setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, false);
+            setButtonActive(SEL_G.TRADE.BTN_PASS_CARD, false);
             if (elSellTarget) elSellTarget.disabled = true;
             if (elSellPrice) elSellPrice.disabled = true;
         }
@@ -84,22 +92,24 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
         }
         setButtonActive(SEL_G.TRADE.BTN_SELL, false);
         setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, false);
+        setButtonActive(SEL_G.TRADE.BTN_PASS_CARD, false);
         
         if (elNumProcess) elNumProcess.hidden = true;
         if (elSellTarget) elSellTarget.disabled = true;
         if (elSellPrice) elSellPrice.disabled = true;
-        if (elBtnProcess) elBtnProcess.textContent = '自分で実行する / 見送る';
+        if (elBtnProcess) elBtnProcess.textContent = '自分で実行する（購入・支払）';
     } else {
         safeUpdate(SEL_G.TRADE.THIS_CARD, "場に出たカード");
         setButtonActive(SEL_G.TRADE.BTN_SELL, false);
         setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, false);
+        setButtonActive(SEL_G.TRADE.BTN_PASS_CARD, false);
         setButtonActive(SEL_G.CARD.BTN_SMALL_DEAL, false);
         setButtonActive(SEL_G.CARD.BTN_BIG_DEAL, false);
         
         if (elNumProcess) elNumProcess.hidden = true;
         if (elSellTarget) elSellTarget.disabled = true;
         if (elSellPrice) elSellPrice.disabled = true;
-        if (elBtnProcess) elBtnProcess.textContent = '自分で実行する / 見送る';
+        if (elBtnProcess) elBtnProcess.textContent = '自分で実行する（購入・支払）';
     }
     
     if (!isPlaying) {
