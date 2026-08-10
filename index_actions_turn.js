@@ -174,3 +174,5 @@ export async function actionEndTurn(supabase, currentUserId) {
         await insertSystemMessage(supabase, playerName, `エラー: ${error.message}`);
     }
 }
+
+console.log("【残す】 index_actions_turn.js が正常にロードされました。");
