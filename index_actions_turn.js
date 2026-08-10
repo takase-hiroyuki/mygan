@@ -1,7 +1,7 @@
 // index_actions_turn.js
 import { roomId } from './common_config.js';
 import { SEL_G } from './common_dom_selectors.js'; 
-import { disableAllActionButtons } from './index_ui.js';
+import { disableAllActionButtons } from './index_ui_base.js';
 import { callRpcWithDebug,
          CELLS_OPPORTUNITY,
          CELLS_DOODAD,
