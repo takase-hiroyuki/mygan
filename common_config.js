@@ -7,6 +7,4 @@ export const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdX
 // 2. 小規模運用のための固定設定
 export const roomId = "room01"; // ゲーム（部屋）は1つに固定
 
-// 【デバッグコード】
 console.log("【デバッグ】config.js が読み込まれました。");
-console.log("【デバッグ】config.js 部屋番号:", roomId);
