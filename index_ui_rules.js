@@ -39,6 +39,8 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
     const elSellTarget = document.getElementById(SEL_G.TRADE.SELECT_TARGET);
     const elSellPrice = document.getElementById(SEL_G.TRADE.INPUT_PRICE);
 
+    const isTurnUserOnCharity = [3, 16].includes(turnUserState.position);
+
     if (activeCard) {
         safeUpdate(SEL_G.TRADE.THIS_CARD, `【${activeCard.title}】\n${activeCard.description_jp || ''}`);
         
@@ -79,6 +81,30 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
         
         setButtonActive(SEL_G.CARD.BTN_SMALL_DEAL, false);
         setButtonActive(SEL_G.CARD.BTN_BIG_DEAL, false);
+
+    } else if (turnUserFlags.has_rolled_dice && isTurnUserOnCharity && !turnUserFlags.is_action_completed) {
+        // ★追加: 寄付マスのUI表示ロジック
+        if (isMyTurn) {
+            const items = state.items || [];
+            const totalIncome = items.filter(i => (i.cashflow || 0) > 0).reduce((sum, i) => sum + Number(i.cashflow), 0);
+            const donateAmount = totalIncome * 0.1;
+            
+            safeUpdate(SEL_G.TRADE.THIS_CARD, `【寄付】\n総収入の10% ($${toCurrency(donateAmount)}) を支払うことで、以降3ターンの間サイコロを2個振ることができます。`);
+            
+            setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, true);
+            setButtonActive(SEL_G.TRADE.BTN_PASS_CARD, true);
+            if (elBtnProcess) elBtnProcess.textContent = '寄付する';
+        } else {
+            safeUpdate(SEL_G.TRADE.THIS_CARD, `${turnUserState.name || '他のプレイヤー'} が寄付を検討中です...`);
+            setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, false);
+            setButtonActive(SEL_G.TRADE.BTN_PASS_CARD, false);
+        }
+        if (elNumProcess) elNumProcess.hidden = true;
+        if (elSellTarget) elSellTarget.disabled = true;
+        if (elSellPrice) elSellPrice.disabled = true;
+        setButtonActive(SEL_G.CARD.BTN_SMALL_DEAL, false);
+        setButtonActive(SEL_G.CARD.BTN_BIG_DEAL, false);
+        setButtonActive(SEL_G.TRADE.BTN_SELL, false);
 
     } else if (turnUserFlags.has_rolled_dice && CELLS_OPPORTUNITY.includes(turnUserState.position) && !turnUserFlags.is_card_drawn) {
         if (isMyTurn) {
@@ -138,9 +164,13 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
                 const items = state.items || [];
                 const hasInstantDebt = items.some(item => item.type_id === 'InstantDebt');
                 
+                const isMyCharity = [3, 16].includes(state.position);
+                
                 if (!flags.is_calculating && financials.cash >= 0) {
                     if (!anyCardHolderExists && !isTrading && !hasInstantDebt) {
-                        if (!state.drawn_card || flags.is_action_completed) {
+                        if (isMyCharity) {
+                            if (flags.is_action_completed) canEndTurn = true;
+                        } else if (!state.drawn_card || flags.is_action_completed) {
                             canEndTurn = true;
                         }
                     }
@@ -150,9 +180,8 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
 
             } else {
                 const charityTurnsLeft = parseInt(flags.charity_turns_left || 0, 10);
-                const downsizedTurnsLeft = parseInt(flags.downsized_turns_left || 0, 10); // ★追加
+                const downsizedTurnsLeft = parseInt(flags.downsized_turns_left || 0, 10);
 
-                // ★追加: 休みの場合のブロック制御
                 if (downsizedTurnsLeft > 0) {
                     if (diceStatusArea) diceStatusArea.textContent = `休み（残り ${downsizedTurnsLeft} ターン）`;
                     setButtonActive(SEL_G.CONTROLS.BTN_DICE1, false);
@@ -161,10 +190,12 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
                     const items = state.items || [];
                     const hasInstantDebt = items.some(item => item.type_id === 'InstantDebt');
                     
-                    // 休み中はサイコロを振らず、未払いのInstantDebtがなければ「次の人へ」を進められる
                     setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, !hasInstantDebt);
                 } else {
-                    if (diceStatusArea) diceStatusArea.textContent = "あなたの手番";
+                    if (diceStatusArea) diceStatusArea.textContent = charityTurnsLeft > 0 
+                        ? `あなたの手番 (寄付効果: 残り ${charityTurnsLeft} ターン)` 
+                        : "あなたの手番";
+                        
                     setButtonActive(SEL_G.CONTROLS.BTN_DICE1, true);
                     setButtonActive(SEL_G.CONTROLS.BTN_DICE_2, charityTurnsLeft > 0);
                     setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, false);
