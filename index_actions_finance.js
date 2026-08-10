@@ -95,4 +95,4 @@ export async function actionOperateItem(supabase, currentUserId) {
     }
 }
 
-console.log("[デバッグ] index_actions_finance.js が正常にロードされました。");
+console.log("【残す】 index_actions_finance.js が正常にロードされました。");
