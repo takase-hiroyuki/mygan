@@ -149,4 +149,4 @@ export const DOM_SELECTORS = {
 export const SEL_G = DOM_SELECTORS.GUEST;
 export const SEL_H = DOM_SELECTORS.HOST;
 
-console.log("【デバッグ】common_dom_selectors.js が読み込まれました。");
+console.log("【残す】common_dom_selectors.js が読み込まれました。");
