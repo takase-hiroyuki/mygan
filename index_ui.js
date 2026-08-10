@@ -177,9 +177,6 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
         }
     }
 
-    // =========================================================================
-    // UI制御の基準を「カードを持っている人」に変更
-    // =========================================================================
     const turnUserRecord = cachedParticipants.find(p => p.user_id === turnUserId);
     const turnUserState = turnUserRecord ? turnUserRecord.state : {};
     const turnUserFlags = turnUserState.flags || {};
@@ -226,14 +223,12 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
             if (elSellPrice) elSellPrice.disabled = true;
         }
         
-        // カードが出ている場合はドローボタンは無効
         setButtonActive(SEL_G.CARD.BTN_SMALL_DEAL, false);
         setButtonActive(SEL_G.CARD.BTN_BIG_DEAL, false);
 
     } else if (turnUserFlags.has_rolled_dice && CELLS_OPPORTUNITY.includes(turnUserState.position) && !turnUserFlags.is_card_drawn) {
         if (isMyTurn) {
             safeUpdate(SEL_G.TRADE.THIS_CARD, "普通の商売、または大きな商売、のどちらかをひいてください");
-            // ★ カードを引くボタンを有効化
             setButtonActive(SEL_G.CARD.BTN_SMALL_DEAL, true);
             setButtonActive(SEL_G.CARD.BTN_BIG_DEAL, true);
         } else {
@@ -289,15 +284,29 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
                 const isTrading = !!cachedRoom?.game_state?.trade_offer;
                 const anyCardHolderExists = cachedParticipants.some(p => p.state && p.state.drawn_card);
                 
+                const items = state.items || [];
+                const hasInstantDebt = items.some(item => item.type_id === 'InstantDebt');
+                
                 if (!flags.is_calculating) {
                     if (financials.cash >= 0) {
-                        if (!anyCardHolderExists && !isTrading) {
+                        if (!anyCardHolderExists && !isTrading && !hasInstantDebt) {
                             if (!state.drawn_card || flags.is_action_completed) {
                                 canEndTurn = true;
                             }
                         }
                     }
                 }
+                
+                console.log("[DEBUG] ターン終了判定:", {
+                    playerName: state.name,
+                    is_calculating: flags.is_calculating,
+                    cash: financials.cash,
+                    isTrading: isTrading,
+                    anyCardHolderExists: anyCardHolderExists,
+                    hasInstantDebt: hasInstantDebt,
+                    is_action_completed: flags.is_action_completed,
+                    canEndTurn: canEndTurn
+                });
                 
                 setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, canEndTurn);
 
@@ -321,8 +330,6 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
             
         } else {
             if (diceStatusArea) diceStatusArea.textContent = `[${turnUserName}] がプレイ中`;
-            // 手番でない場合は、手番専用の操作ボタンだけを無効化する
-            // ※ disableAllActionButtons() で全部消すと、トレードの承諾ボタンなども消えてしまうため
             setMultipleButtonsActive([
                 SEL_G.CONTROLS.BTN_DICE1,
                 SEL_G.CONTROLS.BTN_DICE_2,
@@ -338,9 +345,6 @@ export async function renderGuestUI(currentUserId, cachedParticipants, cachedRoo
         }
     }
 
-    // =========================================================================
-    // 交渉（トレード）状態の監視とUI反映
-    // =========================================================================
     const tradeOffer = cachedRoom?.game_state?.trade_offer;
     
     if (tradeOffer) {
