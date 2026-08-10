@@ -300,4 +300,4 @@ btnForceGameEnd?.addEventListener('click', async () => {
     }
 });
 
-console.log("【デバッグ】host.js が読み込まれました。");
+console.log("【残す】host.js が読み込まれました。");
