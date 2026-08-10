@@ -208,3 +208,5 @@ export function disableAllActionButtons() {
     ];
     setMultipleButtonsActive(actionButtonIds.filter(Boolean), false);
 }
+
+console.log("【残す】index_ui_base.js が読み込まれました。");
