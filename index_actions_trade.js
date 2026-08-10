@@ -131,4 +131,4 @@ export async function actionProcessSelf(supabase, currentUserId) {
     }
 }
 
-console.log("[デバッグ] index_actions_trade.js が正常にロードされました。");
+console.log("【残す】 index_actions_trade.js が正常にロードされました。");
