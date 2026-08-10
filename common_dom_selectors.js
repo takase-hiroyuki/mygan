@@ -53,8 +53,9 @@ export const DOM_SELECTORS = {
             SELECT_TARGET: 'sell-target',
             INPUT_PRICE: 'sell-price',
             BTN_SELL: 'btn-sell-card',
-            NUM_PROCESS_SELF: 'num-process-self', // ★追加: 数量入力欄
-            BTN_PROCESS_SELF: 'btn-process-self', // ★追加: 自分で処理するボタン
+            NUM_PROCESS_SELF: 'num-process-self',
+            BTN_PROCESS_SELF: 'btn-process-self',
+            BTN_PASS_CARD: 'btn-pass-card', // ★追加: 見送る（パスする）ボタン
             TRADE_MESSAGE: 'trade-message',
             BTN_ACCEPT: 'btn-trade-accept',
             BTN_REJECT: 'btn-trade-reject'
@@ -74,8 +75,8 @@ export const DOM_SELECTORS = {
         // 財務諸表・資産負債手動計算・操作エリア
         FINANCIALS: {
             PLAYER_SELECT: 'player-select',
-            D_PROFESSION: 'l-profession',   // ★追加: 選択された人の職業
-            D_CASH: 'l-cash',               // ★追加: 選択された人の現金
+            D_PROFESSION: 'l-profession',
+            D_CASH: 'l-cash',
             D_PROFIT: 'l-profit',
             D_LOSS: 'l-loss',
             D_CASHFLOW: 'ncashflow', 
