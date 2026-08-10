@@ -55,7 +55,8 @@ import { insertSystemMessage } from './common_utils.js';
 import { actionRollDice, actionEndTurn, actionDrawCard, actionPass } from './index_actions_turn.js';
 import { actionClaimPaycheck, actionCheckCalculations, actionOperateItem } from './index_actions_finance.js'; 
 import { actionBorrowBankLoan, actionRepayBankLoan } from './index_actions_loan.js';
-import { actionProposeTrade, actionAcceptTrade, actionRejectTrade } from './index_actions_trade.js';
+// ★修正: actionProcessSelf をインポートに追加
+import { actionProposeTrade, actionAcceptTrade, actionRejectTrade, actionProcessSelf } from './index_actions_trade.js';
 
 let supabase = null;
 let currentUserId = null;
@@ -73,17 +74,17 @@ const btnSmallDeal = document.getElementById(SEL_G.CARD.BTN_SMALL_DEAL);
 const btnBigDeal = document.getElementById(SEL_G.CARD.BTN_BIG_DEAL);
 const btnOperate = document.getElementById(SEL_G.FINANCIALS.BTN_OPERATE);
 const btnSellCard = document.getElementById(SEL_G.TRADE.BTN_SELL);
+
+// ★取引・カード処理用ボタンの取得
 const btnProcessSelf = document.getElementById(SEL_G.TRADE.BTN_PROCESS_SELF);
+const btnPassCard = document.getElementById(SEL_G.TRADE.BTN_PASS_CARD); // ★追加: 見送るボタン
 const btnTradeAccept = document.getElementById(SEL_G.TRADE.BTN_ACCEPT);
 const btnTradeReject = document.getElementById(SEL_G.TRADE.BTN_REJECT);
 
-// ★追加: 描画とルール適用を順番に実行する統合UI更新関数
 function updateUI(userId, participants, room) {
-    // 描画（Base）を実行。プルダウン変更時用の再帰コールバックも渡す
     renderBaseUI(userId, participants, room, () => {
         updateUI(userId, participants, room);
     });
-    // ルール（Rules）を実行してボタンの有効/無効を適用する
     applyUIRules(userId, participants, room);
 }
 
@@ -98,7 +99,6 @@ function updateUI(userId, participants, room) {
     if (currentUserId) {
         console.log(`[DEBUG] 既存のログインセッションを検出しました: user_id=${currentUserId}`);
         toggleScreen(true);
-        // ★変更: updateUI をコールバックとして引き渡す
         startSubscriptions(supabase, roomId, currentUserId, updateUI);
     } else {
         console.log("[DEBUG] ログインセッションは見つかりませんでした。ログイン画面を表示します。");
@@ -122,7 +122,6 @@ btnLogin?.addEventListener('click', async () => {
     if (newUserId) {
         currentUserId = newUserId;
         toggleScreen(true);
-        // ★変更: updateUI をコールバックとして引き渡す
         startSubscriptions(supabase, roomId, currentUserId, updateUI);
     } else {
         btnLogin.disabled = false;
@@ -173,7 +172,13 @@ btnSellCard?.addEventListener('click', () => {
     actionProposeTrade(supabase, currentUserId);
 });
 
-btnProcessSelf?.addEventListener('click', async () => {
+// ★修正: 「自分で実行する」ボタンは本物の購入・支払い処理へ
+btnProcessSelf?.addEventListener('click', () => {
+    actionProcessSelf(supabase, currentUserId);
+});
+
+// ★追加: 「見送る（パスする）」ボタンは手番の完了（破棄）へ
+btnPassCard?.addEventListener('click', async () => {
     await actionPass(supabase, currentUserId);
 });
 
