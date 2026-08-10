@@ -77,6 +77,7 @@ export const DOM_SELECTORS = {
             PLAYER_SELECT: 'player-select',
             D_PROFESSION: 'l-profession',
             D_CASH: 'l-cash',
+            BTN_FAST_TRACK: 'fast_track', // ★追加
             D_PROFIT: 'l-profit',
             D_LOSS: 'l-loss',
             D_CASHFLOW: 'ncashflow', 
