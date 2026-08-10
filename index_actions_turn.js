@@ -22,7 +22,6 @@ async function getCurrentPlayerState(supabase, userId) {
     return data.state || {};
 }
 
-// カードを引く共通関数
 export async function actionDrawCard(supabase, currentUserId, deckType) {
     if (!supabase || !currentUserId) return;
     
@@ -87,7 +86,6 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
     }
 }
 
-// 寄付およびカード処理を実行する統合関数
 export async function actionProcessSelf(supabase, currentUserId, qty = 1) {
     if (!supabase || !currentUserId) return;
 
@@ -95,11 +93,9 @@ export async function actionProcessSelf(supabase, currentUserId, qty = 1) {
     if (!state) return;
 
     const playerName = state.name || getLocalPlayerName();
-    // ★修正: state.position を必ず数値として判定する
     const isCharity = [3, 16].includes(parseInt(state.position, 10));
 
     try {
-        // 寄付マスのアクション処理
         if (isCharity && !state.drawn_card && !state.flags.is_action_completed) {
             await callRpcWithDebug(supabase, 'donate_charity_v2', {
                 p_room_id: roomId,
@@ -109,12 +105,18 @@ export async function actionProcessSelf(supabase, currentUserId, qty = 1) {
             return;
         }
 
-        // 通常のカード実行処理
-        await callRpcWithDebug(supabase, 'execute_drawn_card_v2', {
-            p_room_id: roomId,
-            p_user_id: currentUserId,
-            p_input_quantity: qty
-        });
+        if (state.drawn_card && state.drawn_card.asset_type === 'other') {
+            await callRpcWithDebug(supabase, 'execute_special_event_v2', {
+                p_room_id: roomId,
+                p_user_id: currentUserId
+            });
+        } else {
+            await callRpcWithDebug(supabase, 'execute_drawn_card_v2', {
+                p_room_id: roomId,
+                p_user_id: currentUserId,
+                p_input_quantity: qty
+            });
+        }
     } catch (error) {
         await insertSystemMessage(supabase, playerName, `エラー: ${error.message}`);
     }
@@ -172,5 +174,3 @@ export async function actionEndTurn(supabase, currentUserId) {
         await insertSystemMessage(supabase, playerName, `エラー: ${error.message}`);
     }
 }
-
-console.log("[デバッグ] index_actions_turn.js が正常にロードされました。");
