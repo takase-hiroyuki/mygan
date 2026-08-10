@@ -216,4 +216,4 @@ async function debugSupabaseConnection(supabaseClient) {
     }
 }
 
-console.log("[デバッグ] index.js が正常にロードされました。");
+console.log("【残す】 index.js が正常にロードされました。");
