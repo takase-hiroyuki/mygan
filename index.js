@@ -46,46 +46,46 @@ action_rule の設計例:
 
 import { roomId } from './common_config.js';
 import { SEL_G } from './common_dom_selectors.js'; 
-import { toggleScreen } from './index_ui.js';
 
+import { toggleScreen, renderBaseUI } from './index_ui_base.js';
+import { applyUIRules } from './index_ui_rules.js';
 import { initSupabaseClient, checkExistingLogin, loginUser } from './index_auth.js';
 import { startSubscriptions } from './index_state.js'; 
 import { insertSystemMessage } from './common_utils.js'; 
 import { actionRollDice, actionEndTurn, actionDrawCard, actionPass } from './index_actions_turn.js';
 import { actionClaimPaycheck, actionCheckCalculations, actionOperateItem } from './index_actions_finance.js'; 
 import { actionBorrowBankLoan, actionRepayBankLoan } from './index_actions_loan.js';
-import { actionProposeTrade, actionAcceptTrade, actionRejectTrade } from './index_actions_trade.js'; // ★修正: 承諾と拒否を追加
+import { actionProposeTrade, actionAcceptTrade, actionRejectTrade } from './index_actions_trade.js';
 
 let supabase = null;
 let currentUserId = null;
 
-// DOM要素の取得
 const inputUsername = document.getElementById(SEL_G.LOGIN.INPUT_USERNAME);
 const btnLogin = document.getElementById(SEL_G.LOGIN.BTN_LOGIN);
-
-// コントロールボタン群
 const btnRollDice = document.getElementById(SEL_G.CONTROLS.BTN_DICE1);
 const btnRollDice2 = document.getElementById(SEL_G.CONTROLS.BTN_DICE_2); 
 const btnClaimPaycheck = document.getElementById(SEL_G.CONTROLS.BTN_PAYCHECK);
 const btnEndTurn = document.getElementById(SEL_G.CONTROLS.BTN_END_TURN);
-
 const btnCheckCalculations = document.getElementById(SEL_G.FINANCIALS.BTN_C_CASHFLOW);
-
 const btnBorrowLoan = document.getElementById(SEL_G.LOAN.BTN_BORROW_LOAN);
 const btnPaybackLoan = document.getElementById(SEL_G.LOAN.BTN_PAYBACK_LOAN);
-
-// -----------------------------------------------------------------------------
-// カードドロー用のボタン
-// -----------------------------------------------------------------------------
 const btnSmallDeal = document.getElementById(SEL_G.CARD.BTN_SMALL_DEAL);
 const btnBigDeal = document.getElementById(SEL_G.CARD.BTN_BIG_DEAL);
-
-// 新しい取引・処理用のボタン
 const btnOperate = document.getElementById(SEL_G.FINANCIALS.BTN_OPERATE);
 const btnSellCard = document.getElementById(SEL_G.TRADE.BTN_SELL);
 const btnProcessSelf = document.getElementById(SEL_G.TRADE.BTN_PROCESS_SELF);
 const btnTradeAccept = document.getElementById(SEL_G.TRADE.BTN_ACCEPT);
 const btnTradeReject = document.getElementById(SEL_G.TRADE.BTN_REJECT);
+
+// ★追加: 描画とルール適用を順番に実行する統合UI更新関数
+function updateUI(userId, participants, room) {
+    // 描画（Base）を実行。プルダウン変更時用の再帰コールバックも渡す
+    renderBaseUI(userId, participants, room, () => {
+        updateUI(userId, participants, room);
+    });
+    // ルール（Rules）を実行してボタンの有効/無効を適用する
+    applyUIRules(userId, participants, room);
+}
 
 (async function init() {
     console.log("[DEBUG] アプリケーションの初期化を開始します...");
@@ -98,7 +98,8 @@ const btnTradeReject = document.getElementById(SEL_G.TRADE.BTN_REJECT);
     if (currentUserId) {
         console.log(`[DEBUG] 既存のログインセッションを検出しました: user_id=${currentUserId}`);
         toggleScreen(true);
-        startSubscriptions(supabase, roomId, currentUserId);
+        // ★変更: updateUI をコールバックとして引き渡す
+        startSubscriptions(supabase, roomId, currentUserId, updateUI);
     } else {
         console.log("[DEBUG] ログインセッションは見つかりませんでした。ログイン画面を表示します。");
         toggleScreen(false);
@@ -121,7 +122,8 @@ btnLogin?.addEventListener('click', async () => {
     if (newUserId) {
         currentUserId = newUserId;
         toggleScreen(true);
-        startSubscriptions(supabase, roomId, currentUserId);
+        // ★変更: updateUI をコールバックとして引き渡す
+        startSubscriptions(supabase, roomId, currentUserId, updateUI);
     } else {
         btnLogin.disabled = false;
     }
@@ -155,9 +157,6 @@ btnPaybackLoan?.addEventListener('click', () => {
     actionRepayBankLoan(supabase, currentUserId);
 });
 
-// -----------------------------------------------------------------------------
-// 商売マスのカードドロー処理
-// -----------------------------------------------------------------------------
 btnSmallDeal?.addEventListener('click', () => {
     actionDrawCard(supabase, currentUserId, 'small_deal');
 });
@@ -165,10 +164,6 @@ btnSmallDeal?.addEventListener('click', () => {
 btnBigDeal?.addEventListener('click', () => {
     actionDrawCard(supabase, currentUserId, 'big_deal');
 });
-
-// ============================================================================
-// アイテム処理およびトレード用のリスナー
-// ============================================================================
 
 btnOperate?.addEventListener('click', () => {
     actionOperateItem(supabase, currentUserId);
@@ -182,7 +177,6 @@ btnProcessSelf?.addEventListener('click', async () => {
     await actionPass(supabase, currentUserId);
 });
 
-// ★ 修正：承諾・拒否ボタンに実際の関数を紐付け
 btnTradeAccept?.addEventListener('click', () => {
     actionAcceptTrade(supabase, currentUserId);
 });
