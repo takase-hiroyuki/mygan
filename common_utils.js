@@ -3,13 +3,39 @@
 import { roomId } from './common_config.js';
 import { SEL_G } from './common_dom_selectors.js';
 
+// ★ 新設: ログを game_logs テーブルへ出力する汎用関数
+let localSeqCounter = 0;
+export function writeLog(supabaseClient, target, title, body) {
+    if (!supabaseClient) return;
+    
+    // sequence_numは integer 型 (上限約21.4億) のため、現在時刻(秒) + ローカルカウンターで一意性と順序を担保
+    const seqNum = Math.floor(Date.now() / 1000) + (localSeqCounter++); 
+    
+    const bodyStr = typeof body === 'object' ? JSON.stringify(body, null, 2) : String(body);
+    
+    // ※UI処理をブロックしないよう、awaitせずに非同期でINSERTを投げる
+    supabaseClient.from('game_logs').insert([{
+        room_id: roomId,
+        sequence_num: seqNum,
+        target: target,
+        title: title,
+        body: bodyStr
+    }]).then(({ error }) => {
+        if (error) {
+            // スクリプトエラー等でDBに書き込めない異常事態のみ、コンソールに残す
+            console.error("【残す】game_logsへの保存エラー:", error);
+        }
+    });
+}
+
 // index.js と host.js の両方から参照される関数群
 
 // SupabaseのRPC関数を安全に呼び出し、入出力をデバッグするためのラッパー関数。
 export async function callRpcWithDebug(supabaseClient, rpcName, params = {}) {
     const startTime = performance.now();
-    console.log(`[RPC_CALL_START] ${rpcName}`);
-    console.log(`[RPC_PARAMS]`, JSON.stringify(params, null, 2));
+    
+    // ★ 修正: console.log を writeLog に置き換え
+    writeLog(supabaseClient, "System", "RPC_CALL_START", `RPC: ${rpcName}\nParams: ${JSON.stringify(params, null, 2)}`);
     
     const { data, error } = await supabaseClient.rpc(rpcName, params);
     
@@ -17,17 +43,16 @@ export async function callRpcWithDebug(supabaseClient, rpcName, params = {}) {
     const executionTime = (endTime - startTime).toFixed(2);
 
     if (error) {
-        console.error(`[RPC_CALL_FAILED] ${rpcName} (${executionTime}ms)`);
-        console.error(`[RPC_ERROR_DETAILS]`, error);
+        writeLog(supabaseClient, "System", "RPC_CALL_FAILED", `RPC: ${rpcName} (${executionTime}ms)\nError: ${JSON.stringify(error, null, 2)}`);
         throw new Error(`RPC実行エラー: ${error.message}`);
     }
 
-    console.log(`[RPC_CALL_SUCCESS] ${rpcName} (${executionTime}ms)`);
-    console.log(`[RPC_RETURN_VALUE]`, data !== null ? JSON.stringify(data, null, 2) : 'No returning data (void)');
+    const responseBody = data !== null ? JSON.stringify(data, null, 2) : 'No returning data (void)';
+    writeLog(supabaseClient, "System", "RPC_CALL_SUCCESS", `RPC: ${rpcName} (${executionTime}ms)\nResult: ${responseBody}`);
 
     // 整合性監視: RPC関数側で定義された論理エラー（JSONBのstatus: 'error'）の検知
     if (data && typeof data === 'object' && data.status === 'error') {
-        console.warn(`[RPC_LOGICAL_WARNING] ${rpcName} はエラー状態を返却しました。Message: ${data.message}`);
+        writeLog(supabaseClient, "System", "RPC_LOGICAL_WARNING", `RPC: ${rpcName} はエラー状態を返却しました。\nMessage: ${data.message}`);
     }
 
     return data;
@@ -124,7 +149,8 @@ export function getLocalPlayerName() {
 }
 
 export async function insertSystemMessage(supabase, targetName, message) {
-    // ログ保存機能を削除したため、通信を行わず何もしない
+    // ★ 修正: ダミー化されていた機能を writeLog に接続し復活させる
+    writeLog(supabase, targetName, "Message", message);
     return { data: null, error: null };
 }
 
