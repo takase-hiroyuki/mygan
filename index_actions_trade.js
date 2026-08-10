@@ -92,4 +92,43 @@ export async function actionRejectTrade(supabase, currentUserId) {
     }
 }
 
+// ★追加：引いたカードを自分で処理（購入・支払い）する関数
+export async function actionProcessSelf(supabase, currentUserId) {
+    if (!supabase || !currentUserId) return;
+    const playerName = getLocalPlayerName();
+    
+    const elBtnProcess = document.getElementById(SEL_G.TRADE.BTN_PROCESS_SELF);
+    const elNumProcess = document.getElementById(SEL_G.TRADE.NUM_PROCESS_SELF);
+    
+    let quantity = 1;
+    
+    // 数量入力欄が表示されており、かつ値が入力されている場合は取得する
+    if (elNumProcess && !elNumProcess.hidden && elNumProcess.value) {
+        quantity = parseInt(elNumProcess.value, 10);
+        if (isNaN(quantity) || quantity <= 0) {
+            await insertSystemMessage(supabase, playerName, "有効な数量を入力してください。");
+            return;
+        }
+    }
+
+    // 通信前のUIロック（連打防止）
+    if (elBtnProcess) elBtnProcess.disabled = true;
+
+    try {
+        await callRpcWithDebug(supabase, 'execute_drawn_card_v2', {
+            p_room_id: roomId,
+            p_user_id: currentUserId,
+            p_input_quantity: quantity
+        });
+        await insertSystemMessage(supabase, playerName, "カードを処理しました。");
+        
+        // 処理成功後は数量入力欄をリセット
+        if (elNumProcess) elNumProcess.value = '';
+    } catch (error) {
+        await insertSystemMessage(supabase, playerName, `処理エラー: ${error.message}`);
+        // エラー時のみロックを解除
+        if (elBtnProcess) elBtnProcess.disabled = false;
+    }
+}
+
 console.log("[デバッグ] index_actions_trade.js が正常にロードされました。");
