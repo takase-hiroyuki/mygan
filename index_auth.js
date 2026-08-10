@@ -112,4 +112,4 @@ export async function loginUser(supabase, username) {
     return newUserId;
 }
 
-console.log("【デバッグ】index_auth.js が読み込まれました。");
+console.log("【残す】index_auth.js が読み込まれました。");
