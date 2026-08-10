@@ -87,7 +87,7 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
     }
 }
 
-// ★追加: 寄付およびカード処理を実行する統合関数
+// 寄付およびカード処理を実行する統合関数
 export async function actionProcessSelf(supabase, currentUserId, qty = 1) {
     if (!supabase || !currentUserId) return;
 
@@ -95,7 +95,8 @@ export async function actionProcessSelf(supabase, currentUserId, qty = 1) {
     if (!state) return;
 
     const playerName = state.name || getLocalPlayerName();
-    const isCharity = [3, 16].includes(state.position);
+    // ★修正: state.position を必ず数値として判定する
+    const isCharity = [3, 16].includes(parseInt(state.position, 10));
 
     try {
         // 寄付マスのアクション処理
