@@ -35,7 +35,7 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
 
     const elNumProcess = document.getElementById(SEL_G.TRADE.NUM_PROCESS_SELF);
     const elBtnProcess = document.getElementById(SEL_G.TRADE.BTN_PROCESS_SELF);
-    const elBtnPass = document.getElementById(SEL_G.TRADE.BTN_PASS_CARD); // ★追加: パスボタン
+    const elBtnPass = document.getElementById(SEL_G.TRADE.BTN_PASS_CARD);
     const elSellTarget = document.getElementById(SEL_G.TRADE.SELECT_TARGET);
     const elSellPrice = document.getElementById(SEL_G.TRADE.INPUT_PRICE);
 
@@ -47,13 +47,13 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
             elNumProcess.hidden = !['stock', 'mutual_fund', 'coin'].includes(cardType);
         }
 
-        let canPass = false; // ★追加: パス可能フラグ
+        let canPass = false;
 
         if (elBtnProcess) {
             const cardHolderPos = cardHolderRecord.state.position;
             if (cardHolderPos !== undefined && CELLS_DOODAD.includes(parseInt(cardHolderPos, 10))) {
                 elBtnProcess.textContent = '支払う';
-                canPass = false; // Doodad(無駄遣い)はパス不可（強制支払い）
+                canPass = false;
             } else if (cardHolderPos !== undefined && CELLS_MARKET.includes(parseInt(cardHolderPos, 10))) {
                 elBtnProcess.textContent = '確認して手番を進める';
                 canPass = true;
@@ -66,7 +66,7 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
         if (iAmCardHolder) {
             setButtonActive(SEL_G.TRADE.BTN_SELL, !!activeCard.is_resellable);
             setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, true);
-            setButtonActive(SEL_G.TRADE.BTN_PASS_CARD, canPass); // ★フラグに基づく制御
+            setButtonActive(SEL_G.TRADE.BTN_PASS_CARD, canPass);
             if (elSellTarget) elSellTarget.disabled = !activeCard.is_resellable;
             if (elSellPrice) elSellPrice.disabled = !activeCard.is_resellable;
         } else {
@@ -135,7 +135,6 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
                 const isTrading = !!cachedRoom?.game_state?.trade_offer;
                 const anyCardHolderExists = cachedParticipants.some(p => p.state && p.state.drawn_card);
                 
-                // ★InstantDebtのチェック
                 const items = state.items || [];
                 const hasInstantDebt = items.some(item => item.type_id === 'InstantDebt');
                 
@@ -150,12 +149,26 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
                 setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, canEndTurn);
 
             } else {
-                if (diceStatusArea) diceStatusArea.textContent = "あなたの手番";
                 const charityTurnsLeft = parseInt(flags.charity_turns_left || 0, 10);
-                
-                setButtonActive(SEL_G.CONTROLS.BTN_DICE1, true);
-                setButtonActive(SEL_G.CONTROLS.BTN_DICE_2, charityTurnsLeft > 0);
-                setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, false);
+                const downsizedTurnsLeft = parseInt(flags.downsized_turns_left || 0, 10); // ★追加
+
+                // ★追加: 休みの場合のブロック制御
+                if (downsizedTurnsLeft > 0) {
+                    if (diceStatusArea) diceStatusArea.textContent = `休み（残り ${downsizedTurnsLeft} ターン）`;
+                    setButtonActive(SEL_G.CONTROLS.BTN_DICE1, false);
+                    setButtonActive(SEL_G.CONTROLS.BTN_DICE_2, false);
+                    
+                    const items = state.items || [];
+                    const hasInstantDebt = items.some(item => item.type_id === 'InstantDebt');
+                    
+                    // 休み中はサイコロを振らず、未払いのInstantDebtがなければ「次の人へ」を進められる
+                    setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, !hasInstantDebt);
+                } else {
+                    if (diceStatusArea) diceStatusArea.textContent = "あなたの手番";
+                    setButtonActive(SEL_G.CONTROLS.BTN_DICE1, true);
+                    setButtonActive(SEL_G.CONTROLS.BTN_DICE_2, charityTurnsLeft > 0);
+                    setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, false);
+                }
             }
             
             setButtonActive(SEL_G.FINANCIALS.BTN_C_CASHFLOW, !!flags.is_calculating);
