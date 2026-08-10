@@ -93,34 +93,46 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
         let optionsHTML = '<option value="">対象の資産・負債を選択</option>';
 
         selectedItems.forEach(item => {
-            // 1. 資産の部への出力判定 (cost が 0 より大きいものは実体価値があるので資産)
-            if (item.cost && Number(item.cost) > 0) {
-                const cfStr = item.cashflow <= 0 ? toCurrency(item.cashflow) : `+${toCurrency(item.cashflow)}`;
-                const unitPrice = toCurrency(item.cost);
+            // 変数を数値化して扱いやすくする
+            const costVal = Number(item.cost || 0);
+            const liabVal = Number(item.liability || 0);
+            const cfVal = Number(item.cashflow || 0);
+
+            // 1. 資産の部への出力判定
+            // 実体価値(cost > 0)があるか、または純粋なプラスのCFを生み出す(給料など)もの
+            if (costVal > 0 || (liabVal === 0 && cfVal > 0)) {
+                const cfStr = cfVal <= 0 ? toCurrency(cfVal) : `+${toCurrency(cfVal)}`;
+                const unitPrice = toCurrency(costVal);
                 const quantity = item.quantity !== undefined ? item.quantity : 1; 
                 const quantityStr = Number(quantity).toLocaleString(); 
                 
                 assetsHTML += `<tr><td>${item.title}</td><td>${unitPrice}</td><td>${quantityStr}</td><td>${cfStr}</td></tr>`;
-                optionsHTML += `<option value="${item.id}">【売却】${item.title} (単価: $${unitPrice}, 数量: ${quantityStr})</option>`;
+                
+                // 売却可能なのは cost(単価) が設定されているものだけにする
+                if (costVal > 0) {
+                    optionsHTML += `<option value="${item.id}">【売却】${item.title} (単価: $${unitPrice}, 数量: ${quantityStr})</option>`;
+                }
             }
 
-            // 2. 負債の部への出力判定 (liability が 0 より大きい、または cost がなく cashflow がマイナスな純粋支出)
-            if ((item.liability && Number(item.liability) > 0) || (item.cashflow < 0 && !(item.cost > 0))) {
+            // 2. 負債の部への出力判定
+            // 負債残高(liability > 0)があるか、または純粋なマイナスのCF(税金など)のもの
+            if (liabVal > 0 || (cfVal < 0 && costVal === 0)) {
                 let displayName = item.title;
-                let displayCF = item.cashflow;
+                let displayCF = cfVal;
                 
                 // アパートなどの「資産に紐づくローン」の場合は表示名を変え、CF表示をゼロ(資産側に計上済みのため)にする
-                if (item.cost && Number(item.cost) > 0 && item.liability && Number(item.liability) > 0) {
+                if (costVal > 0 && liabVal > 0) {
                     displayName = item.title + "のローン";
                     displayCF = 0; 
                 }
 
                 const cfStr = displayCF < 0 ? toCurrency(displayCF) : `+${toCurrency(displayCF)}`;
-                const liabStr = item.liability > 0 ? toCurrency(item.liability) : '0';
+                const liabStr = liabVal > 0 ? toCurrency(liabVal) : '0';
                 
                 liabHTML += `<tr><td>${displayName}</td><td>${liabStr}</td><td>${cfStr}</td></tr>`;
                 
-                if (item.liability > 0) {
+                // 返済可能なのは liability(残高) があるものだけにする
+                if (liabVal > 0) {
                     optionsHTML += `<option value="${item.id}">【返済】${displayName} (残高: $${liabStr})</option>`;
                 }
             }
