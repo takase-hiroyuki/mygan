@@ -1,36 +1,278 @@
-Doodadカード「誕生日」を引きました。 - 子供の遊園地費用（子供がいる場合）。 (費用: $100)
-は、子どもの人数によって支払い金額が変わるので注意
+// index_ui_rules.js
+import { SEL_G } from './common_dom_selectors.js'; 
+import { setButtonActive, setMultipleButtonsActive, CELLS_OPPORTUNITY, CELLS_DOODAD, CELLS_MARKET } from './common_utils.js';
 
-- https://mygan-six.vercel.app/
-- https://mygan-six.vercel.app/host.html
-- https://mygan-six.vercel.app/cards/small.html
+function toCurrency(value) {
+    return Number(value || 0).toLocaleString();
+}
 
+export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
+    const record = cachedParticipants.find(p => p.user_id === currentUserId);
+    if (!record || !record.state) return;
 
-【supabase 現在のテーブル確認SQL】
+    const state = record.state;
+    const financials = state.financials || {};
+    const flags = state.flags || {}; 
+    const turnUserId = cachedRoom ? cachedRoom.current_turn_user_id : null;
+    const isMyTurn = (turnUserId === currentUserId);
+    const isPlaying = cachedRoom?.game_state?.status === 'playing';
 
-SELECT 
-    schemaname, 
-    tablename, 
-    tableowner 
-FROM 
-    pg_tables 
-WHERE 
-    schemaname = 'public';
+    const diceStatusArea = document.getElementById(SEL_G.CONTROLS.DICE_USER);
+    
+    const safeUpdate = (selectorId, text) => {
+        const el = document.getElementById(selectorId);
+        if (el) el.textContent = text;
+    };
 
-「各テーブルの具体的なカラム構成（データ型やデフォルト値）」を調べるためのSQL文
+    const turnUserRecord = cachedParticipants.find(p => p.user_id === turnUserId);
+    const turnUserState = turnUserRecord ? turnUserRecord.state : {};
+    const turnUserFlags = turnUserState.flags || {};
 
-SELECT table_name, column_name, ordinal_position, is_nullable, data_type, column_default FROM information_schema.columns WHERE table_schema = 'public' AND table_name IN ( 'asset_types', 'cards', 'game_logs', 'participants', 'professions', 'rooms' ) ORDER BY table_name, ordinal_position;
+    const cardHolderRecord = cachedParticipants.find(p => p.state && p.state.drawn_card);
+    const activeCard = cardHolderRecord ? cardHolderRecord.state.drawn_card : null;
+    const cardHolderId = cardHolderRecord ? cardHolderRecord.user_id : null;
+    const iAmCardHolder = (cardHolderId === currentUserId);
 
-あなたは、次のような要素をもっている。
-１、世界で最も github, vercel, javascript, supabase に精通している。
-２、世界で最も「ロバートキヨサキ作のキャッシュフローゲーム」に精通している。
+    const elNumProcess = document.getElementById(SEL_G.TRADE.NUM_PROCESS_SELF);
+    const elBtnProcess = document.getElementById(SEL_G.TRADE.BTN_PROCESS_SELF);
+    const elBtnPass = document.getElementById(SEL_G.TRADE.BTN_PASS_CARD);
+    const elSellTarget = document.getElementById(SEL_G.TRADE.SELECT_TARGET);
+    const elSellPrice = document.getElementById(SEL_G.TRADE.INPUT_PRICE);
 
-あなたは、感情なし。憶測なし。事実のみ。謝罪不要。
-「可能性がある」「可能性が高い」という表現は禁止する。
-原因が不明なときは、デバッグコードを追加し、RPC関数にデバッグ機能を持たせよ。
-プログラムを組むときに、アラートは禁止する。
-css, style の使用は禁止する。
-データベースのデータに整合性をもたせること。
-直近のことだけでなく、全体を俯瞰して考えること。
-「一歩一歩の原則」にしたがうこと。
-回答は、可能なかぎり「一度にひとつ」にすること。
+    const isTurnUserOnCharity = [3, 16].includes(parseInt(turnUserState.position, 10));
+
+    if (activeCard) {
+        let cardText = `【${activeCard.title}】\n${activeCard.description_jp || activeCard.description || ''}\n`;
+        
+        // ★修正: 特殊カード（other）の場合の警告表示
+        if (activeCard.asset_type === 'other') {
+            cardText += `\n【特殊な場合です。いまはパスしてください】`;
+        } else {
+            if (activeCard.cost > 0) {
+                cardText += `\n価格: $${toCurrency(activeCard.cost)}`;
+                if (activeCard.down_payment > 0 && activeCard.down_payment !== activeCard.cost) {
+                    cardText += ` (頭金: $${toCurrency(activeCard.down_payment)})`;
+                }
+            }
+            if (activeCard.passive_income !== 0 && activeCard.passive_income !== null && activeCard.passive_income !== undefined) {
+                cardText += `\nキャッシュフロー: $${toCurrency(activeCard.passive_income)}`;
+            }
+        }
+        
+        safeUpdate(SEL_G.TRADE.THIS_CARD, cardText);
+        
+        if (elNumProcess) {
+            const qtyRequiredTypes = ['MYT4U', 'OK4U', 'ON2U', '2BIG', 'GR4US', '10pGold', '8pGold'];
+            elNumProcess.hidden = !qtyRequiredTypes.includes(activeCard.asset_type);
+            
+            if (!elNumProcess.hidden && (!elNumProcess.value || parseInt(elNumProcess.value, 10) < 1)) {
+                elNumProcess.value = 1;
+            }
+        }
+
+        let canPass = false;
+        let canProcess = false;
+
+        if (elBtnProcess) {
+            const cardHolderPos = cardHolderRecord.state.position;
+            
+            // ★修正: otherの場合は実行ボタンを無効化し、パスのみを許可
+            if (activeCard.asset_type === 'other') {
+                elBtnProcess.textContent = '実行不可（特殊）';
+                canProcess = false;
+                canPass = true;
+            } else if (cardHolderPos !== undefined && CELLS_DOODAD.includes(parseInt(cardHolderPos, 10))) {
+                elBtnProcess.textContent = '支払う';
+                canProcess = true;
+                canPass = false;
+            } else if (cardHolderPos !== undefined && CELLS_MARKET.includes(parseInt(cardHolderPos, 10))) {
+                elBtnProcess.textContent = '確認して手番を進める';
+                canProcess = true;
+                canPass = true;
+            } else {
+                elBtnProcess.textContent = '自分で実行する（購入・支払）';
+                canProcess = true;
+                canPass = true;
+            }
+        }
+        
+        if (iAmCardHolder) {
+            setButtonActive(SEL_G.TRADE.BTN_SELL, activeCard.asset_type !== 'other' && !!activeCard.is_resellable);
+            setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, canProcess);
+            setButtonActive(SEL_G.TRADE.BTN_PASS_CARD, canPass);
+            if (elSellTarget) elSellTarget.disabled = activeCard.asset_type === 'other' || !activeCard.is_resellable;
+            if (elSellPrice) elSellPrice.disabled = activeCard.asset_type === 'other' || !activeCard.is_resellable;
+        } else {
+            setButtonActive(SEL_G.TRADE.BTN_SELL, false);
+            setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, false);
+            setButtonActive(SEL_G.TRADE.BTN_PASS_CARD, false);
+            if (elSellTarget) elSellTarget.disabled = true;
+            if (elSellPrice) elSellPrice.disabled = true;
+        }
+        
+        setButtonActive(SEL_G.CARD.BTN_SMALL_DEAL, false);
+        setButtonActive(SEL_G.CARD.BTN_BIG_DEAL, false);
+
+    } else if (turnUserFlags.has_rolled_dice && isTurnUserOnCharity && !turnUserFlags.is_action_completed) {
+        if (isMyTurn) {
+            const items = state.items || [];
+            const totalIncome = items.filter(i => (i.cashflow || 0) > 0).reduce((sum, i) => sum + Number(i.cashflow), 0);
+            const donateAmount = totalIncome * 0.1;
+            
+            safeUpdate(SEL_G.TRADE.THIS_CARD, `【寄付】\n総収入の10% ($${toCurrency(donateAmount)}) を支払うことで、以降3ターンの間サイコロを2個振ることができます。`);
+            
+            setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, true);
+            setButtonActive(SEL_G.TRADE.BTN_PASS_CARD, true);
+            if (elBtnProcess) elBtnProcess.textContent = '寄付する';
+        } else {
+            safeUpdate(SEL_G.TRADE.THIS_CARD, `${turnUserState.name || '他のプレイヤー'} が寄付を検討中です...`);
+            setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, false);
+            setButtonActive(SEL_G.TRADE.BTN_PASS_CARD, false);
+        }
+        if (elNumProcess) elNumProcess.hidden = true;
+        if (elSellTarget) elSellTarget.disabled = true;
+        if (elSellPrice) elSellPrice.disabled = true;
+        setButtonActive(SEL_G.CARD.BTN_SMALL_DEAL, false);
+        setButtonActive(SEL_G.CARD.BTN_BIG_DEAL, false);
+        setButtonActive(SEL_G.TRADE.BTN_SELL, false);
+
+    } else if (turnUserFlags.has_rolled_dice && CELLS_OPPORTUNITY.includes(parseInt(turnUserState.position, 10)) && !turnUserFlags.is_card_drawn) {
+        if (isMyTurn) {
+            safeUpdate(SEL_G.TRADE.THIS_CARD, "普通の商売、または大きな商売、のどちらかをひいてください");
+            setButtonActive(SEL_G.CARD.BTN_SMALL_DEAL, true);
+            setButtonActive(SEL_G.CARD.BTN_BIG_DEAL, true);
+        } else {
+            safeUpdate(SEL_G.TRADE.THIS_CARD, `${turnUserState.name || '他のプレイヤー'} が商売カードを選択中です...`);
+            setButtonActive(SEL_G.CARD.BTN_SMALL_DEAL, false);
+            setButtonActive(SEL_G.CARD.BTN_BIG_DEAL, false);
+        }
+        setButtonActive(SEL_G.TRADE.BTN_SELL, false);
+        setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, false);
+        setButtonActive(SEL_G.TRADE.BTN_PASS_CARD, false);
+        
+        if (elNumProcess) elNumProcess.hidden = true;
+        if (elSellTarget) elSellTarget.disabled = true;
+        if (elSellPrice) elSellPrice.disabled = true;
+        if (elBtnProcess) elBtnProcess.textContent = '自分で実行する（購入・支払）';
+    } else {
+        safeUpdate(SEL_G.TRADE.THIS_CARD, "場に出たカード");
+        setButtonActive(SEL_G.TRADE.BTN_SELL, false);
+        setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, false);
+        setButtonActive(SEL_G.TRADE.BTN_PASS_CARD, false);
+        setButtonActive(SEL_G.CARD.BTN_SMALL_DEAL, false);
+        setButtonActive(SEL_G.CARD.BTN_BIG_DEAL, false);
+        
+        if (elNumProcess) elNumProcess.hidden = true;
+        if (elSellTarget) elSellTarget.disabled = true;
+        if (elSellPrice) elSellPrice.disabled = true;
+        if (elBtnProcess) elBtnProcess.textContent = '自分で実行する（購入・支払）';
+    }
+    
+    if (!isPlaying) {
+        if (diceStatusArea) diceStatusArea.textContent = "ホストがゲームを開始するまでお待ちください。";
+    } else {
+        const turnUserName = turnUserRecord ? turnUserRecord.state.name : "他のプレイヤー";        
+
+        if (isMyTurn) {
+            const pendingPaydays = parseInt(flags.pending_paydays || 0, 10);
+            setButtonActive(SEL_G.CONTROLS.BTN_PAYCHECK, pendingPaydays > 0);
+
+            if (flags.has_rolled_dice) {
+                if (diceStatusArea) {
+                    diceStatusArea.textContent = pendingPaydays > 0 
+                        ? `結果:【${state.last_dice}】 入金請求（${pendingPaydays}回分）`
+                        : `結果:【${state.last_dice}】`;
+                }
+                
+                setButtonActive(SEL_G.CONTROLS.BTN_DICE1, false);
+                setButtonActive(SEL_G.CONTROLS.BTN_DICE_2, false);
+                
+                let canEndTurn = false;
+                const isTrading = !!cachedRoom?.game_state?.trade_offer;
+                const anyCardHolderExists = cachedParticipants.some(p => p.state && p.state.drawn_card);
+                
+                const items = state.items || [];
+                const hasInstantDebt = items.some(item => item.type_id === 'InstantDebt');
+                
+                const isMyCharity = [3, 16].includes(parseInt(state.position, 10));
+                
+                if (!flags.is_calculating && financials.cash >= 0) {
+                    if (!anyCardHolderExists && !isTrading && !hasInstantDebt) {
+                        if (isMyCharity) {
+                            if (flags.is_action_completed) canEndTurn = true;
+                        } else if (!state.drawn_card || flags.is_action_completed) {
+                            canEndTurn = true;
+                        }
+                    }
+                }
+                
+                setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, canEndTurn);
+
+            } else {
+                const charityTurnsLeft = parseInt(flags.charity_turns_left || 0, 10);
+                const downsizedTurnsLeft = parseInt(flags.downsized_turns_left || 0, 10);
+
+                if (downsizedTurnsLeft > 0) {
+                    if (diceStatusArea) diceStatusArea.textContent = `休み（残り ${downsizedTurnsLeft} ターン）`;
+                    setButtonActive(SEL_G.CONTROLS.BTN_DICE1, false);
+                    setButtonActive(SEL_G.CONTROLS.BTN_DICE_2, false);
+                    
+                    const items = state.items || [];
+                    const hasInstantDebt = items.some(item => item.type_id === 'InstantDebt');
+                    
+                    setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, !hasInstantDebt);
+                } else {
+                    if (diceStatusArea) diceStatusArea.textContent = charityTurnsLeft > 0 
+                        ? `あなたの手番 (寄付効果: 残り ${charityTurnsLeft} ターン)` 
+                        : "あなたの手番";
+                        
+                    setButtonActive(SEL_G.CONTROLS.BTN_DICE1, true);
+                    setButtonActive(SEL_G.CONTROLS.BTN_DICE_2, charityTurnsLeft > 0);
+                    setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, false);
+                }
+            }
+            
+            setButtonActive(SEL_G.FINANCIALS.BTN_C_CASHFLOW, !!flags.is_calculating);
+            setButtonActive(SEL_G.LOAN.BTN_BORROW_LOAN, true);
+            setButtonActive(SEL_G.LOAN.BTN_PAYBACK_LOAN, true);
+            setButtonActive(SEL_G.FINANCIALS.BTN_OPERATE, true);
+            
+        } else {
+            if (diceStatusArea) diceStatusArea.textContent = `[${turnUserName}] がプレイ中`;
+            
+            // ★修正: 他の手番中であっても、ローン操作と財務諸表の操作は制限しない
+            setMultipleButtonsActive([
+                SEL_G.CONTROLS.BTN_DICE1, SEL_G.CONTROLS.BTN_DICE_2, SEL_G.CONTROLS.BTN_PAYCHECK, SEL_G.CONTROLS.BTN_END_TURN,
+                SEL_G.CARD.BTN_SMALL_DEAL, SEL_G.CARD.BTN_BIG_DEAL,
+                SEL_G.FINANCIALS.BTN_C_CASHFLOW
+            ], false);
+
+            setButtonActive(SEL_G.LOAN.BTN_BORROW_LOAN, true);
+            setButtonActive(SEL_G.LOAN.BTN_PAYBACK_LOAN, true);
+            setButtonActive(SEL_G.FINANCIALS.BTN_OPERATE, true);
+        }
+    }
+
+    const tradeOffer = cachedRoom?.game_state?.trade_offer;
+    if (tradeOffer) {
+        if (tradeOffer.to === currentUserId) {
+            const fromUser = cachedParticipants.find(p => p.user_id === tradeOffer.from);
+            safeUpdate(SEL_G.TRADE.TRADE_MESSAGE, `${fromUser?.state?.name || "他のプレイヤー"} さんから $${toCurrency(tradeOffer.price)} で権利を買う提案が来ています。`);
+            setButtonActive(SEL_G.TRADE.BTN_ACCEPT, true);
+            setButtonActive(SEL_G.TRADE.BTN_REJECT, true);
+        } else if (tradeOffer.from === currentUserId) {
+            const toUser = cachedParticipants.find(p => p.user_id === tradeOffer.to);
+            safeUpdate(SEL_G.TRADE.TRADE_MESSAGE, `${toUser?.state?.name || "他のプレイヤー"} さんからの返答を待っています...`);
+            setButtonActive(SEL_G.TRADE.BTN_ACCEPT, false);
+            setButtonActive(SEL_G.TRADE.BTN_REJECT, false);
+        } else {
+            safeUpdate(SEL_G.TRADE.TRADE_MESSAGE, "他プレイヤー間で交渉中です...");
+            setButtonActive(SEL_G.TRADE.BTN_ACCEPT, false);
+            setButtonActive(SEL_G.TRADE.BTN_REJECT, false);
+        }
+    } else {
+        safeUpdate(SEL_G.TRADE.TRADE_MESSAGE, "受け取るメッセージ (現在交渉なし)");
+        setButtonActive(SEL_G.TRADE.BTN_ACCEPT, false);
+        setButtonActive(SEL_G.TRADE.BTN_REJECT, false);
+    }
+}
