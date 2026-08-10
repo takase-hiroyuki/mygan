@@ -87,7 +87,38 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
     }
 }
 
-// ★修正: updatePlayerFlagを削除し、新規作成したRPCを呼び出す
+// ★追加: 寄付およびカード処理を実行する統合関数
+export async function actionProcessSelf(supabase, currentUserId, qty = 1) {
+    if (!supabase || !currentUserId) return;
+
+    const state = await getCurrentPlayerState(supabase, currentUserId);
+    if (!state) return;
+
+    const playerName = state.name || getLocalPlayerName();
+    const isCharity = [3, 16].includes(state.position);
+
+    try {
+        // 寄付マスのアクション処理
+        if (isCharity && !state.drawn_card && !state.flags.is_action_completed) {
+            await callRpcWithDebug(supabase, 'donate_charity_v2', {
+                p_room_id: roomId,
+                p_user_id: currentUserId
+            });
+            await insertSystemMessage(supabase, playerName, "寄付を行いました。以降のターンでサイコロを2個振る権利を獲得しました。");
+            return;
+        }
+
+        // 通常のカード実行処理
+        await callRpcWithDebug(supabase, 'execute_drawn_card_v2', {
+            p_room_id: roomId,
+            p_user_id: currentUserId,
+            p_input_quantity: qty
+        });
+    } catch (error) {
+        await insertSystemMessage(supabase, playerName, `エラー: ${error.message}`);
+    }
+}
+
 export async function actionPass(supabase, currentUserId) {
     if (!supabase || !currentUserId) return;
     
@@ -97,7 +128,6 @@ export async function actionPass(supabase, currentUserId) {
             p_room_id: roomId,
             p_user_id: currentUserId
         });
-        await insertSystemMessage(supabase, playerName, "処理を完了しました。");
     } catch (error) {
         await insertSystemMessage(supabase, playerName, `エラー: ${error.message}`);
     }
