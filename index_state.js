@@ -100,4 +100,4 @@ export async function fetchAndRender(supabase, roomId, currentUserId) {
     }
 }
 
-console.log("【デバッグ】index_state.js が読み込まれました。");
+console.log("【残す】index_state.js が読み込まれました。");
