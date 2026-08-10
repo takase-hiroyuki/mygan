@@ -92,11 +92,21 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
         let liabHTML = "<table border='1' width='100%'><tr><th>負債名</th><th>負債残高</th><th>CF</th></tr>";
         let optionsHTML = '<option value="">対象の資産・負債を選択</option>';
 
+        let totalExpenses = 0;
+        let passiveIncome = 0;
+
         selectedItems.forEach(item => {
             // 変数を数値化して扱いやすくする
             const costVal = Number(item.cost || 0);
             const liabVal = Number(item.liability || 0);
             const cfVal = Number(item.cashflow || 0);
+
+            // 総支出と不労所得の計算
+            if (cfVal < 0) {
+                totalExpenses += Math.abs(cfVal);
+            } else if (cfVal > 0 && costVal > 0) {
+                passiveIncome += cfVal;
+            }
 
             // 1. 資産の部への出力判定
             // 実体価値(cost > 0)があるか、または純粋なプラスのCFを生み出す(給料など)もの
@@ -149,6 +159,17 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
         
         const elProfitLossSelect = document.getElementById(SEL_G.FINANCIALS.PROFIT_LOSS_SELECT);
         if (elProfitLossSelect) elProfitLossSelect.innerHTML = optionsHTML;
+
+        // ファーストトラック移行ボタンのテキスト更新
+        const btnFastTrack = document.getElementById(SEL_G.FINANCIALS.BTN_FAST_TRACK);
+        if (btnFastTrack) {
+            const diffToFastTrack = totalExpenses - passiveIncome;
+            if (diffToFastTrack > 0) {
+                btnFastTrack.textContent = `ファーストトラックまで、あと$${toCurrency(diffToFastTrack)}`;
+            } else {
+                btnFastTrack.textContent = `ファーストトラックへ移行可能！`;
+            }
+        }
     }
 
     const sellTargetSelect = document.getElementById(SEL_G.TRADE.SELECT_TARGET);
