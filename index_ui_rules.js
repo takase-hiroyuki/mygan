@@ -44,19 +44,14 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
     if (activeCard) {
         let cardText = `【${activeCard.title}】\n${activeCard.description_jp || activeCard.description || ''}\n`;
         
-        // ★修正: 特殊カード（other）の場合の警告表示
-        if (activeCard.asset_type === 'other') {
-            cardText += `\n【特殊な場合です。いまはパスしてください】`;
-        } else {
-            if (activeCard.cost > 0) {
-                cardText += `\n価格: $${toCurrency(activeCard.cost)}`;
-                if (activeCard.down_payment > 0 && activeCard.down_payment !== activeCard.cost) {
-                    cardText += ` (頭金: $${toCurrency(activeCard.down_payment)})`;
-                }
+        if (activeCard.cost > 0) {
+            cardText += `\n価格: $${toCurrency(activeCard.cost)}`;
+            if (activeCard.down_payment > 0 && activeCard.down_payment !== activeCard.cost) {
+                cardText += ` (頭金: $${toCurrency(activeCard.down_payment)})`;
             }
-            if (activeCard.passive_income !== 0 && activeCard.passive_income !== null && activeCard.passive_income !== undefined) {
-                cardText += `\nキャッシュフロー: $${toCurrency(activeCard.passive_income)}`;
-            }
+        }
+        if (activeCard.passive_income !== 0 && activeCard.passive_income !== null && activeCard.passive_income !== undefined) {
+            cardText += `\nキャッシュフロー: $${toCurrency(activeCard.passive_income)}`;
         }
         
         safeUpdate(SEL_G.TRADE.THIS_CARD, cardText);
@@ -76,10 +71,9 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
         if (elBtnProcess) {
             const cardHolderPos = cardHolderRecord.state.position;
             
-            // ★修正: otherの場合は実行ボタンを無効化し、パスのみを許可
             if (activeCard.asset_type === 'other') {
-                elBtnProcess.textContent = '実行不可（特殊）';
-                canProcess = false;
+                elBtnProcess.textContent = '実行する（支払・適用）';
+                canProcess = true;
                 canPass = true;
             } else if (cardHolderPos !== undefined && CELLS_DOODAD.includes(parseInt(cardHolderPos, 10))) {
                 elBtnProcess.textContent = '支払う';
@@ -239,12 +233,16 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
             
         } else {
             if (diceStatusArea) diceStatusArea.textContent = `[${turnUserName}] がプレイ中`;
+            
             setMultipleButtonsActive([
                 SEL_G.CONTROLS.BTN_DICE1, SEL_G.CONTROLS.BTN_DICE_2, SEL_G.CONTROLS.BTN_PAYCHECK, SEL_G.CONTROLS.BTN_END_TURN,
                 SEL_G.CARD.BTN_SMALL_DEAL, SEL_G.CARD.BTN_BIG_DEAL,
-                SEL_G.LOAN.BTN_BORROW_LOAN, SEL_G.LOAN.BTN_PAYBACK_LOAN, 
-                SEL_G.FINANCIALS.BTN_C_CASHFLOW, SEL_G.FINANCIALS.BTN_OPERATE
+                SEL_G.FINANCIALS.BTN_C_CASHFLOW
             ], false);
+
+            setButtonActive(SEL_G.LOAN.BTN_BORROW_LOAN, true);
+            setButtonActive(SEL_G.LOAN.BTN_PAYBACK_LOAN, true);
+            setButtonActive(SEL_G.FINANCIALS.BTN_OPERATE, true);
         }
     }
 
