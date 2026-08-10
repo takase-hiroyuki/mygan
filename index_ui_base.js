@@ -93,20 +93,35 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
         let optionsHTML = '<option value="">対象の資産・負債を選択</option>';
 
         selectedItems.forEach(item => {
-            if (item.liability > 0 || item.cashflow < 0) {
-                const cfStr = item.cashflow < 0 ? toCurrency(item.cashflow) : `+${toCurrency(item.cashflow)}`;
-                liabHTML += `<tr><td>${item.title}</td><td>${item.liability > 0 ? toCurrency(item.liability) : '0'}</td><td>${cfStr}</td></tr>`;
-                if (item.liability > 0) {
-                    optionsHTML += `<option value="${item.id}">【返済】${item.title} (残高: $${toCurrency(item.liability)})</option>`;
-                }
-            } else {
+            // 1. 資産の部への出力判定 (cost が 0 より大きいものは実体価値があるので資産)
+            if (item.cost && Number(item.cost) > 0) {
                 const cfStr = item.cashflow <= 0 ? toCurrency(item.cashflow) : `+${toCurrency(item.cashflow)}`;
-                const unitPrice = item.cost > 0 ? toCurrency(item.cost) : '0';
+                const unitPrice = toCurrency(item.cost);
                 const quantity = item.quantity !== undefined ? item.quantity : 1; 
                 const quantityStr = Number(quantity).toLocaleString(); 
+                
                 assetsHTML += `<tr><td>${item.title}</td><td>${unitPrice}</td><td>${quantityStr}</td><td>${cfStr}</td></tr>`;
-                if (item.cost > 0) {
-                    optionsHTML += `<option value="${item.id}">【売却】${item.title} (単価: $${unitPrice}, 数量: ${quantityStr})</option>`;
+                optionsHTML += `<option value="${item.id}">【売却】${item.title} (単価: $${unitPrice}, 数量: ${quantityStr})</option>`;
+            }
+
+            // 2. 負債の部への出力判定 (liability が 0 より大きい、または cost がなく cashflow がマイナスな純粋支出)
+            if ((item.liability && Number(item.liability) > 0) || (item.cashflow < 0 && !(item.cost > 0))) {
+                let displayName = item.title;
+                let displayCF = item.cashflow;
+                
+                // アパートなどの「資産に紐づくローン」の場合は表示名を変え、CF表示をゼロ(資産側に計上済みのため)にする
+                if (item.cost && Number(item.cost) > 0 && item.liability && Number(item.liability) > 0) {
+                    displayName = item.title + "のローン";
+                    displayCF = 0; 
+                }
+
+                const cfStr = displayCF < 0 ? toCurrency(displayCF) : `+${toCurrency(displayCF)}`;
+                const liabStr = item.liability > 0 ? toCurrency(item.liability) : '0';
+                
+                liabHTML += `<tr><td>${displayName}</td><td>${liabStr}</td><td>${cfStr}</td></tr>`;
+                
+                if (item.liability > 0) {
+                    optionsHTML += `<option value="${item.id}">【返済】${displayName} (残高: $${liabStr})</option>`;
                 }
             }
         });
