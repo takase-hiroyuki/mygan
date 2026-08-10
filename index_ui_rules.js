@@ -42,22 +42,25 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
     const isTurnUserOnCharity = [3, 16].includes(parseInt(turnUserState.position, 10));
 
     if (activeCard) {
-        // ★修正: カードの詳細情報（価格、頭金、キャッシュフロー）を見やすく組み立てる
         let cardText = `【${activeCard.title}】\n${activeCard.description_jp || activeCard.description || ''}\n`;
         
-        if (activeCard.cost > 0) {
-            cardText += `\n価格: $${toCurrency(activeCard.cost)}`;
-            if (activeCard.down_payment > 0 && activeCard.down_payment !== activeCard.cost) {
-                cardText += ` (頭金: $${toCurrency(activeCard.down_payment)})`;
+        // ★修正: 特殊カード（other）の場合の警告表示
+        if (activeCard.asset_type === 'other') {
+            cardText += `\n【特殊な場合です。いまはパスしてください】`;
+        } else {
+            if (activeCard.cost > 0) {
+                cardText += `\n価格: $${toCurrency(activeCard.cost)}`;
+                if (activeCard.down_payment > 0 && activeCard.down_payment !== activeCard.cost) {
+                    cardText += ` (頭金: $${toCurrency(activeCard.down_payment)})`;
+                }
             }
-        }
-        if (activeCard.passive_income !== 0 && activeCard.passive_income !== null && activeCard.passive_income !== undefined) {
-            cardText += `\nキャッシュフロー: $${toCurrency(activeCard.passive_income)}`;
+            if (activeCard.passive_income !== 0 && activeCard.passive_income !== null && activeCard.passive_income !== undefined) {
+                cardText += `\nキャッシュフロー: $${toCurrency(activeCard.passive_income)}`;
+            }
         }
         
         safeUpdate(SEL_G.TRADE.THIS_CARD, cardText);
         
-        // ★修正: マスターデータに基づき、数量入力フォームの表示・非表示を制御する
         if (elNumProcess) {
             const qtyRequiredTypes = ['MYT4U', 'OK4U', 'ON2U', '2BIG', 'GR4US', '10pGold', '8pGold'];
             elNumProcess.hidden = !qtyRequiredTypes.includes(activeCard.asset_type);
@@ -68,27 +71,37 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
         }
 
         let canPass = false;
+        let canProcess = false;
 
         if (elBtnProcess) {
             const cardHolderPos = cardHolderRecord.state.position;
-            if (cardHolderPos !== undefined && CELLS_DOODAD.includes(parseInt(cardHolderPos, 10))) {
+            
+            // ★修正: otherの場合は実行ボタンを無効化し、パスのみを許可
+            if (activeCard.asset_type === 'other') {
+                elBtnProcess.textContent = '実行不可（特殊）';
+                canProcess = false;
+                canPass = true;
+            } else if (cardHolderPos !== undefined && CELLS_DOODAD.includes(parseInt(cardHolderPos, 10))) {
                 elBtnProcess.textContent = '支払う';
+                canProcess = true;
                 canPass = false;
             } else if (cardHolderPos !== undefined && CELLS_MARKET.includes(parseInt(cardHolderPos, 10))) {
                 elBtnProcess.textContent = '確認して手番を進める';
+                canProcess = true;
                 canPass = true;
             } else {
                 elBtnProcess.textContent = '自分で実行する（購入・支払）';
+                canProcess = true;
                 canPass = true;
             }
         }
         
         if (iAmCardHolder) {
-            setButtonActive(SEL_G.TRADE.BTN_SELL, !!activeCard.is_resellable);
-            setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, true);
+            setButtonActive(SEL_G.TRADE.BTN_SELL, activeCard.asset_type !== 'other' && !!activeCard.is_resellable);
+            setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, canProcess);
             setButtonActive(SEL_G.TRADE.BTN_PASS_CARD, canPass);
-            if (elSellTarget) elSellTarget.disabled = !activeCard.is_resellable;
-            if (elSellPrice) elSellPrice.disabled = !activeCard.is_resellable;
+            if (elSellTarget) elSellTarget.disabled = activeCard.asset_type === 'other' || !activeCard.is_resellable;
+            if (elSellPrice) elSellPrice.disabled = activeCard.asset_type === 'other' || !activeCard.is_resellable;
         } else {
             setButtonActive(SEL_G.TRADE.BTN_SELL, false);
             setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, false);
