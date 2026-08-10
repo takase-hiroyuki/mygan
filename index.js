@@ -74,6 +74,7 @@ const btnSmallDeal = document.getElementById(SEL_G.CARD.BTN_SMALL_DEAL);
 const btnBigDeal = document.getElementById(SEL_G.CARD.BTN_BIG_DEAL);
 const btnOperate = document.getElementById(SEL_G.FINANCIALS.BTN_OPERATE);
 const btnSellCard = document.getElementById(SEL_G.TRADE.BTN_SELL);
+const btnFastTrack = document.getElementById(SEL_G.FINANCIALS.BTN_FAST_TRACK); // ★追加: ファーストトラックボタン
 
 // 取引・カード処理用ボタンの取得
 const btnProcessSelf = document.getElementById(SEL_G.TRADE.BTN_PROCESS_SELF);
@@ -170,6 +171,12 @@ btnOperate?.addEventListener('click', () => {
 
 btnSellCard?.addEventListener('click', () => {
     actionProposeTrade(supabase, currentUserId);
+});
+
+// ★追加: ファーストトラックのダミーリスナー
+btnFastTrack?.addEventListener('click', () => {
+    console.log("[DEBUG] ファーストトラック移行ボタンが押下されました。(現在はダミーリスナー)");
+    // 今後ここにファーストトラック移行処理を実装する
 });
 
 // ★修正: 寄付および株の購入処理（数量の取得を追加）
