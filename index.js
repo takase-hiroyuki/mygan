@@ -52,11 +52,11 @@ import { applyUIRules } from './index_ui_rules.js';
 import { initSupabaseClient, checkExistingLogin, loginUser } from './index_auth.js';
 import { startSubscriptions } from './index_state.js'; 
 import { insertSystemMessage } from './common_utils.js'; 
-import { actionRollDice, actionEndTurn, actionDrawCard, actionPass } from './index_actions_turn.js';
+// ★修正: actionProcessSelf は index_actions_turn.js からインポートする
+import { actionRollDice, actionEndTurn, actionDrawCard, actionPass, actionProcessSelf } from './index_actions_turn.js';
 import { actionClaimPaycheck, actionCheckCalculations, actionOperateItem } from './index_actions_finance.js'; 
 import { actionBorrowBankLoan, actionRepayBankLoan } from './index_actions_loan.js';
-// ★修正: actionProcessSelf をインポートに追加
-import { actionProposeTrade, actionAcceptTrade, actionRejectTrade, actionProcessSelf } from './index_actions_trade.js';
+import { actionProposeTrade, actionAcceptTrade, actionRejectTrade } from './index_actions_trade.js';
 
 let supabase = null;
 let currentUserId = null;
@@ -75,9 +75,9 @@ const btnBigDeal = document.getElementById(SEL_G.CARD.BTN_BIG_DEAL);
 const btnOperate = document.getElementById(SEL_G.FINANCIALS.BTN_OPERATE);
 const btnSellCard = document.getElementById(SEL_G.TRADE.BTN_SELL);
 
-// ★取引・カード処理用ボタンの取得
+// 取引・カード処理用ボタンの取得
 const btnProcessSelf = document.getElementById(SEL_G.TRADE.BTN_PROCESS_SELF);
-const btnPassCard = document.getElementById(SEL_G.TRADE.BTN_PASS_CARD); // ★追加: 見送るボタン
+const btnPassCard = document.getElementById(SEL_G.TRADE.BTN_PASS_CARD);
 const btnTradeAccept = document.getElementById(SEL_G.TRADE.BTN_ACCEPT);
 const btnTradeReject = document.getElementById(SEL_G.TRADE.BTN_REJECT);
 
@@ -172,12 +172,13 @@ btnSellCard?.addEventListener('click', () => {
     actionProposeTrade(supabase, currentUserId);
 });
 
-// ★修正: 「自分で実行する」ボタンは本物の購入・支払い処理へ
+// ★修正: 寄付および株の購入処理（数量の取得を追加）
 btnProcessSelf?.addEventListener('click', () => {
-    actionProcessSelf(supabase, currentUserId);
+    const numInput = document.getElementById(SEL_G.TRADE.NUM_PROCESS_SELF);
+    const qty = numInput && !numInput.hidden ? parseInt(numInput.value, 10) || 1 : 1;
+    actionProcessSelf(supabase, currentUserId, qty);
 });
 
-// ★追加: 「見送る（パスする）」ボタンは手番の完了（破棄）へ
 btnPassCard?.addEventListener('click', async () => {
     await actionPass(supabase, currentUserId);
 });
