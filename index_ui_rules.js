@@ -269,3 +269,5 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
         setButtonActive(SEL_G.TRADE.BTN_REJECT, false);
     }
 }
+
+console.log("【残す】index_ui_rules.js が読み込まれました。");
