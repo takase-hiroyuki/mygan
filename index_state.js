@@ -1,20 +1,22 @@
 // index_state.js
-import { renderGuestUI } from './index_ui.js';
 import { SEL_G } from './common_dom_selectors.js'; 
 import { getLocalPlayerName, insertSystemMessage, displaySystemMessage } from './common_utils.js';
 
 let cachedParticipants = [];
 let cachedRoom = null;
+let _onRenderCallback = null; // ★ UI更新用のコールバック関数を保持する変数
 
 // Supabase Realtimeの購読を開始する
-export function startSubscriptions(supabase, roomId, currentUserId) {
+export function startSubscriptions(supabase, roomId, currentUserId, onRender) {
     if (!supabase) return;
+    
+    // ★ index.js から渡された UI描画関数をセット
+    _onRenderCallback = onRender;
 
     // 参加者データの変更監視
     supabase.channel('public:participants').on('postgres_changes', {
         event: '*', schema: 'public', table: 'participants' 
     }, async (payload) => {
-        // 対象ユーザーが削除（キック）された場合、自身であれば強制ログアウトする
         if (payload.eventType === 'DELETE' && payload.old) {
             if (payload.old.user_id === currentUserId) {
                 const playerName = getLocalPlayerName();
@@ -30,7 +32,6 @@ export function startSubscriptions(supabase, roomId, currentUserId) {
                 return;
             }
             
-            // 部屋の参加者が0になった場合の処理
             const { data } = await supabase.from('participants').select('id').eq('room_id', roomId);
             if (!data || data.length === 0) {
                 const playerName = getLocalPlayerName();
@@ -61,8 +62,6 @@ export function startSubscriptions(supabase, roomId, currentUserId) {
     }, (payload) => {
         const logData = payload.new;
         if (logData && logData.target && logData.body) {
-            // 【重要】ここは「DBから受信したログを画面に表示する」だけの受信機のため、
-            // 唯一 displaySystemMessage を維持します。
             displaySystemMessage(logData.target, logData.body);
         }
     }).subscribe();
@@ -70,7 +69,7 @@ export function startSubscriptions(supabase, roomId, currentUserId) {
     fetchAndRender(supabase, roomId, currentUserId);
 }
 
- // データベースから最新状態を取得し、キャッシュを更新して画面を描画する
+// データベースから最新状態を取得し、キャッシュを更新して画面を描画する
 export async function fetchAndRender(supabase, roomId, currentUserId) {
     if (!supabase) return;
     
@@ -95,8 +94,10 @@ export async function fetchAndRender(supabase, roomId, currentUserId) {
     if (resPart.data) cachedParticipants = resPart.data;
     if (resRoom.data) cachedRoom = resRoom.data;
     
-    // UI描画関数を呼び出し、最新のキャッシュを渡す（ここですべてのボタン制御を決定）
-    renderGuestUI(currentUserId, cachedParticipants, cachedRoom, supabase);
+    // ★ 直接 UI.js を呼び出さず、登録されたコールバックを実行する
+    if (_onRenderCallback) {
+        _onRenderCallback(currentUserId, cachedParticipants, cachedRoom);
+    }
 }
 
 console.log("【デバッグ】index_state.js が読み込まれました。");
