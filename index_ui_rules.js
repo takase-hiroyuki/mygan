@@ -39,14 +39,32 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
     const elSellTarget = document.getElementById(SEL_G.TRADE.SELECT_TARGET);
     const elSellPrice = document.getElementById(SEL_G.TRADE.INPUT_PRICE);
 
-    const isTurnUserOnCharity = [3, 16].includes(turnUserState.position);
+    const isTurnUserOnCharity = [3, 16].includes(parseInt(turnUserState.position, 10));
 
     if (activeCard) {
-        safeUpdate(SEL_G.TRADE.THIS_CARD, `【${activeCard.title}】\n${activeCard.description_jp || ''}`);
+        // ★修正: カードの詳細情報（価格、頭金、キャッシュフロー）を見やすく組み立てる
+        let cardText = `【${activeCard.title}】\n${activeCard.description_jp || activeCard.description || ''}\n`;
         
+        if (activeCard.cost > 0) {
+            cardText += `\n価格: $${toCurrency(activeCard.cost)}`;
+            if (activeCard.down_payment > 0 && activeCard.down_payment !== activeCard.cost) {
+                cardText += ` (頭金: $${toCurrency(activeCard.down_payment)})`;
+            }
+        }
+        if (activeCard.passive_income !== 0 && activeCard.passive_income !== null && activeCard.passive_income !== undefined) {
+            cardText += `\nキャッシュフロー: $${toCurrency(activeCard.passive_income)}`;
+        }
+        
+        safeUpdate(SEL_G.TRADE.THIS_CARD, cardText);
+        
+        // ★修正: マスターデータに基づき、数量入力フォームの表示・非表示を制御する
         if (elNumProcess) {
-            const cardType = activeCard.type || '';
-            elNumProcess.hidden = !['stock', 'mutual_fund', 'coin'].includes(cardType);
+            const qtyRequiredTypes = ['MYT4U', 'OK4U', 'ON2U', '2BIG', 'GR4US', '10pGold', '8pGold'];
+            elNumProcess.hidden = !qtyRequiredTypes.includes(activeCard.asset_type);
+            
+            if (!elNumProcess.hidden && (!elNumProcess.value || parseInt(elNumProcess.value, 10) < 1)) {
+                elNumProcess.value = 1;
+            }
         }
 
         let canPass = false;
@@ -83,7 +101,6 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
         setButtonActive(SEL_G.CARD.BTN_BIG_DEAL, false);
 
     } else if (turnUserFlags.has_rolled_dice && isTurnUserOnCharity && !turnUserFlags.is_action_completed) {
-        // ★追加: 寄付マスのUI表示ロジック
         if (isMyTurn) {
             const items = state.items || [];
             const totalIncome = items.filter(i => (i.cashflow || 0) > 0).reduce((sum, i) => sum + Number(i.cashflow), 0);
@@ -106,7 +123,7 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
         setButtonActive(SEL_G.CARD.BTN_BIG_DEAL, false);
         setButtonActive(SEL_G.TRADE.BTN_SELL, false);
 
-    } else if (turnUserFlags.has_rolled_dice && CELLS_OPPORTUNITY.includes(turnUserState.position) && !turnUserFlags.is_card_drawn) {
+    } else if (turnUserFlags.has_rolled_dice && CELLS_OPPORTUNITY.includes(parseInt(turnUserState.position, 10)) && !turnUserFlags.is_card_drawn) {
         if (isMyTurn) {
             safeUpdate(SEL_G.TRADE.THIS_CARD, "普通の商売、または大きな商売、のどちらかをひいてください");
             setButtonActive(SEL_G.CARD.BTN_SMALL_DEAL, true);
@@ -164,7 +181,7 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
                 const items = state.items || [];
                 const hasInstantDebt = items.some(item => item.type_id === 'InstantDebt');
                 
-                const isMyCharity = [3, 16].includes(state.position);
+                const isMyCharity = [3, 16].includes(parseInt(state.position, 10));
                 
                 if (!flags.is_calculating && financials.cash >= 0) {
                     if (!anyCardHolderExists && !isTrading && !hasInstantDebt) {
