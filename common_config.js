@@ -1,4 +1,4 @@
-// config.js
+// common_config.js
 
 // 1. Supabaseの接続設定
 export const SUPABASE_URL = "https://hpuvozteepfhttxiqnvl.supabase.co";
