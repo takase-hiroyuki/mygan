@@ -2,18 +2,18 @@
 import { roomId, SUPABASE_URL, SUPABASE_KEY } from './common_config.js';
 import { waitForSupabase,
         getInitialRegistrationState,
-        insertSystemMessage } from './common_utils.js';
+        insertSystemMessage,
+        writeLog } from './common_utils.js'; // ★ writeLog を追加インポート
 
 // Supabaseクライアントの初期化
 export async function initSupabaseClient() {
-    console.log("[DEBUG_AUTH] initSupabaseClient を実行します。");
     const supabaseGlobal = await waitForSupabase();
     return supabaseGlobal.createClient(SUPABASE_URL, SUPABASE_KEY);
 }
 
 // 既存のログインセッションが存在するか確認する
 export async function checkExistingLogin(supabase, guestSelectors) {
-    console.log("[DEBUG_AUTH] checkExistingLogin を実行します。");
+    writeLog(supabase, "System", "Auth", "checkExistingLogin を実行します。");
     
     const currentUserId = localStorage.getItem('user_id');
     const storedName = localStorage.getItem('player_name');
@@ -22,11 +22,11 @@ export async function checkExistingLogin(supabase, guestSelectors) {
     if (elRoomId) elRoomId.textContent = roomId;
 
     if (!currentUserId) {
-        console.log("[DEBUG_AUTH] ローカルストレージにユーザーIDが存在しません。");
+        writeLog(supabase, "System", "Auth", "ローカルストレージにユーザーIDが存在しません。");
         return null;
     }
 
-    console.log(`[DEBUG_AUTH] ローカルストレージからユーザーIDを取得: ${currentUserId}`);
+    writeLog(supabase, "System", "Auth", `ローカルストレージからユーザーIDを取得: ${currentUserId}`);
     
     const { data, error } = await supabase
         .from('participants')
@@ -36,16 +36,16 @@ export async function checkExistingLogin(supabase, guestSelectors) {
         .maybeSingle();
     
     if (error) {
-        console.error("[CRITICAL_ERROR] 既存ユーザー状態の取得に失敗しました:", error);
+        writeLog(supabase, "System", "Auth Error", `既存ユーザー状態の取得に失敗しました: ${JSON.stringify(error)}`);
         return null;
     }
 
     if (data) {
-        console.log("[DEBUG_AUTH] データベースにユーザーデータが存在します。セッションを復元します。");
+        writeLog(supabase, "System", "Auth", "データベースにユーザーデータが存在します。セッションを復元します。");
         return currentUserId;
     }
 
-    console.warn("[DEBUG_AUTH] データベースにユーザーが存在しません。ローカルストレージのIDを破棄します。");
+    writeLog(supabase, "System", "Auth Warning", "データベースにユーザーが存在しません。ローカルストレージのIDを破棄します。");
     localStorage.removeItem('user_id');
     localStorage.removeItem('player_name');
     return null;
@@ -53,7 +53,7 @@ export async function checkExistingLogin(supabase, guestSelectors) {
 
 // 新規ログイン（入室）処理を実行する
 export async function loginUser(supabase, username) {
-    console.log(`[DEBUG_AUTH] loginUser を実行します: username=${username}`);
+    writeLog(supabase, "System", "Auth", `loginUser を実行します: username=${username}`);
     
     const { data: roomCheck, error: roomError } = await supabase
         .from('rooms')
@@ -62,7 +62,7 @@ export async function loginUser(supabase, username) {
         .maybeSingle();
         
     if (roomError) {
-        console.error("[CRITICAL_ERROR] 部屋状態の取得に失敗しました:", roomError);
+        writeLog(supabase, "System", "Auth Error", `部屋状態の取得に失敗しました: ${JSON.stringify(roomError)}`);
         await insertSystemMessage(supabase, username, "部屋情報の取得に失敗しました。");
         return null;
     }
@@ -73,7 +73,7 @@ export async function loginUser(supabase, username) {
     }
 
     if (roomCheck.game_state?.status !== 'waiting') {
-        console.warn(`[DEBUG_AUTH] 入室拒否: 部屋のステータスが '${roomCheck.game_state.status}' です。`);
+        writeLog(supabase, "System", "Auth Warning", `入室拒否: 部屋のステータスが '${roomCheck.game_state.status}' です。`);
         await insertSystemMessage(supabase, username, "ゲームが既に開始されているか終了しているため、入室できません。");
         return null;
     }
@@ -85,7 +85,7 @@ export async function loginUser(supabase, username) {
     
     // スキーマ準拠の初期状態を取得
     const initialRegistrationState = getInitialRegistrationState(username);
-    console.log("[DEBUG_AUTH] データベースへ送信する初期ステータス:", JSON.stringify(initialRegistrationState, null, 2));
+    writeLog(supabase, "System", "Auth", `データベースへ送信する初期ステータス: ${JSON.stringify(initialRegistrationState, null, 2)}`);
     
     const { error: insertError } = await supabase
         .from('participants')
@@ -96,19 +96,18 @@ export async function loginUser(supabase, username) {
         }]);
     
     if (insertError) {
-        console.error("[CRITICAL_ERROR] ユーザー登録(INSERT)に失敗しました:", insertError);
+        writeLog(supabase, "System", "Auth Error", `ユーザー登録(INSERT)に失敗しました: ${JSON.stringify(insertError)}`);
         await insertSystemMessage(supabase, username, "参加登録に失敗しました。");
         localStorage.removeItem('user_id');
         localStorage.removeItem('player_name');
         return null;
     }
         
-
     const logBody = `${username} が入室しました。ホストがゲームを開始するまでお待ちください。`;
     await insertSystemMessage(supabase, username, logBody);
-    console.log("[DEBUG_AUTH] 入室ログの書き込みリクエストを送信しました。");
+    writeLog(supabase, "System", "Auth", "入室ログの書き込みリクエストを送信しました。");
         
-    console.log(`[DEBUG_AUTH] ログイン(INSERT)完了: user_id=${newUserId}`);
+    writeLog(supabase, "System", "Auth", `ログイン(INSERT)完了: user_id=${newUserId}`);
     return newUserId;
 }
 
