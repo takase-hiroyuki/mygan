@@ -1,1 +1,142 @@
-x
+<!DOCTYPE html>
+<!-- index.html -->
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>mygan index</title>
+    <link rel="icon" href="data:,">
+</head>
+<body>
+    <div id="section-login">
+        プレイヤー登録
+        <input type="text" id="input-username" placeholder="あなたの名前を入力">
+        <button id="btn-login">入室する</button>
+    </div>
+
+    <div id="section-guest">
+        <span id="message-body"></span>
+        
+        <p>
+            名前: <span id="g-name">未定</span> / 
+            子供: <span id="g-child-count">0</span>人 / 
+            養育費 $<span id="g-child-expense">0</span>(1人あたり)<br>
+            職業: <span id="g-profession"></span>
+        </p>
+
+        <!-- ★上部は常に「自分」の現金を表示するための current-cash -->
+        <p>
+            現金: $<span id="current-cash">0</span> / 
+            <span id="dice-result">現在地</span> / 
+            <span id="dice-user">手番</span><br>
+        </p>
+
+        <p>
+            <button id="btn-dice1" disabled>X サイコロ１個</button>
+            <button id="btn-dice2" disabled>X サイコロ２個</button>
+            <button id="btn-end-turn" disabled>X 次の人へ</button>
+        </p>
+        
+        <p>
+            <button id="btn-small-deal" disabled>X 普通の商売</button>
+            <button id="btn-big-deal" disabled>X 大きい商売</button>
+            <button id="btn-borrow-loan" disabled>x 銀行借入</button>
+            <button id="btn-payback-loan" disabled>x 銀行返済</button>
+            <button id="btn-paycheck" disabled>X 入金請求</button>
+        </p>
+
+        <table border="1" cellspacing="0" cellpadding="2">
+            <tbody>
+                <tr>
+                    <td>00入金<span id="cell-0" class="occupants"></span></td>
+                    <td>01娯楽<span id="cell-1" class="occupants"></span></td>
+                    <td>02商売<span id="cell-2" class="occupants"></span></td>
+                    <td>03寄付<span id="cell-3" class="occupants"></span></td>
+                    <td>04商売<span id="cell-4" class="occupants"></span></td>
+                    <td>05入金<span id="cell-5" class="occupants"></span></td>
+                    <td>06商売<span id="cell-6" class="occupants"></span></td>
+                    <td>07娯楽<span id="cell-7" class="occupants"></span></td>
+                    <td>08商売<span id="cell-8" class="occupants"></span></td>
+                    <td>09子供<span id="cell-9" class="occupants"></span></td>
+                    <td>10商売<span id="cell-10" class="occupants"></span></td>
+                    <td>11入金<span id="cell-11" class="occupants"></span></td>
+                </tr>
+                <tr>
+                    <td>12市場<span id="cell-12" class="occupants"></span></td>
+                    <td>13商売<span id="cell-13" class="occupants"></span></td>
+                    <td>14娯楽<span id="cell-14" class="occupants"></span></td>
+                    <td>15商売<span id="cell-15" class="occupants"></span></td>
+                    <td>16寄付<span id="cell-16" class="occupants"></span></td>
+                    <td>17商売<span id="cell-17" class="occupants"></span></td>
+                    <td>18入金<span id="cell-18" class="occupants"></span></td>
+                    <td>19商売<span id="cell-19" class="occupants"></span></td>
+                    <td>20解雇<span id="cell-20" class="occupants"></span></td>
+                    <td>21商売<span id="cell-21" class="occupants"></span></td>
+                    <td>22市場<span id="cell-22" class="occupants"></span></td>
+                    <td>23商売<span id="cell-23" class="occupants"></span></td>
+                </tr>
+            </tbody>
+        </table>
+        
+<!-- 修正されたカード取引エリア -->
+<div id="card-trade-area">
+    <span id="thiscard">場に出たカード</span>
+<hr>
+    <!-- 自分用アクションエリア -->
+        <label for="num-process-self">数量:</label>
+        <input type="number" id="num-process-self" placeholder="任意の場合のみ入力">
+        <button id="btn-process-self">自分で実行する（購入・支払）</button>
+        <button id="btn-pass-card">見送る（パスする）</button>
+<br>
+    <!-- 交渉・売買エリア -->
+        <label>権利を売る:</label>
+        <select id="sell-target">
+            <option value="">だれに</option>
+        </select>
+        <input type="number" id="sell-price" placeholder="いくらで ($)">
+        <button id="btn-sell-card">交渉を持ちかける</button>
+<br>
+    <!-- メッセージ応答エリア -->
+        <span id="trade-message">受け取るメッセージ (現在交渉なし)</span> 
+        <button id="btn-trade-accept">承諾</button>
+        <button id="btn-trade-reject">拒否</button>
+</div>
+
+        <p>
+            <select id="player-select"></select> <!-- 以下、財務諸表 -->
+        </p>
+        
+        <!-- ★下部は「プルダウンで選ばれた人」の情報を表示するための l-profession と l-cash -->
+        <p>
+            <span id="l-profession">◯◯の職業：★★★</span><br>
+            <span id="l-cash">◯◯の所持金：★★★</span><br>
+            <button id="fast_track">ファーストトラックまで、あと◯◯◯ドル</button>
+
+        </p>
+        <p><span id="l-profit">資産 table</span></p>
+        <p><span id="l-loss">負債 table</span></p>
+        
+        <p>
+            <span id="ncashflow">キャッシュフロー： xxx</span>
+            <input type="number" id="icashflow" placeholder="金額">
+            <button id="bcashflow">計算</button>
+        </p>
+        
+        <p>
+            <select id="profit_loss">
+                <option value="">対象の資産・負債を選択</option>
+            </select><br>
+            <select id="pl-operate">
+                <option value="">処理の内容を選択</option>
+                <option value="sell">この資産を、一括売却する</option>
+                <option value="payoff">この負債を、一括返済する</option>
+            </select><br>
+            <button id="b-operate">X 実際に処理する</button>
+        </p>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module" src="./index.js"></script>
+</body>
+</html>
