@@ -32,7 +32,6 @@
         <table border="1">
             <thead>
                 <tr>
-                    <!-- JSの出力に合わせて9列に見出しを修正 -->
                     <th>名前</th>
                     <th>手番</th>
                     <th>給料</th>
@@ -50,7 +49,6 @@
         <br>
         
         <fieldset>
-            <!-- <legend>部屋ステータス管理・ライフサイクル制御</legend> -->
             <p>
                 現在の部屋ステータス: <b id="host-room-status">waiting (準備中)</b>
             </p>
@@ -167,6 +165,15 @@
             <legend>手番プレイヤー手動制御</legend>
             <input type="number" id="input-next-turn-order" placeholder="入室順を入力" min="1">
             <button id="btn-set-turn">O を手番にする</button>
+        </fieldset>
+
+        <br>
+
+        <fieldset>
+            <legend>システムログ管理</legend>
+            <button id="btn-fetch-logs">O 最新100件のログを取得</button>
+            <button id="btn-copy-logs">O ログをコピー</button><br>
+            <textarea id="host-log-textarea" rows="15" cols="100" readonly></textarea>
         </fieldset>
 
         <br>
