@@ -43,11 +43,12 @@ export async function actionProposeTrade(supabase, currentUserId) {
     } catch (error) {
         console.error("[DEBUG] 交渉エラー:", error);
         await insertSystemMessage(supabase, playerName, `交渉エラー: ${error.message}`);
+    } finally {
+        // ★修正: 通信完了後にロックを解除
         if (elBtnSell) elBtnSell.disabled = false;
     }
 }
 
-// ★追加：交渉を承諾する関数
 export async function actionAcceptTrade(supabase, currentUserId) {
     if (!supabase || !currentUserId) return;
     const playerName = getLocalPlayerName();
@@ -65,12 +66,13 @@ export async function actionAcceptTrade(supabase, currentUserId) {
         await insertSystemMessage(supabase, playerName, "交渉を承諾し、代金を支払いました。カードの権利を取得しました。");
     } catch (error) {
         await insertSystemMessage(supabase, playerName, `承諾エラー: ${error.message}`);
+    } finally {
+        // ★修正: 通信完了後にロックを解除
         if (btnAccept) btnAccept.disabled = false;
         if (btnReject) btnReject.disabled = false;
     }
 }
 
-// ★追加：交渉を拒否する関数
 export async function actionRejectTrade(supabase, currentUserId) {
     if (!supabase || !currentUserId) return;
     const playerName = getLocalPlayerName();
@@ -87,12 +89,13 @@ export async function actionRejectTrade(supabase, currentUserId) {
         await insertSystemMessage(supabase, playerName, "交渉を拒否しました。");
     } catch (error) {
         await insertSystemMessage(supabase, playerName, `拒否エラー: ${error.message}`);
+    } finally {
+        // ★修正: 通信完了後にロックを解除
         if (btnAccept) btnAccept.disabled = false;
         if (btnReject) btnReject.disabled = false;
     }
 }
 
-// ★追加：引いたカードを自分で処理（購入・支払い）する関数
 export async function actionProcessSelf(supabase, currentUserId) {
     if (!supabase || !currentUserId) return;
     const playerName = getLocalPlayerName();
@@ -102,7 +105,6 @@ export async function actionProcessSelf(supabase, currentUserId) {
     
     let quantity = 1;
     
-    // 数量入力欄が表示されており、かつ値が入力されている場合は取得する
     if (elNumProcess && !elNumProcess.hidden && elNumProcess.value) {
         quantity = parseInt(elNumProcess.value, 10);
         if (isNaN(quantity) || quantity <= 0) {
@@ -111,7 +113,6 @@ export async function actionProcessSelf(supabase, currentUserId) {
         }
     }
 
-    // 通信前のUIロック（連打防止）
     if (elBtnProcess) elBtnProcess.disabled = true;
 
     try {
@@ -122,11 +123,11 @@ export async function actionProcessSelf(supabase, currentUserId) {
         });
         await insertSystemMessage(supabase, playerName, "カードを処理しました。");
         
-        // 処理成功後は数量入力欄をリセット
         if (elNumProcess) elNumProcess.value = '';
     } catch (error) {
         await insertSystemMessage(supabase, playerName, `処理エラー: ${error.message}`);
-        // エラー時のみロックを解除
+    } finally {
+        // ★修正: 通信完了後にロックを解除
         if (elBtnProcess) elBtnProcess.disabled = false;
     }
 }
