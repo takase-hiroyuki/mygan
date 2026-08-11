@@ -27,43 +27,28 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
         if (el) el.textContent = text;
     };
 
-    // ★ 修正: アイテムのループ前にactiveCardを取得（フィルタリングや★判定に使うため）
     const cardHolderRecord = cachedParticipants.find(p => p.state && p.state.drawn_card);
     const activeCard = cardHolderRecord ? cardHolderRecord.state.drawn_card : null;
 
-    // ★ 追加: 自分の資産とカードの条件を照らし合わせて「★」を表示する判定
     let isHit = false;
     if (activeCard && state.items) {
-        
-        // --- ★ここからデバッグ用ログ出力を追加 ---
-        console.log(`【DEBUG】判定開始: ${state.name} の画面`);
-        console.log("  activeCard.title:", activeCard.title);
-        console.log("  activeCard.asset_type:", activeCard.asset_type);
-        console.log("  activeCard.symbol:", activeCard.symbol);
-        // --- ここまで ---
-
         isHit = state.items.some(item => {
-            // --- ★ここからデバッグ用ログ出力を追加 ---
-            console.log("  チェック中アイテム:", item.title);
-            console.log("    item.type_id:", item.type_id);
-            console.log("    item.symbol:", item.symbol);
-            // --- ここまで ---
-
-            // 不動産タイプの一致（'other' は汎用タイプのため除外）
-            if (activeCard.asset_type && activeCard.asset_type !== 'other' && item.type_id === activeCard.asset_type) return true;
-            // 株式銘柄（シンボル）の一致
-            if (activeCard.symbol && item.symbol === activeCard.symbol) return true;
-            // 株式分割・併合などの特殊ターゲットシンボルの一致
-            if (activeCard.action_rule && activeCard.action_rule.target_symbol && item.symbol === activeCard.action_rule.target_symbol) return true;
-            return false;
+            if (activeCard.asset_type !== 'other') {
+                return item.type_id === activeCard.asset_type;
+            } else {
+                if (activeCard.action_rule) {
+                    if (activeCard.action_rule.target_symbol && item.type_id === activeCard.action_rule.target_symbol) {
+                        return true;
+                    }
+                    if (Array.isArray(activeCard.action_rule.target_asset) && activeCard.action_rule.target_asset.includes(item.type_id)) {
+                        return true;
+                    }
+                }
+                return false;
+            }
         });
-
-        // --- ★ここからデバッグ用ログ出力を追加 ---
-        console.log("【DEBUG】判定結果 isHit:", isHit);
-        // --- ここまで ---
     }
 
-    // 該当する資産があれば★を表示
     const hitSelector = SEL_G.STATUS.HIT || 'hit';
     safeUpdate(hitSelector, isHit ? "★該当あり " : "");
 
@@ -109,7 +94,6 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
             playerSelect.value = currentUserId;
         }
 
-        // プルダウン変更時は、index.js から渡された再描画関数を実行する
         playerSelect.onchange = () => {
             if (onReRenderCallback) onReRenderCallback();
         };
@@ -143,17 +127,14 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
             const liabVal = Number(item.liability || 0);
             const cfVal = Number(item.cashflow || 0);
 
-            // House判定
             if (item.type_id === 'House') hasHouse = true;
 
-            // 総支出と不労所得の計算
             if (cfVal < 0) {
                 totalExpenses += Math.abs(cfVal);
             } else if (cfVal > 0 && costVal > 0) {
                 passiveIncome += cfVal;
             }
 
-            // 1. 資産の部への出力判定
             if (costVal > 0 || (liabVal === 0 && cfVal > 0)) {
                 const cfStr = cfVal <= 0 ? toCurrency(cfVal) : `+${toCurrency(cfVal)}`;
                 const unitPrice = toCurrency(costVal);
@@ -162,10 +143,8 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
                 
                 assetsHTML += `<tr><td>${item.title}</td><td>${unitPrice}</td><td>${quantityStr}</td><td>${cfStr}</td></tr>`;
                 
-                // ★ 修正: 売却可能なアイテムのみプルダウンに追加するフィルタリング
                 if (costVal > 0) {
                     let canSell = false;
-                    // 今後の実地検証で照合ルールを追加しやすいように基本のif文を用意
                     if (activeCard && activeCard.sell === 'all') {
                         if (activeCard.asset_type === item.type_id) {
                             canSell = true;
@@ -177,7 +156,6 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
                 }
             }
 
-            // 2. 負債の部への出力判定
             if (liabVal > 0 || (cfVal < 0 && costVal === 0)) {
                 let displayName = item.title;
                 let displayCF = cfVal;
@@ -212,7 +190,6 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
         const elProfitLossSelect = document.getElementById(SEL_G.FINANCIALS.PROFIT_LOSS_SELECT);
         if (elProfitLossSelect) elProfitLossSelect.innerHTML = optionsHTML;
 
-        // 操作プルダウンの動的生成
         const elOperateSelect = document.getElementById(SEL_G.FINANCIALS.PL_OPERATE_SELECT);
         if (elOperateSelect) {
             const currentOp = elOperateSelect.value;
@@ -230,7 +207,6 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
             }
         }
 
-        // ファーストトラック移行ボタンのテキスト更新
         const btnFastTrack = document.getElementById(SEL_G.FINANCIALS.BTN_FAST_TRACK);
         if (btnFastTrack) {
             const diffToFastTrack = totalExpenses - passiveIncome;
