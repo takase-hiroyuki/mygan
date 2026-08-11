@@ -34,7 +34,21 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
     // ★ 追加: 自分の資産とカードの条件を照らし合わせて「★」を表示する判定
     let isHit = false;
     if (activeCard && state.items) {
+        
+        // --- ★ここからデバッグ用ログ出力を追加 ---
+        console.log(`【DEBUG】判定開始: ${state.name} の画面`);
+        console.log("  activeCard.title:", activeCard.title);
+        console.log("  activeCard.asset_type:", activeCard.asset_type);
+        console.log("  activeCard.symbol:", activeCard.symbol);
+        // --- ここまで ---
+
         isHit = state.items.some(item => {
+            // --- ★ここからデバッグ用ログ出力を追加 ---
+            console.log("  チェック中アイテム:", item.title);
+            console.log("    item.type_id:", item.type_id);
+            console.log("    item.symbol:", item.symbol);
+            // --- ここまで ---
+
             // 不動産タイプの一致（'other' は汎用タイプのため除外）
             if (activeCard.asset_type && activeCard.asset_type !== 'other' && item.type_id === activeCard.asset_type) return true;
             // 株式銘柄（シンボル）の一致
@@ -43,6 +57,10 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
             if (activeCard.action_rule && activeCard.action_rule.target_symbol && item.symbol === activeCard.action_rule.target_symbol) return true;
             return false;
         });
+
+        // --- ★ここからデバッグ用ログ出力を追加 ---
+        console.log("【DEBUG】判定結果 isHit:", isHit);
+        // --- ここまで ---
     }
 
     // 該当する資産があれば★を表示
