@@ -309,7 +309,7 @@ btnFetchLogs?.addEventListener('click', async () => {
         .select('*')
         .eq('room_id', roomId)
         .order('sequence_num', { ascending: false })
-        .limit(100);
+        .limit(1000);
         
     if (error) {
         if (hostLogTextarea) hostLogTextarea.value = `エラー: ${error.message}`;
