@@ -94,12 +94,15 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
 
         let totalExpenses = 0;
         let passiveIncome = 0;
+        let hasHouse = false; // ★ 追加
 
         selectedItems.forEach(item => {
-            // 変数を数値化して扱いやすくする
             const costVal = Number(item.cost || 0);
             const liabVal = Number(item.liability || 0);
             const cfVal = Number(item.cashflow || 0);
+
+            // House判定
+            if (item.type_id === 'House') hasHouse = true;
 
             // 総支出と不労所得の計算
             if (cfVal < 0) {
@@ -109,7 +112,6 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
             }
 
             // 1. 資産の部への出力判定
-            // 実体価値(cost > 0)があるか、または純粋なプラスのCFを生み出す(給料など)もの
             if (costVal > 0 || (liabVal === 0 && cfVal > 0)) {
                 const cfStr = cfVal <= 0 ? toCurrency(cfVal) : `+${toCurrency(cfVal)}`;
                 const unitPrice = toCurrency(costVal);
@@ -118,19 +120,16 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
                 
                 assetsHTML += `<tr><td>${item.title}</td><td>${unitPrice}</td><td>${quantityStr}</td><td>${cfStr}</td></tr>`;
                 
-                // 売却可能なのは cost(単価) が設定されているものだけにする
                 if (costVal > 0) {
                     optionsHTML += `<option value="${item.id}">【売却】${item.title} (単価: $${unitPrice}, 数量: ${quantityStr})</option>`;
                 }
             }
 
             // 2. 負債の部への出力判定
-            // 負債残高(liability > 0)があるか、または純粋なマイナスのCF(税金など)のもの
             if (liabVal > 0 || (cfVal < 0 && costVal === 0)) {
                 let displayName = item.title;
                 let displayCF = cfVal;
                 
-                // アパートなどの「資産に紐づくローン」の場合は表示名を変え、CF表示をゼロ(資産側に計上済みのため)にする
                 if (costVal > 0 && liabVal > 0) {
                     displayName = item.title + "のローン";
                     displayCF = 0; 
@@ -141,7 +140,6 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
                 
                 liabHTML += `<tr><td>${displayName}</td><td>${liabStr}</td><td>${cfStr}</td></tr>`;
                 
-                // 返済可能なのは liability(残高) があるものだけにする
                 if (liabVal > 0) {
                     optionsHTML += `<option value="${item.id}">【返済】${displayName} (残高: $${liabStr})</option>`;
                 }
@@ -159,6 +157,28 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
         
         const elProfitLossSelect = document.getElementById(SEL_G.FINANCIALS.PROFIT_LOSS_SELECT);
         if (elProfitLossSelect) elProfitLossSelect.innerHTML = optionsHTML;
+
+        // ★ 追加: 操作プルダウンの動的生成
+        const elOperateSelect = document.getElementById(SEL_G.FINANCIALS.PL_OPERATE_SELECT);
+        if (elOperateSelect) {
+            const currentOp = elOperateSelect.value;
+            let operateHTML = '<option value="">処理の内容を選択</option>';
+            operateHTML += '<option value="sell">この資産を、一括売却する</option>';
+            operateHTML += '<option value="payoff">この負債を、一括返済する</option>';
+
+            const activeCard = cachedRoom?.game_state?.current_card;
+            const isTurnUser = cachedRoom?.current_turn_user_id === currentUserId;
+            
+            // ID: 122 の条件を満たす場合のみ特殊売却を追加
+            if (activeCard && activeCard.id === 122 && hasHouse && isTurnUser) {
+                operateHTML += '<option value="sell_bonus_50000">このHouseを、+$50,000で特殊売却する</option>';
+            }
+            
+            elOperateSelect.innerHTML = operateHTML;
+            if (currentOp && elOperateSelect.querySelector(`option[value="${currentOp}"]`)) {
+                elOperateSelect.value = currentOp;
+            }
+        }
 
         // ファーストトラック移行ボタンのテキスト更新
         const btnFastTrack = document.getElementById(SEL_G.FINANCIALS.BTN_FAST_TRACK);
