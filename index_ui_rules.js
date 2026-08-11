@@ -188,13 +188,17 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
                 const items = state.items || [];
                 const hasInstantDebt = items.some(item => item.type_id === 'InstantDebt');
                 
-                const isMyCharity = [3, 16].includes(parseInt(state.position, 10));
+                const posNum = parseInt(state.position, 10);
+                const isMyCharity = [3, 16].includes(posNum);
+                const isCardCell = CELLS_OPPORTUNITY.includes(posNum) || CELLS_MARKET.includes(posNum) || CELLS_DOODAD.includes(posNum);
                 
                 if (!flags.is_calculating && financials.cash >= 0) {
                     if (!anyCardHolderExists && !isTrading && !hasInstantDebt) {
-                        if (isMyCharity) {
-                            if (flags.is_action_completed) canEndTurn = true;
-                        } else if (!state.drawn_card || flags.is_action_completed) {
+                        if (isMyCharity || isCardCell) {
+                            if (flags.is_action_completed) {
+                                canEndTurn = true;
+                            }
+                        } else {
                             canEndTurn = true;
                         }
                     }
