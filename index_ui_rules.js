@@ -87,7 +87,7 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
                 canProcess = true;
                 canPass = true;
             } else {
-                elBtnProcess.textContent = '自分で実行する（購入・支払）';
+                elBtnProcess.textContent = '購入する・支払う）';
                 canProcess = true;
                 canPass = true;
             }
@@ -149,7 +149,7 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
         if (elNumProcess) elNumProcess.hidden = true;
         if (elSellTarget) elSellTarget.disabled = true;
         if (elSellPrice) elSellPrice.disabled = true;
-        if (elBtnProcess) elBtnProcess.textContent = '自分で実行する（購入・支払）';
+        if (elBtnProcess) elBtnProcess.textContent = '購入する・支払う';
     } else {
         safeUpdate(SEL_G.TRADE.THIS_CARD, "場に出たカード");
         setButtonActive(SEL_G.TRADE.BTN_SELL, false);
