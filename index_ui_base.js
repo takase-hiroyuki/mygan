@@ -34,13 +34,13 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
     if (activeCard && state.items) {
         isHit = state.items.some(item => {
             if (activeCard.asset_type !== 'other') {
-                return item.type_id === activeCard.asset_type;
+                return item.asset_type === activeCard.asset_type;
             } else {
                 if (activeCard.action_rule) {
-                    if (activeCard.action_rule.target_symbol && item.type_id === activeCard.action_rule.target_symbol) {
+                    if (activeCard.action_rule.target_symbol && item.asset_type === activeCard.action_rule.target_symbol) {
                         return true;
                     }
-                    if (Array.isArray(activeCard.action_rule.target_asset) && activeCard.action_rule.target_asset.includes(item.type_id)) {
+                    if (Array.isArray(activeCard.action_rule.target_asset) && activeCard.action_rule.target_asset.includes(item.asset_type)) {
                         return true;
                     }
                 }
@@ -127,7 +127,7 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
             const liabVal = Number(item.liability || 0);
             const cfVal = Number(item.cashflow || 0);
 
-            if (item.type_id === 'House') hasHouse = true;
+            if (item.asset_type === 'House') hasHouse = true;
 
             if (cfVal < 0) {
                 totalExpenses += Math.abs(cfVal);
@@ -146,7 +146,7 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
                 if (costVal > 0) {
                     let canSell = false;
                     if (activeCard && activeCard.sell === 'all') {
-                        if (activeCard.asset_type === item.type_id) {
+                        if (activeCard.asset_type === item.asset_type) {
                             canSell = true;
                         }
                     }
