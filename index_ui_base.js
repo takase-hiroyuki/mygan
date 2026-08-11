@@ -141,7 +141,10 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
                 liabHTML += `<tr><td>${displayName}</td><td>${liabStr}</td><td>${cfStr}</td></tr>`;
                 
                 if (liabVal > 0) {
-                    optionsHTML += `<option value="${item.id}">【返済】${displayName} (残高: $${liabStr})</option>`;
+                    // ★ 変更: 不動産（costVal > 0 のもの）の負債はプルダウンの選択肢に含めない（売却時に自動精算されるため）
+                    if (costVal === 0) {
+                        optionsHTML += `<option value="${item.id}">【返済】${displayName} (残高: $${liabStr})</option>`;
+                    }
                 }
             }
         });
