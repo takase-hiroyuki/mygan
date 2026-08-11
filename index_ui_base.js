@@ -88,13 +88,18 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
         safeUpdate(SEL_G.FINANCIALS.D_PROFESSION, `${selectedName}の職業：${selectedState.profession || '未定'}`);
         safeUpdate(SEL_G.FINANCIALS.D_CASH, `${selectedName}の所持金：$${toCurrency(selectedFinancials.cash)}`);
 
+        // ★ 修正: アイテムのループ前にactiveCardを取得（フィルタリングに使うため）
+        const cardHolderRecord = cachedParticipants.find(p => p.state && p.state.drawn_card);
+        const activeCard = cardHolderRecord ? cardHolderRecord.state.drawn_card : null;
+        const isTurnUser = cachedRoom?.current_turn_user_id === currentUserId;
+
         let assetsHTML = "<table border='1' width='100%'><tr><th>資産名</th><th>単価</th><th>数量</th><th>CF</th></tr>";
         let liabHTML = "<table border='1' width='100%'><tr><th>負債名</th><th>負債残高</th><th>CF</th></tr>";
         let optionsHTML = '<option value="">対象の資産・負債を選択</option>';
 
         let totalExpenses = 0;
         let passiveIncome = 0;
-        let hasHouse = false; // ★ 追加
+        let hasHouse = false;
 
         selectedItems.forEach(item => {
             const costVal = Number(item.cost || 0);
@@ -120,8 +125,18 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
                 
                 assetsHTML += `<tr><td>${item.title}</td><td>${unitPrice}</td><td>${quantityStr}</td><td>${cfStr}</td></tr>`;
                 
+                // ★ 修正: 売却可能なアイテムのみプルダウンに追加するフィルタリング
                 if (costVal > 0) {
-                    optionsHTML += `<option value="${item.id}">【売却】${item.title} (単価: $${unitPrice}, 数量: ${quantityStr})</option>`;
+                    let canSell = false;
+                    // 今後の実地検証で照合ルールを追加しやすいように基本のif文を用意
+                    if (activeCard && activeCard.sell === 'all') {
+                        if (activeCard.asset_type === item.type_id) {
+                            canSell = true;
+                        }
+                    }
+                    if (canSell) {
+                        optionsHTML += `<option value="${item.id}">【売却】${item.title} (単価: $${unitPrice}, 数量: ${quantityStr})</option>`;
+                    }
                 }
             }
 
@@ -141,7 +156,6 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
                 liabHTML += `<tr><td>${displayName}</td><td>${liabStr}</td><td>${cfStr}</td></tr>`;
                 
                 if (liabVal > 0) {
-                    // ★ 変更: 不動産（costVal > 0 のもの）の負債はプルダウンの選択肢に含めない（売却時に自動精算されるため）
                     if (costVal === 0) {
                         optionsHTML += `<option value="${item.id}">【返済】${displayName} (残高: $${liabStr})</option>`;
                     }
@@ -161,7 +175,7 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
         const elProfitLossSelect = document.getElementById(SEL_G.FINANCIALS.PROFIT_LOSS_SELECT);
         if (elProfitLossSelect) elProfitLossSelect.innerHTML = optionsHTML;
 
-        // ★ 追加: 操作プルダウンの動的生成
+        // 操作プルダウンの動的生成
         const elOperateSelect = document.getElementById(SEL_G.FINANCIALS.PL_OPERATE_SELECT);
         if (elOperateSelect) {
             const currentOp = elOperateSelect.value;
@@ -169,11 +183,6 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
             operateHTML += '<option value="sell">この資産を、一括売却する</option>';
             operateHTML += '<option value="payoff">この負債を、一括返済する</option>';
 
-            // ★ 修正: activeCardの取得方法をキャッシュされた参加者データからに変更
-            const cardHolderRecord = cachedParticipants.find(p => p.state && p.state.drawn_card);
-            const activeCard = cardHolderRecord ? cardHolderRecord.state.drawn_card : null;
-            const isTurnUser = cachedRoom?.current_turn_user_id === currentUserId;
-            
             // ID: 122 の条件を満たす場合のみ特殊売却を追加
             if (activeCard && activeCard.id === 122 && hasHouse && isTurnUser) {
                 operateHTML += '<option value="sell_bonus_50000">このHouseを、+$50,000で特殊売却する</option>';
