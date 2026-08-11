@@ -169,7 +169,9 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
             operateHTML += '<option value="sell">この資産を、一括売却する</option>';
             operateHTML += '<option value="payoff">この負債を、一括返済する</option>';
 
-            const activeCard = cachedRoom?.game_state?.current_card;
+            // ★ 修正: activeCardの取得方法をキャッシュされた参加者データからに変更
+            const cardHolderRecord = cachedParticipants.find(p => p.state && p.state.drawn_card);
+            const activeCard = cardHolderRecord ? cardHolderRecord.state.drawn_card : null;
             const isTurnUser = cachedRoom?.current_turn_user_id === currentUserId;
             
             // ID: 122 の条件を満たす場合のみ特殊売却を追加
