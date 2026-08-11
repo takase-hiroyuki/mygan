@@ -180,10 +180,9 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
         if (elOperateSelect) {
             const currentOp = elOperateSelect.value;
             let operateHTML = '<option value="">処理の内容を選択</option>';
-            operateHTML += '<option value="sell">この資産を、一括売却する</option>';
-            operateHTML += '<option value="payoff">この負債を、一括返済する</option>';
+            operateHTML += '<option value="sell">資産を売却する。現金が増える</option>';
+            operateHTML += '<option value="payoff">負債を返済する。現金は、減る</option>';
 
-            // ID: 122 の条件を満たす場合のみ特殊売却を追加
             if (activeCard && activeCard.id === 122 && hasHouse && isTurnUser) {
                 operateHTML += '<option value="sell_bonus_50000">このHouseを、+$50,000で特殊売却する</option>';
             }
