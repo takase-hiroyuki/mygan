@@ -24,6 +24,7 @@ export const DOM_SELECTORS = {
         // あなたのステータス表示エリア
         STATUS: {
             SECTION: 'section-guest',
+            HIT: 'hit', // ★追加: 該当判定の★マーク表示用
             NAME: 'g-name',
             CHILDREN_COUNT: 'g-child-count',
             PER_CHILD_EXPENSE: 'g-child-expense',
