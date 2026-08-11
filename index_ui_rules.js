@@ -90,13 +90,13 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
                 if (activeCard.asset_type === 'other') {
                     // 特殊イベント（増資・減資・損害など） -> 強制適用
                     elBtnProcess.textContent = '実行する（適用）';
-                    elBtnPass.textContent = '見送る（パスする）';
+                    elBtnPass.textContent = 'パスする';
                     canProcess = true;
                     canPass = false; 
                 } else {
                     // 通常の商売（株、不動産など） -> 任意購入
                     elBtnProcess.textContent = '購入する';
-                    elBtnPass.textContent = '見送る（パスする）';
+                    elBtnPass.textContent = 'パスする';
                     canProcess = true;
                     canPass = true; 
                 }
