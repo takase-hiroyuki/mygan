@@ -12,8 +12,7 @@ import { toggleScreen, renderBaseUI } from './index_ui_base.js';
 import { applyUIRules } from './index_ui_rules.js';
 import { initSupabaseClient, checkExistingLogin, loginUser } from './index_auth.js';
 import { startSubscriptions } from './index_state.js'; 
-import { insertSystemMessage } from './common_utils.js'; 
-// ★修正: actionProcessSelf は index_actions_turn.js からインポートする
+import { insertSystemMessage, writeLog } from './common_utils.js'; // ★ writeLog を追加インポート
 import { actionRollDice, actionEndTurn, actionDrawCard, actionPass, actionProcessSelf } from './index_actions_turn.js';
 import { actionClaimPaycheck, actionCheckCalculations, actionOperateItem } from './index_actions_finance.js'; 
 import { actionBorrowBankLoan, actionRepayBankLoan } from './index_actions_loan.js';
@@ -35,9 +34,8 @@ const btnSmallDeal = document.getElementById(SEL_G.CARD.BTN_SMALL_DEAL);
 const btnBigDeal = document.getElementById(SEL_G.CARD.BTN_BIG_DEAL);
 const btnOperate = document.getElementById(SEL_G.FINANCIALS.BTN_OPERATE);
 const btnSellCard = document.getElementById(SEL_G.TRADE.BTN_SELL);
-const btnFastTrack = document.getElementById(SEL_G.FINANCIALS.BTN_FAST_TRACK); // ★追加: ファーストトラックボタン
+const btnFastTrack = document.getElementById(SEL_G.FINANCIALS.BTN_FAST_TRACK); 
 
-// 取引・カード処理用ボタンの取得
 const btnProcessSelf = document.getElementById(SEL_G.TRADE.BTN_PROCESS_SELF);
 const btnPassCard = document.getElementById(SEL_G.TRADE.BTN_PASS_CARD);
 const btnTradeAccept = document.getElementById(SEL_G.TRADE.BTN_ACCEPT);
@@ -51,26 +49,26 @@ function updateUI(userId, participants, room) {
 }
 
 (async function init() {
-    console.log("[DEBUG] アプリケーションの初期化を開始します...");
     supabase = await initSupabaseClient();
+    writeLog(supabase, "System", "Init", "アプリケーションの初期化を開始します...");
     
     await debugSupabaseConnection(supabase);
 
     currentUserId = await checkExistingLogin(supabase, SEL_G);
 
     if (currentUserId) {
-        console.log(`[DEBUG] 既存のログインセッションを検出しました: user_id=${currentUserId}`);
+        writeLog(supabase, "System", "Init", `既存のログインセッションを検出しました: user_id=${currentUserId}`);
         toggleScreen(true);
         startSubscriptions(supabase, roomId, currentUserId, updateUI);
     } else {
-        console.log("[DEBUG] ログインセッションは見つかりませんでした。ログイン画面を表示します。");
+        writeLog(supabase, "System", "Init", "ログインセッションは見つかりませんでした。ログイン画面を表示します。");
         toggleScreen(false);
     }
 })();
 
 // イベントリスナーの登録
 btnLogin?.addEventListener('click', async () => {
-    console.log("[DEBUG-UI] 「ログイン」ボタンが押下されました");
+    writeLog(supabase, "System", "UI", "「ログイン」ボタンが押下されました");
     if (!supabase) return;
     const username = inputUsername?.value.trim();
     if (!username) { 
@@ -134,13 +132,10 @@ btnSellCard?.addEventListener('click', () => {
     actionProposeTrade(supabase, currentUserId);
 });
 
-// ★追加: ファーストトラックのダミーリスナー
 btnFastTrack?.addEventListener('click', () => {
-    console.log("[DEBUG] ファーストトラック移行ボタンが押下されました。(現在はダミーリスナー)");
-    // 今後ここにファーストトラック移行処理を実装する
+    writeLog(supabase, "System", "UI", "ファーストトラック移行ボタンが押下されました。(現在はダミーリスナー)");
 });
 
-// ★修正: 寄付および株の購入処理（数量の取得を追加）
 btnProcessSelf?.addEventListener('click', () => {
     const numInput = document.getElementById(SEL_G.TRADE.NUM_PROCESS_SELF);
     const qty = numInput && !numInput.hidden ? parseInt(numInput.value, 10) || 1 : 1;
@@ -161,19 +156,19 @@ btnTradeReject?.addEventListener('click', () => {
 
 // デバッグ機能
 async function debugSupabaseConnection(supabaseClient) {
-    console.log("[DEBUG-NETWORK] 接続テストを開始します。");
+    writeLog(supabaseClient, "System", "Network", "接続テストを開始します。");
     try {
         const startTime = performance.now();
         const { data, error } = await supabaseClient.from('cards').select('id').limit(1);
         const endTime = performance.now();
 
         if (error) {
-            console.error(`[DEBUG-NETWORK] 応答エラー (${(endTime - startTime).toFixed(2)}ms):`, error);
+            writeLog(supabaseClient, "System", "Network Error", `応答エラー (${(endTime - startTime).toFixed(2)}ms): ${JSON.stringify(error)}`);
         } else {
-            console.log(`[DEBUG-NETWORK] 接続成功 (${(endTime - startTime).toFixed(2)}ms):`, data);
+            writeLog(supabaseClient, "System", "Network", `接続成功 (${(endTime - startTime).toFixed(2)}ms)`);
         }
     } catch (err) {
-        console.error("[DEBUG-NETWORK] fetch例外発生:", err.name, err.message, err);
+        writeLog(supabaseClient, "System", "Network Error", `fetch例外発生: ${err.name} ${err.message}`);
     }
 }
 
