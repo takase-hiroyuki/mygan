@@ -52,6 +52,14 @@ button:hover {
     background-color: #cbd5e1;
 }
 
+/* ボタンの最初の文字が O または ◯ のときの赤っぽい装飾 */
+.active-red-button {
+    background-color: #fed7d7 !important;
+    border-color: #feb2b2 !important;
+    color: #9b2c2c !important;
+    font-weight: bold;
+}
+
 input, select {
     padding: 6px;
     margin: 2px;
