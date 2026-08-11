@@ -2,7 +2,7 @@
 body {
     font-family: sans-serif;
     margin: 20px;
-    background-color: #f4f6f8;
+    background-color: #fcfcfc;
     color: #2c3e50;
 }
 
@@ -11,15 +11,15 @@ div {
 }
 
 #section-login {
-    background-color: #ffffff;
+    background-color: #fff5f5; /* 淡い赤 */
     padding: 20px;
-    border: 1px solid #cbd5e1;
+    border: 1px solid #feb2b2;
     border-radius: 6px;
     max-width: 400px;
 }
 
 #section-guest {
-    background-color: #ffffff;
+    background-color: #f0f4f8; /* 淡い青 */
     padding: 20px;
     border: 1px solid #cbd5e1;
     border-radius: 6px;
@@ -60,9 +60,9 @@ input, select {
 }
 
 #card-trade-area {
-    border: 1px solid #94a3b8;
+    border: 1px solid #f6e05e; /* 淡い黄のボーダー */
     padding: 15px;
-    background-color: #f8fafc;
+    background-color: #fffff0; /* 淡い黄 */
     margin-top: 15px;
     margin-bottom: 15px;
     border-radius: 6px;
