@@ -76,7 +76,7 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
             if (activeCard.deck_type === 'doodad') {
                 // パターン1: Doodad（無駄遣い） -> 強制支払い
                 elBtnProcess.textContent = '支払う';
-                elBtnPass.textContent = '見送る（パスする）'; 
+                elBtnPass.textContent = 'パスする'; 
                 canProcess = true;
                 canPass = false; 
             } else if (activeCard.deck_type === 'market') {
