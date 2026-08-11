@@ -49,13 +49,13 @@ export const DOM_SELECTORS = {
 
         // 他プレイヤーとの取引（トレード）エリア
         TRADE: {
-            THIS_CARD: 'thiscard',
+            THIS_CARD: 'main-msg', // ★変更: 'thiscard' から 'main-msg' へ変更
             SELECT_TARGET: 'sell-target',
             INPUT_PRICE: 'sell-price',
             BTN_SELL: 'btn-sell-card',
             NUM_PROCESS_SELF: 'num-process-self',
             BTN_PROCESS_SELF: 'btn-process-self',
-            BTN_PASS_CARD: 'btn-pass-card', // ★追加: 見送る（パスする）ボタン
+            BTN_PASS_CARD: 'btn-pass-card', 
             TRADE_MESSAGE: 'trade-message',
             BTN_ACCEPT: 'btn-trade-accept',
             BTN_REJECT: 'btn-trade-reject'
@@ -77,7 +77,7 @@ export const DOM_SELECTORS = {
             PLAYER_SELECT: 'player-select',
             D_PROFESSION: 'l-profession',
             D_CASH: 'l-cash',
-            BTN_FAST_TRACK: 'fast_track', // ★追加
+            BTN_FAST_TRACK: 'fast_track', 
             D_PROFIT: 'l-profit',
             D_LOSS: 'l-loss',
             D_CASHFLOW: 'ncashflow', 
