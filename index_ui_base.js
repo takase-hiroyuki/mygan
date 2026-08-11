@@ -27,6 +27,28 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
         if (el) el.textContent = text;
     };
 
+    // ★ 修正: アイテムのループ前にactiveCardを取得（フィルタリングや★判定に使うため）
+    const cardHolderRecord = cachedParticipants.find(p => p.state && p.state.drawn_card);
+    const activeCard = cardHolderRecord ? cardHolderRecord.state.drawn_card : null;
+
+    // ★ 追加: 自分の資産とカードの条件を照らし合わせて「★」を表示する判定
+    let isHit = false;
+    if (activeCard && state.items) {
+        isHit = state.items.some(item => {
+            // 不動産タイプの一致（'other' は汎用タイプのため除外）
+            if (activeCard.asset_type && activeCard.asset_type !== 'other' && item.type_id === activeCard.asset_type) return true;
+            // 株式銘柄（シンボル）の一致
+            if (activeCard.symbol && item.symbol === activeCard.symbol) return true;
+            // 株式分割・併合などの特殊ターゲットシンボルの一致
+            if (activeCard.action_rule && activeCard.action_rule.target_symbol && item.symbol === activeCard.action_rule.target_symbol) return true;
+            return false;
+        });
+    }
+
+    // 該当する資産があれば★を表示
+    const hitSelector = SEL_G.STATUS.HIT || 'hit';
+    safeUpdate(hitSelector, isHit ? "★該当あり " : "");
+
     safeUpdate(SEL_G.STATUS.NAME, state.name || "");
     safeUpdate(SEL_G.STATUS.CURRENT_CASH, toCurrency(financials.cash));
     safeUpdate(SEL_G.STATUS.PROFESSION, state.profession || "未定");
@@ -88,9 +110,6 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
         safeUpdate(SEL_G.FINANCIALS.D_PROFESSION, `${selectedName}の職業：${selectedState.profession || '未定'}`);
         safeUpdate(SEL_G.FINANCIALS.D_CASH, `${selectedName}の所持金：$${toCurrency(selectedFinancials.cash)}`);
 
-        // ★ 修正: アイテムのループ前にactiveCardを取得（フィルタリングに使うため）
-        const cardHolderRecord = cachedParticipants.find(p => p.state && p.state.drawn_card);
-        const activeCard = cardHolderRecord ? cardHolderRecord.state.drawn_card : null;
         const isTurnUser = cachedRoom?.current_turn_user_id === currentUserId;
 
         let assetsHTML = "<table border='1' width='100%'><tr><th>資産名</th><th>単価</th><th>数量</th><th>CF</th></tr>";
