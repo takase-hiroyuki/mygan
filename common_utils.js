@@ -155,37 +155,17 @@ export async function insertSystemMessage(supabase, targetName, message) {
 }
 
 /**
- * システムメッセージをDOMのテーブルに追記する関数
- * @param {string} target - メッセージの宛先（1番目のtd用）
- * @param {string} body - メッセージ本文（2番目のtd用）
+ * システムメッセージをメッセージエリアに一時的に追記する関数
+ * @param {string} target - メッセージの宛先や種類
+ * @param {string} body - メッセージ本文
  */
 export function displaySystemMessage(target, body) {
-    /*
-    const tbody = document.getElementById(SEL_G.MESSAGE.TABLE_BODY); // ★修正: DOM_SELECTORS.GUEST を SEL_G に変更
-    if (!tbody) {
-        console.warn("[WARNING] message-table-body が見つかりません。メッセージの表示をスキップします。");
-        return;
+    const el = document.getElementById(SEL_G.TRADE.THIS_CARD);
+    if (el) {
+        // 画面の自動更新で一瞬で消えるのを防ぐため、現在の表示内容の上部に赤字で追記する
+        const alertHtml = `<div style="color: #d32f2f; font-weight: bold; margin-bottom: 8px;">【通知: ${target}】${body}</div>`;
+        el.innerHTML = alertHtml + el.innerHTML;
     }
-
-    const tr = document.createElement('tr');
-    const tdTarget = document.createElement('td');
-    tdTarget.textContent = target;
-    const tdBody = document.createElement('td');
-    tdBody.textContent = body;
-    tr.appendChild(tdTarget);
-    tr.appendChild(tdBody);
-    
-    // 古いログが上になり、最新ログが下に追加されていく
-    tbody.appendChild(tr);
-
-    // スクロールコンテナの最下部へ自動スクロール
-    const scrollContainer = tbody.parentElement.parentElement;
-    if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight;
-    }
-
-    console.log(`[game_logs] ${target} / ${body}`);
-    */
 }
 
 console.log("【残す】common_utils.js が読み込まれました。");
