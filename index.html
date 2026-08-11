@@ -33,6 +33,7 @@
         <p>
             <button id="btn-dice1" disabled>X サイコロ１個</button>
             <button id="btn-dice2" disabled>X サイコロ２個</button>
+            <button id="btn-paycheck" disabled>X 入金請求</button>
             <button id="btn-end-turn" disabled>X 次の人へ</button>
         </p>
         
@@ -41,7 +42,6 @@
             <button id="btn-big-deal" disabled>X 大きい商売</button>
             <button id="btn-borrow-loan" disabled>x 銀行借入</button>
             <button id="btn-payback-loan" disabled>x 銀行返済</button>
-            <button id="btn-paycheck" disabled>X 入金請求</button>
         </p>
 
         <table border="1" cellspacing="0" cellpadding="2">
@@ -82,10 +82,10 @@
     <span id="main-msg">あなたの手番を待つか、サイコロを振ってください。</span>
 <hr>
     <!-- 自分用アクションエリア -->
-        <label for="num-process-self">数量:</label>
+        <label for="num-process-self">　</label>
         <input type="number" id="num-process-self" placeholder="任意の場合のみ入力">
-        <button id="btn-process-self">自分で実行する（購入・支払）</button>
-        <button id="btn-pass-card">見送る（パスする）</button>
+        <button id="btn-process-self">購入する・支払う）</button>
+        <button id="btn-pass-card">パスする</button>
 <br>
     <!-- 交渉・売買エリア -->
         <label>権利を売る:</label>
@@ -96,7 +96,7 @@
         <button id="btn-sell-card">交渉を持ちかける</button>
 <br>
     <!-- メッセージ応答エリア -->
-        <span id="trade-message">受け取るメッセージ (現在交渉なし)</span> 
+        <span id="trade-message"> (現在交渉なし)</span> 
         <button id="btn-trade-accept">承諾</button>
         <button id="btn-trade-reject">拒否</button>
 </div>
