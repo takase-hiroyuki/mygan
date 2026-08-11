@@ -161,7 +161,7 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
         if (elNumProcess) elNumProcess.hidden = true;
         if (elSellTarget) elSellTarget.disabled = true;
         if (elSellPrice) elSellPrice.disabled = true;
-        if (elBtnProcess) elBtnProcess.textContent = '自分で実行する（購入・支払）';
+        if (elBtnProcess) elBtnProcess.textContent = '購入する・支払う';
     }
     
     if (!isPlaying) {
