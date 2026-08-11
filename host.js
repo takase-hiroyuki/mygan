@@ -17,6 +17,7 @@ const btnKickParticipant = document.getElementById(DOM_SELECTORS.HOST.KICK_CONTR
 
 // ★ ログ管理用DOM
 const btnFetchLogs = document.getElementById('btn-fetch-logs');
+const btnFetchCurrentGameLogs = document.getElementById('btn-fetch-current-game-logs'); // ★追加
 const btnCopyLogs = document.getElementById('btn-copy-logs');
 const hostLogTextarea = document.getElementById('host-log-textarea');
 
@@ -306,10 +307,60 @@ btnForceGameEnd?.addEventListener('click', async () => {
     }
 });
 
-// ★ 追加: ログの取得とコピー機能
+// ★ 追加: 「今回のゲームのログのみ」を自動で絞り込んで取得する機能
+btnFetchCurrentGameLogs?.addEventListener('click', async () => {
+    if (!supabase) return;
+    writeLog(supabase, "Host", "Action", "「今回のゲームログを取得」ボタンが押下されました");
+    if (hostLogTextarea) hostLogTextarea.value = "取得中...";
+    setButtonActive('btn-fetch-current-game-logs', false);
+    
+    try {
+        // 1. 直近の「ゲーム開始」イベントを探す
+        const { data: startLogData, error: startLogError } = await supabase
+            .from('game_logs')
+            .select('sequence_num')
+            .eq('room_id', roomId)
+            .eq('target', 'Host')
+            .eq('title', 'Action')
+            .eq('body', 'ゲーム開始処理が正常に完了しました')
+            .order('sequence_num', { ascending: false })
+            .limit(1);
+
+        if (startLogError) throw startLogError;
+
+        let query = supabase
+            .from('game_logs')
+            .select('*')
+            .eq('room_id', roomId)
+            .order('sequence_num', { ascending: false })
+            .limit(3000); // 1ゲーム分として余裕を持たせる
+
+        // ゲーム開始ログが見つかれば、そのシーケンス番号でフィルターをかける
+        if (startLogData && startLogData.length > 0) {
+            query = query.gte('sequence_num', startLogData[0].sequence_num);
+        }
+
+        // 2. ログを取得して表示
+        const { data, error } = await query;
+        if (error) throw error;
+
+        if (data && hostLogTextarea) {
+            hostLogTextarea.value = data.reverse().map(log => 
+                `[${new Date(log.created_at).toLocaleString()}] Target: ${log.target} | Title: ${log.title}\n${log.body}`
+            ).join('\n----------------------------------------\n');
+        }
+    } catch (err) {
+        if (hostLogTextarea) hostLogTextarea.value = `エラー: ${err.message}`;
+        writeLog(supabase, "Host", "Error", `現在のゲームログの取得に失敗しました: ${err.message}`);
+    }
+    
+    setButtonActive('btn-fetch-current-game-logs', true);
+});
+
+// 従来の「直近1000件を強制取得」機能
 btnFetchLogs?.addEventListener('click', async () => {
     if (!supabase) return;
-    writeLog(supabase, "Host", "Action", "「最新のログを取得」ボタンが押下されました");
+    writeLog(supabase, "Host", "Action", "「直近1000件を取得」ボタンが押下されました");
     if (hostLogTextarea) hostLogTextarea.value = "取得中...";
     setButtonActive('btn-fetch-logs', false);
     
