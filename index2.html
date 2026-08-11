@@ -7,6 +7,14 @@
     <title>mygan index2</title>
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="./index2.css">
+    <style>
+        .active-red-button {
+            background-color: #fed7d7 !important;
+            border-color: #feb2b2 !important;
+            color: #9b2c2c !important;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
     <div id="section-login">
@@ -20,7 +28,7 @@
         
         <p>
             名前: <span id="g-name">未定</span> / 
-            子供: <span id="g-child-count">0</span>人 / 
+            子供: <span id="g-child-count">0</span>คน / 
             養育費 $<span id="g-child-expense">0</span>(1人あたり)<br>
             職業: <span id="g-profession"></span>
         </p>
@@ -137,6 +145,20 @@
 
     </div>
 
+    <script>
+        // index.jsを変更せず、DOMの変化を監視してボタンの先頭文字が 'O' または '◯' の場合に赤色クラスを付与するオブザーバー
+        const observer = new MutationObserver(() => {
+            document.querySelectorAll('button').forEach(btn => {
+                const text = btn.textContent.trim();
+                if (text.startsWith('O') || text.startsWith('◯')) {
+                    btn.classList.add('active-red-button');
+                } else {
+                    btn.classList.remove('active-red-button');
+                }
+            });
+        });
+        observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="module" src="./index.js"></script>
 </body>
