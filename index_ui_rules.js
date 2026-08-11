@@ -87,7 +87,7 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
                 canProcess = true;
                 canPass = true;
             } else {
-                elBtnProcess.textContent = '購入する・支払う）';
+                elBtnProcess.textContent = '購入する・支払う';
                 canProcess = true;
                 canPass = true;
             }
