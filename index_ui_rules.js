@@ -71,25 +71,35 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
         let canPass = false;
         let canProcess = false;
 
-        if (elBtnProcess) {
-            const cardHolderPos = cardHolderRecord.state.position;
-            
-            if (activeCard.asset_type === 'other') {
-                elBtnProcess.textContent = '実行する（支払・適用）';
-                canProcess = true;
-                canPass = true;
-            } else if (cardHolderPos !== undefined && CELLS_DOODAD.includes(parseInt(cardHolderPos, 10))) {
+        // ★修正: deck_type を最優先にした堅牢な判定ロジックに変更
+        if (elBtnProcess && elBtnPass) {
+            if (activeCard.deck_type === 'doodad') {
+                // パターン1: Doodad（無駄遣い） -> 強制支払い
                 elBtnProcess.textContent = '支払う';
+                elBtnPass.textContent = '見送る（パスする）'; 
                 canProcess = true;
-                canPass = false;
-            } else if (cardHolderPos !== undefined && CELLS_MARKET.includes(parseInt(cardHolderPos, 10))) {
-                elBtnProcess.textContent = '確認して手番を進める';
-                canProcess = true;
+                canPass = false; 
+            } else if (activeCard.deck_type === 'market') {
+                // パターン2: Market（市場） -> この場での購入・支払いはなし（手番を進めるだけ）
+                elBtnProcess.textContent = '実行する'; 
+                elBtnPass.textContent = '確認して手番を進める';
+                canProcess = false; 
                 canPass = true;
             } else {
-                elBtnProcess.textContent = '購入する・支払う';
-                canProcess = true;
-                canPass = true;
+                // パターン3, 4: Small Deal / Big Deal
+                if (activeCard.asset_type === 'other') {
+                    // 特殊イベント（増資・減資・損害など） -> 強制適用
+                    elBtnProcess.textContent = '実行する（適用）';
+                    elBtnPass.textContent = '見送る（パスする）';
+                    canProcess = true;
+                    canPass = false; 
+                } else {
+                    // 通常の商売（株、不動産など） -> 任意購入
+                    elBtnProcess.textContent = '購入する';
+                    elBtnPass.textContent = '見送る（パスする）';
+                    canProcess = true;
+                    canPass = true; 
+                }
             }
         }
         
@@ -120,6 +130,7 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
             setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, true);
             setButtonActive(SEL_G.TRADE.BTN_PASS_CARD, true);
             if (elBtnProcess) elBtnProcess.textContent = '寄付する';
+            if (elBtnPass) elBtnPass.textContent = '見送る（パスする）';
         } else {
             safeUpdate(SEL_G.TRADE.THIS_CARD, `${turnUserState.name || '他のプレイヤー'} が寄付を検討中です...`);
             setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, false);
@@ -150,8 +161,9 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
         if (elSellTarget) elSellTarget.disabled = true;
         if (elSellPrice) elSellPrice.disabled = true;
         if (elBtnProcess) elBtnProcess.textContent = '購入する・支払う';
+        if (elBtnPass) elBtnPass.textContent = '見送る（パスする）';
     } else {
-        safeUpdate(SEL_G.TRADE.THIS_CARD, "場に出たカード");
+        safeUpdate(SEL_G.TRADE.THIS_CARD, "あなたの手番を待つか、サイコロを振ってください。");
         setButtonActive(SEL_G.TRADE.BTN_SELL, false);
         setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, false);
         setButtonActive(SEL_G.TRADE.BTN_PASS_CARD, false);
@@ -162,6 +174,7 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
         if (elSellTarget) elSellTarget.disabled = true;
         if (elSellPrice) elSellPrice.disabled = true;
         if (elBtnProcess) elBtnProcess.textContent = '購入する・支払う';
+        if (elBtnPass) elBtnPass.textContent = '見送る（パスする）';
     }
     
     if (!isPlaying) {
@@ -232,7 +245,7 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
             
             setButtonActive(SEL_G.FINANCIALS.BTN_C_CASHFLOW, !!flags.is_calculating);
             setButtonActive(SEL_G.LOAN.BTN_BORROW_LOAN, true);
-            setButtonActive(SEL_G.LOAN.BTN_PAYBACK_LOAN, hasBankLoan); // ★ 変更: ローンがある場合のみ有効化
+            setButtonActive(SEL_G.LOAN.BTN_PAYBACK_LOAN, hasBankLoan); 
             setButtonActive(SEL_G.FINANCIALS.BTN_OPERATE, true);
             
         } else {
@@ -245,7 +258,7 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
             ], false);
 
             setButtonActive(SEL_G.LOAN.BTN_BORROW_LOAN, true);
-            setButtonActive(SEL_G.LOAN.BTN_PAYBACK_LOAN, hasBankLoan); // ★ 変更: ローンがある場合のみ有効化
+            setButtonActive(SEL_G.LOAN.BTN_PAYBACK_LOAN, hasBankLoan); 
             setButtonActive(SEL_G.FINANCIALS.BTN_OPERATE, true);
         }
     }
