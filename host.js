@@ -185,6 +185,7 @@ function shuffleArray(array) {
 
 btnInitialShuffleStart?.addEventListener('click', async () => {
     if (!supabase) return;
+    writeLog(supabase, "Host", "Action", "「初期シャッフル＆ゲーム開始」ボタンが押下されました");
     setButtonActive(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE, false);
 
     try {
@@ -219,6 +220,7 @@ btnInitialShuffleStart?.addEventListener('click', async () => {
         }
 
         await syncAndFetchRoom();
+        writeLog(supabase, "Host", "Action", "ゲーム開始処理が正常に完了しました");
     } catch (error) {
         writeLog(supabase, "Host", "Error", `ゲーム開始処理エラー: ${error.message}`);
         await insertSystemMessage(supabase, "ホスト", `ゲーム開始失敗: ${error.message}`);
@@ -229,8 +231,9 @@ btnInitialShuffleStart?.addEventListener('click', async () => {
 btnKickParticipant?.addEventListener('click', async () => {
     if (!supabase) return;
     const orderInput = inputKickOrder.value.trim();
+    writeLog(supabase, "Host", "Action", `「退室させる」ボタンが押下されました (入力順: ${orderInput})`);
+
     const orderIdx = parseInt(orderInput, 10) - 1;
-    
     if (isNaN(orderIdx) || orderIdx < 0 || orderIdx >= currentParticipants.length) {
         await insertSystemMessage(supabase, "ホスト", "有効な退室者の番号（入室順）を入力してください。");
         return;
@@ -245,6 +248,7 @@ btnKickParticipant?.addEventListener('click', async () => {
         });
         inputKickOrder.value = '';
         await syncAndFetchRoom();
+        writeLog(supabase, "Host", "Action", `プレイヤー ${targetUser.user_id} の退室処理が完了しました`);
     } catch (error) {
         await insertSystemMessage(supabase, "ホスト", `退室処理失敗: ${error.message}`);
     }
@@ -253,8 +257,9 @@ btnKickParticipant?.addEventListener('click', async () => {
 btnSetTurn?.addEventListener('click', async () => {
     if (!supabase) return;
     const orderInput = inputNextTurnOrder.value.trim();
+    writeLog(supabase, "Host", "Action", `「を手番にする」ボタンが押下されました (入力順: ${orderInput})`);
+
     const orderIdx = parseInt(orderInput, 10) - 1;
-    
     if (isNaN(orderIdx) || orderIdx < 0 || orderIdx >= currentParticipants.length) {
         await insertSystemMessage(supabase, "ホスト", "有効なプレイヤーの番号（入室順）を入力してください。");
         return;
@@ -269,6 +274,7 @@ btnSetTurn?.addEventListener('click', async () => {
         });
         inputNextTurnOrder.value = '';
         await syncAndFetchRoom();
+        writeLog(supabase, "Host", "Action", `プレイヤー ${targetUser.user_id} への手番変更が完了しました`);
     } catch (error) {
         await insertSystemMessage(supabase, "ホスト", `手番変更失敗: ${error.message}`);
     }
@@ -276,6 +282,7 @@ btnSetTurn?.addEventListener('click', async () => {
 
 btnForceGameEnd?.addEventListener('click', async () => {
     if (!supabase) return;
+    writeLog(supabase, "Host", "Action", "「全員強制退室＆ゲーム終了」ボタンが押下されました");
     
     const { error: deleteError } = await supabase.from('participants').delete().eq('room_id', roomId);
         
@@ -291,6 +298,7 @@ btnForceGameEnd?.addEventListener('click', async () => {
         if (updateError) {
             await insertSystemMessage(supabase, "ホスト", `部屋の状態リセットに失敗しました: ${updateError.message}`);
         } else {
+            writeLog(supabase, "Host", "Action", "ゲーム終了と部屋のリセットが完了しました");
             window.location.reload();
         }
     } else {
@@ -301,6 +309,7 @@ btnForceGameEnd?.addEventListener('click', async () => {
 // ★ 追加: ログの取得とコピー機能
 btnFetchLogs?.addEventListener('click', async () => {
     if (!supabase) return;
+    writeLog(supabase, "Host", "Action", "「最新のログを取得」ボタンが押下されました");
     if (hostLogTextarea) hostLogTextarea.value = "取得中...";
     setButtonActive('btn-fetch-logs', false);
     
@@ -324,6 +333,7 @@ btnFetchLogs?.addEventListener('click', async () => {
 
 btnCopyLogs?.addEventListener('click', () => {
     if (hostLogTextarea && hostLogTextarea.value) {
+        writeLog(supabase, "Host", "Action", "「ログをコピー」ボタンが押下されました");
         navigator.clipboard.writeText(hostLogTextarea.value)
             .then(() => {
                 const originalText = btnCopyLogs.innerText;
