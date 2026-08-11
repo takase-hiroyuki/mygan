@@ -1,7 +1,7 @@
 // host.js
 import { roomId, SUPABASE_URL, SUPABASE_KEY } from './common_config.js';
 import { DOM_SELECTORS } from './common_dom_selectors.js';
-import { setButtonActive, BOARD_CELL_NAMES, waitForSupabase, callRpcWithDebug, insertSystemMessage } from './common_utils.js'; 
+import { setButtonActive, BOARD_CELL_NAMES, waitForSupabase, callRpcWithDebug, insertSystemMessage, writeLog } from './common_utils.js'; // ★ writeLog 追加
 
 let supabase = null;
 const listBody = document.getElementById(DOM_SELECTORS.HOST.PARTICIPANT_LIST);
@@ -15,16 +15,19 @@ const btnSetTurn = document.getElementById(DOM_SELECTORS.HOST.TURN_CONTROL.BTN_S
 const inputKickOrder = document.getElementById(DOM_SELECTORS.HOST.KICK_CONTROL.INPUT_KICK_ORDER);
 const btnKickParticipant = document.getElementById(DOM_SELECTORS.HOST.KICK_CONTROL.BTN_KICK_PARTICIPANT);
 
-console.log("【デバッグ】const 終了");
+// ★ ログ管理用DOM
+const btnFetchLogs = document.getElementById('btn-fetch-logs');
+const btnCopyLogs = document.getElementById('btn-copy-logs');
+const hostLogTextarea = document.getElementById('host-log-textarea');
 
 let currentParticipants = [];
 let activeRoomRecord = null;
 
 (async function initHost() {
-    console.log("【デバッグ】initHost 監視開始 部屋番号:", roomId);
-    
     const supabaseGlobal = await waitForSupabase();
     supabase = supabaseGlobal.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    writeLog(supabase, "Host", "System", `initHost 監視開始 部屋番号: ${roomId}`);
 
     await syncAndFetchRoom();
 
@@ -43,7 +46,7 @@ let activeRoomRecord = null;
 
 async function syncAndFetchRoom() {
     if (!supabase) return;
-    console.log("【デバッグ】syncAndFetchRoom 実行");
+    writeLog(supabase, "Host", "System", "syncAndFetchRoom 実行");
 
     const [resPart, resRoom] = await Promise.all([
         supabase.from('participants').select('*').eq('room_id', roomId).order('id', { ascending: true }),
@@ -171,7 +174,6 @@ function drawHostScreen() {
     });
 }
 
-// 配列をシャッフルするヘルパー関数 (Fisher-Yates アルゴリズム)
 function shuffleArray(array) {
     const newArray = [...array];
     for (let i = newArray.length - 1; i > 0; i--) {
@@ -186,17 +188,14 @@ btnInitialShuffleStart?.addEventListener('click', async () => {
     setButtonActive(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE, false);
 
     try {
-        // 1. 職業と順番の決定
         await callRpcWithDebug(supabase, 'start_game_with_professions_v2', { p_room_id: roomId });
         
-        // 2. データベースから本物のカードデータをすべて取得
         const { data: allCards, error: cardsError } = await supabase.from('cards').select('*');
         if (cardsError) {
-            console.error("【デバッグ】カードデータの取得失敗:", cardsError);
+            writeLog(supabase, "Host", "Error", `カードデータの取得失敗: ${JSON.stringify(cardsError)}`);
             throw new Error(`カードデータの取得に失敗しました: ${cardsError.message}`);
         }
 
-        // 3. 取得したカードを deck_type ごとに分類し、それぞれシャッフル
         const decks = {
             small_deal: shuffleArray(allCards.filter(c => c.deck_type === 'small_deal')),
             big_deal: shuffleArray(allCards.filter(c => c.deck_type === 'big_deal')),
@@ -204,10 +203,9 @@ btnInitialShuffleStart?.addEventListener('click', async () => {
             doodad: shuffleArray(allCards.filter(c => c.deck_type === 'doodad'))
         };
         
-        // 4. 生成したデッキを rooms テーブルの game_state に保存
         const { data: roomData, error: roomError } = await supabase.from('rooms').select('game_state').eq('id', roomId).single();
         if (roomError) {
-            console.error("【デバッグ】部屋の取得失敗:", roomError);
+            writeLog(supabase, "Host", "Error", `部屋の取得失敗: ${JSON.stringify(roomError)}`);
             throw new Error(`部屋情報の取得に失敗しました: ${roomError.message}`);
         }
 
@@ -216,13 +214,13 @@ btnInitialShuffleStart?.addEventListener('click', async () => {
         
         const { error: updateError } = await supabase.from('rooms').update({ game_state: currentState }).eq('id', roomId);
         if (updateError) {
-            console.error("【デバッグ】デッキの保存失敗:", updateError);
+            writeLog(supabase, "Host", "Error", `デッキの保存失敗: ${JSON.stringify(updateError)}`);
             throw new Error(`デッキの保存に失敗しました: ${updateError.message}`);
         }
 
         await syncAndFetchRoom();
     } catch (error) {
-        console.error("【デバッグ】ゲーム開始処理エラー:", error);
+        writeLog(supabase, "Host", "Error", `ゲーム開始処理エラー: ${error.message}`);
         await insertSystemMessage(supabase, "ホスト", `ゲーム開始失敗: ${error.message}`);
         setButtonActive(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE, true);
     }
@@ -297,6 +295,44 @@ btnForceGameEnd?.addEventListener('click', async () => {
         }
     } else {
         await insertSystemMessage(supabase, "ホスト", `参加者の退室処理に失敗しました: ${deleteError.message}`);
+    }
+});
+
+// ★ 追加: ログの取得とコピー機能
+btnFetchLogs?.addEventListener('click', async () => {
+    if (!supabase) return;
+    if (hostLogTextarea) hostLogTextarea.value = "取得中...";
+    setButtonActive('btn-fetch-logs', false);
+    
+    const { data, error } = await supabase
+        .from('game_logs')
+        .select('*')
+        .eq('room_id', roomId)
+        .order('sequence_num', { ascending: false })
+        .limit(100);
+        
+    if (error) {
+        if (hostLogTextarea) hostLogTextarea.value = `エラー: ${error.message}`;
+    } else if (data && hostLogTextarea) {
+        hostLogTextarea.value = data.reverse().map(log => 
+            `[${new Date(log.created_at).toLocaleString()}] Target: ${log.target} | Title: ${log.title}\n${log.body}`
+        ).join('\n----------------------------------------\n');
+    }
+    
+    setButtonActive('btn-fetch-logs', true);
+});
+
+btnCopyLogs?.addEventListener('click', () => {
+    if (hostLogTextarea && hostLogTextarea.value) {
+        navigator.clipboard.writeText(hostLogTextarea.value)
+            .then(() => {
+                const originalText = btnCopyLogs.innerText;
+                btnCopyLogs.innerText = "O コピーしました！";
+                setTimeout(() => { btnCopyLogs.innerText = originalText; }, 2000);
+            })
+            .catch(err => {
+                writeLog(supabase, "Host", "Error", `クリップボードへのコピーに失敗しました: ${err}`);
+            });
     }
 });
 
