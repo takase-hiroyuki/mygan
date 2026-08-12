@@ -24,7 +24,7 @@ export const DOM_SELECTORS = {
         // あなたのステータス表示エリア
         STATUS: {
             SECTION: 'section-guest',
-            HIT: 'hit', // ★追加: 該当判定の★マーク表示用
+            HIT: 'hit', // 該当判定の★マーク表示用
             NAME: 'g-name',
             CHILDREN_COUNT: 'g-child-count',
             PER_CHILD_EXPENSE: 'g-child-expense',
@@ -50,7 +50,7 @@ export const DOM_SELECTORS = {
 
         // 他プレイヤーとの取引（トレード）エリア
         TRADE: {
-            THIS_CARD: 'main-msg', // ★変更: 'thiscard' から 'main-msg' へ変更
+            THIS_CARD: 'main-msg',
             SELECT_TARGET: 'sell-target',
             INPUT_PRICE: 'sell-price',
             BTN_SELL: 'btn-sell-card',
@@ -145,7 +145,7 @@ export const DOM_SELECTORS = {
             CELL_PREFIX: 'rat-cell-'
         },
 
-        // ★追加: 拡張情報表示用コンテナ
+        // 拡張情報表示用コンテナ
         EXTRA_INFO_CONTAINER: 'host-extra-info-container'
     }
 };
