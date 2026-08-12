@@ -3,7 +3,6 @@
 import { roomId } from './common_config.js';
 import { SEL_G } from './common_dom_selectors.js';
 
-// ★ 新設: ログを game_logs テーブルへ出力する汎用関数
 let localSeqCounter = 0;
 export function writeLog(supabaseClient, target, title, body) {
     if (!supabaseClient) return;
