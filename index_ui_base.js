@@ -1,5 +1,4 @@
 // index_ui_base.js
-
 import { SEL_G } from './common_dom_selectors.js';
 import { BOARD_CELL_NAMES, setMultipleButtonsActive, toYenFormat } from './common_utils.js';
 
@@ -10,6 +9,10 @@ const guestDiceResult = document.getElementById(SEL_G.CONTROLS.DICE_RESULT);
 export function toggleScreen(isLoggedIn) {
     if (sectionLogin) sectionLogin.hidden = isLoggedIn;
     if (sectionGuest) sectionGuest.hidden = !isLoggedIn;
+}
+
+function toCurrency(value) {
+    return Number(value || 0).toLocaleString();
 }
 
 export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onReRenderCallback) {
@@ -56,7 +59,9 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
     safeUpdate(SEL_G.STATUS.CURRENT_CASH, toYenFormat(financials.cash));
     safeUpdate(SEL_G.STATUS.PROFESSION, state.profession || "未定");
     safeUpdate(SEL_G.STATUS.CHILDREN_COUNT, state.children_count || 0);
-    safeUpdate(SEL_G.STATUS.PER_CHILD_EXPENSE, `${toYenFormat(financials.per_child_expense)}(1人あたり)`);
+    
+    // (1人あたり) がHTML側にもあるためJS側では付与しないよう修正
+    safeUpdate(SEL_G.STATUS.PER_CHILD_EXPENSE, toYenFormat(financials.per_child_expense));
 
     for (let i = 0; i < 24; i++) {
         const cell = document.getElementById(`${SEL_G.BOARD.RAT_PREFIX}${i}`);
@@ -135,6 +140,7 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
 
             // --- 資産の表示と売却判定 ---
             if (costVal > 0 || (liabVal === 0 && cfVal > 0)) {
+                // toYenFormat がマイナス時に '▲' を返すため、プラス時のみ '+' を明示
                 const cfStr = cfVal <= 0 ? toYenFormat(cfVal) : `+${toYenFormat(cfVal)}`;
                 const unitPrice = toYenFormat(costVal);
                 const quantity = item.quantity !== undefined ? item.quantity : 1; 
