@@ -13,8 +13,8 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
     const state = record.state;
     const financials = state.financials || {};
     const flags = state.flags || {}; 
-    const items = state.items || []; // ★ 共通化: アイテム一覧の取得
-    const hasBankLoan = items.some(item => item.type_id === 'BankLoan'); // ★ 追加: 銀行ローンの有無を判定
+    const items = state.items || []; 
+    const hasBankLoan = items.some(item => item.asset_type === 'BankLoan'); 
 
     const turnUserId = cachedRoom ? cachedRoom.current_turn_user_id : null;
     const isMyTurn = (turnUserId === currentUserId);
@@ -71,30 +71,24 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
         let canPass = false;
         let canProcess = false;
 
-        // ★修正: deck_type を最優先にした堅牢な判定ロジックに変更
         if (elBtnProcess && elBtnPass) {
             if (activeCard.deck_type === 'doodad') {
-                // パターン1: Doodad（無駄遣い） -> 強制支払い
                 elBtnProcess.textContent = '支払う';
                 elBtnPass.textContent = 'パスする'; 
                 canProcess = true;
                 canPass = false; 
             } else if (activeCard.deck_type === 'market') {
-                // パターン2: Market（市場） -> この場での購入・支払いはなし（手番を進めるだけ）
                 elBtnProcess.textContent = '実行する'; 
                 elBtnPass.textContent = '確認して手番を進める';
                 canProcess = false; 
                 canPass = true;
             } else {
-                // パターン3, 4: Small Deal / Big Deal
                 if (activeCard.asset_type === 'other') {
-                    // 特殊イベント（増資・減資・損害など） -> 強制適用
                     elBtnProcess.textContent = '実行する（適用）';
                     elBtnPass.textContent = 'パスする';
                     canProcess = true;
                     canPass = false; 
                 } else {
-                    // 通常の商売（株、不動産など） -> 任意購入
                     elBtnProcess.textContent = '購入する';
                     elBtnPass.textContent = 'パスする';
                     canProcess = true;
@@ -200,7 +194,7 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
                 const isTrading = !!cachedRoom?.game_state?.trade_offer;
                 const anyCardHolderExists = cachedParticipants.some(p => p.state && p.state.drawn_card);
                 
-                const hasInstantDebt = items.some(item => item.type_id === 'InstantDebt');
+                const hasInstantDebt = items.some(item => item.asset_type === 'InstantDebt');
                 
                 const posNum = parseInt(state.position, 10);
                 const isMyCharity = [3, 16].includes(posNum);
@@ -229,7 +223,7 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
                     setButtonActive(SEL_G.CONTROLS.BTN_DICE1, false);
                     setButtonActive(SEL_G.CONTROLS.BTN_DICE_2, false);
                     
-                    const hasInstantDebt = items.some(item => item.type_id === 'InstantDebt');
+                    const hasInstantDebt = items.some(item => item.asset_type === 'InstantDebt');
                     
                     setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, !hasInstantDebt);
                 } else {
@@ -241,13 +235,13 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
                     setButtonActive(SEL_G.CONTROLS.BTN_DICE_2, charityTurnsLeft > 0);
                     setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, false);
                 }
+                
+                setButtonActive(SEL_G.FINANCIALS.BTN_C_CASHFLOW, !!flags.is_calculating);
+                setButtonActive(SEL_G.LOAN.BTN_BORROW_LOAN, true);
+                setButtonActive(SEL_G.LOAN.BTN_PAYBACK_LOAN, hasBankLoan); 
+                setButtonActive(SEL_G.FINANCIALS.BTN_OPERATE, true);
+                
             }
-            
-            setButtonActive(SEL_G.FINANCIALS.BTN_C_CASHFLOW, !!flags.is_calculating);
-            setButtonActive(SEL_G.LOAN.BTN_BORROW_LOAN, true);
-            setButtonActive(SEL_G.LOAN.BTN_PAYBACK_LOAN, hasBankLoan); 
-            setButtonActive(SEL_G.FINANCIALS.BTN_OPERATE, true);
-            
         } else {
             if (diceStatusArea) diceStatusArea.textContent = `[${turnUserName}] がプレイ中`;
             
