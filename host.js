@@ -253,7 +253,7 @@ function drawHostScreen() {
                     return `<span style="background-color: yellow; color: red; font-weight: bold;">★${baseText}</span>`;
                 }
                 return baseText;
-            }).join('<br>');
+            }).join('　');
             
             extraHtml += `<tr>
                 <td>${pState.name || '不明'}</td>
