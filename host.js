@@ -1,7 +1,7 @@
 // host.js
 import { roomId, SUPABASE_URL, SUPABASE_KEY } from './common_config.js';
 import { DOM_SELECTORS } from './common_dom_selectors.js';
-import { setButtonActive, BOARD_CELL_NAMES, waitForSupabase, callRpcWithDebug, insertSystemMessage, writeLog } from './common_utils.js'; // ★ writeLog 追加
+import { setButtonActive, BOARD_CELL_NAMES, waitForSupabase, callRpcWithDebug, insertSystemMessage, writeLog } from './common_utils.js';
 
 let supabase = null;
 const listBody = document.getElementById(DOM_SELECTORS.HOST.PARTICIPANT_LIST);
@@ -15,9 +15,8 @@ const btnSetTurn = document.getElementById(DOM_SELECTORS.HOST.TURN_CONTROL.BTN_S
 const inputKickOrder = document.getElementById(DOM_SELECTORS.HOST.KICK_CONTROL.INPUT_KICK_ORDER);
 const btnKickParticipant = document.getElementById(DOM_SELECTORS.HOST.KICK_CONTROL.BTN_KICK_PARTICIPANT);
 
-// ★ ログ管理用DOM
 const btnFetchLogs = document.getElementById('btn-fetch-logs');
-const btnFetchCurrentGameLogs = document.getElementById('btn-fetch-current-game-logs'); // ★追加
+const btnFetchCurrentGameLogs = document.getElementById('btn-fetch-current-game-logs'); 
 const btnCopyLogs = document.getElementById('btn-copy-logs');
 const hostLogTextarea = document.getElementById('host-log-textarea');
 
@@ -142,8 +141,8 @@ function drawHostScreen() {
                 <td>${!!flags.is_card_drawn}</td>
                 <td>${!!flags.is_action_completed}</td>
                 <td>${!!flags.is_calculating}</td>
-                <td style="font-weight: bold; color: ${charityLeft > 0 ? '#4caf50' : 'inherit'};">${charityLeft}</td>
-                <td style="font-weight: bold; color: ${downsizedLeft > 0 ? '#f44336' : 'inherit'};">${downsizedLeft}</td>
+                <td>${charityLeft}</td>
+                <td>${downsizedLeft}</td>
                 <td>${!!flags.is_negative_cash_flow}</td>
             `;
             flagsListBody.appendChild(trFlags);
@@ -161,8 +160,7 @@ function drawHostScreen() {
             tdNode.setAttribute('bgcolor', '#00bcd4');
             tdNode.setAttribute('align', 'center');
             const fontNode = document.createElement('font');
-            const fontNodeColor = 'white';
-            fontNode.setAttribute('color', fontNodeColor);
+            fontNode.setAttribute('color', 'white');
             fontNode.setAttribute('size', '2');
             fontNode.textContent = displayName;
             
@@ -173,6 +171,81 @@ function drawHostScreen() {
             targetCell.appendChild(table);
         }
     });
+
+    const extraContainer = document.getElementById(DOM_SELECTORS.HOST.EXTRA_INFO_CONTAINER);
+    if (extraContainer) {
+        let extraHtml = `<h2>現在のカード情報</h2>`;
+        const currentCard = state.current_card;
+        if (currentCard) {
+            extraHtml += `<p>タイトル: ${currentCard.title} <br> asset_type: <strong>${currentCard.asset_type}</strong></p>`;
+        } else {
+            extraHtml += `<p>現在、場に出ているカードはありません。</p>`;
+        }
+
+        extraHtml += `<h2>財務状況一覧</h2>`;
+        extraHtml += `<table border="1" width="100%">`;
+        extraHtml += `<tr><th>名前</th><th>給料</th><th>不労所得</th><th>経費</th><th>キャッシュフロー</th><th>ファーストトラックまで</th></tr>`;
+
+        currentParticipants.forEach(p => {
+            const pState = p.state || {};
+            const items = pState.items || [];
+            
+            let salary = 0;
+            let passiveIncome = 0;
+            let totalExpenses = 0;
+            
+            items.forEach(item => {
+                const costVal = Number(item.cost || 0);
+                const liabVal = Number(item.liability || 0);
+                const cfVal = Number(item.cashflow || 0);
+                
+                if (cfVal < 0) {
+                    totalExpenses += Math.abs(cfVal);
+                } else if (cfVal > 0) {
+                    if (costVal > 0 || liabVal > 0) {
+                        passiveIncome += cfVal;
+                    } else {
+                        salary += cfVal;
+                    }
+                }
+            });
+            
+            const cashflow = salary + passiveIncome - totalExpenses;
+            const ftDiff = totalExpenses - passiveIncome;
+            const ftText = ftDiff > 0 ? `あと $${ftDiff.toLocaleString()}` : "移行可能！";
+            
+            extraHtml += `<tr>
+                <td>${pState.name || '不明'}</td>
+                <td>$${salary.toLocaleString()}</td>
+                <td>$${passiveIncome.toLocaleString()}</td>
+                <td>$${totalExpenses.toLocaleString()}</td>
+                <td>$${cashflow.toLocaleString()}</td>
+                <td>${ftText}</td>
+            </tr>`;
+        });
+        extraHtml += `</table>`;
+
+        extraHtml += `<h2>資産保有状況 (asset_type)</h2>`;
+        extraHtml += `<table border="1" width="100%">`;
+        extraHtml += `<tr><th>名前</th><th>保有資産一覧</th></tr>`;
+
+        currentParticipants.forEach(p => {
+            const pState = p.state || {};
+            const items = pState.items || [];
+            
+            const assets = items.filter(item => Number(item.cost || 0) > 0 || (item.asset_type !== 'Salary' && item.asset_type !== 'ChildExpense' && item.asset_type !== 'InstantDebt' && item.asset_type !== 'BankLoan'));
+            
+            const assetStrs = assets.map(item => `[${item.asset_type}] ${item.title}`).join('<br>');
+            
+            extraHtml += `<tr>
+                <td>${pState.name || '不明'}</td>
+                <td>${assetStrs || 'なし'}</td>
+            </tr>`;
+        });
+        extraHtml += `</table>`;
+
+        extraContainer.innerHTML = extraHtml;
+    }
 }
 
 function shuffleArray(array) {
@@ -307,7 +380,6 @@ btnForceGameEnd?.addEventListener('click', async () => {
     }
 });
 
-// ★ 追加: 「今回のゲームのログのみ」を自動で絞り込んで取得する機能
 btnFetchCurrentGameLogs?.addEventListener('click', async () => {
     if (!supabase) return;
     writeLog(supabase, "Host", "Action", "「今回のゲームログを取得」ボタンが押下されました");
@@ -315,7 +387,6 @@ btnFetchCurrentGameLogs?.addEventListener('click', async () => {
     setButtonActive('btn-fetch-current-game-logs', false);
     
     try {
-        // 1. 直近の「ゲーム開始」イベントを探す
         const { data: startLogData, error: startLogError } = await supabase
             .from('game_logs')
             .select('sequence_num')
@@ -333,14 +404,12 @@ btnFetchCurrentGameLogs?.addEventListener('click', async () => {
             .select('*')
             .eq('room_id', roomId)
             .order('sequence_num', { ascending: false })
-            .limit(3000); // 1ゲーム分として余裕を持たせる
+            .limit(3000);
 
-        // ゲーム開始ログが見つかれば、そのシーケンス番号でフィルターをかける
         if (startLogData && startLogData.length > 0) {
             query = query.gte('sequence_num', startLogData[0].sequence_num);
         }
 
-        // 2. ログを取得して表示
         const { data, error } = await query;
         if (error) throw error;
 
@@ -357,7 +426,6 @@ btnFetchCurrentGameLogs?.addEventListener('click', async () => {
     setButtonActive('btn-fetch-current-game-logs', true);
 });
 
-// 従来の「直近1000件を強制取得」機能
 btnFetchLogs?.addEventListener('click', async () => {
     if (!supabase) return;
     writeLog(supabase, "Host", "Action", "「直近1000件を取得」ボタンが押下されました");
