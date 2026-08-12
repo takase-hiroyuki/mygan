@@ -149,8 +149,6 @@ export async function insertSystemMessage(supabase, targetName, message) {
     return { data: null, error: null };
 }
 
-import { SEL_G } from './common_dom_selectors.js';
-
 /**
  * システムメッセージを表示するためのシンプルな関数
  * キューを使わず、既存の画面上部にメッセージを追記していく方式
