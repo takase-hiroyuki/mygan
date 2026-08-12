@@ -182,7 +182,7 @@ function drawHostScreen() {
             extraHtml += `<p>現在、場に出ているカードはありません。</p>`;
         }
 
-        extraHtml += `<table border="1">`;
+        extraHtml += `<table border="1" width="100%">`;
         extraHtml += `<tr><th>名前</th><th>給料</th><th>不労所得</th><th>経費</th><th>キャッシュフロー</th><th>ファーストトラックまで</th></tr>`;
 
         currentParticipants.forEach(p => {
@@ -224,15 +224,36 @@ function drawHostScreen() {
         });
         extraHtml += `</table><br>`;
 
-        extraHtml += `<table border="1">`;
-        extraHtml += `<tr></tr>`;
+        extraHtml += `<table border="1" width="100%">`;
+        extraHtml += `<tr><th>名前</th><th>保有資産一覧</th></tr>`;
 
         currentParticipants.forEach(p => {
             const pState = p.state || {};
             const items = pState.items || [];
             
             const assets = items.filter(item => Number(item.cost || 0) > 0 || (item.asset_type !== 'Salary' && item.asset_type !== 'ChildExpense' && item.asset_type !== 'InstantDebt' && item.asset_type !== 'BankLoan'));
-            const assetStrs = assets.map(item => `[${item.asset_type}] ${item.title}`).join(' ');
+            
+            const assetStrs = assets.map(item => {
+                let isHit = false;
+                if (currentCard) {
+                    if (currentCard.asset_type !== 'other') {
+                        isHit = (item.asset_type === currentCard.asset_type);
+                    } else if (currentCard.action_rule) {
+                        if (currentCard.action_rule.target_symbol && item.asset_type === currentCard.action_rule.target_symbol) {
+                            isHit = true;
+                        }
+                        if (Array.isArray(currentCard.action_rule.target_asset) && currentCard.action_rule.target_asset.includes(item.asset_type)) {
+                            isHit = true;
+                        }
+                    }
+                }
+                
+                const baseText = `[${item.asset_type}] ${item.title}`;
+                if (isHit) {
+                    return `<span style="background-color: yellow; color: red; font-weight: bold;">★${baseText}</span>`;
+                }
+                return baseText;
+            }).join('<br>');
             
             extraHtml += `<tr>
                 <td>${pState.name || '不明'}</td>
