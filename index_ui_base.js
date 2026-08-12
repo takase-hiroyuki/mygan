@@ -27,8 +27,11 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
         if (el) el.textContent = text;
     };
 
-    const cardHolderRecord = cachedParticipants.find(p => p.state && p.state.drawn_card);
-    const activeCard = cardHolderRecord ? cardHolderRecord.state.drawn_card : null;
+    // 場に出ているカード（current_card）を取得（部屋データから優先、なければ誰かのdrawn_cardから）
+    const activeCard = cachedRoom?.game_state?.current_card || 
+                       cachedParticipants.find(p => p.state && p.state.drawn_card)?.state.drawn_card || null;
+    const currentTurnUserId = cachedRoom?.current_turn_user_id;
+    const isTurnUser = currentTurnUserId === currentUserId;
 
     let isHit = false;
     if (activeCard && state.items) {
@@ -112,8 +115,6 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
         safeUpdate(SEL_G.FINANCIALS.D_PROFESSION, `${selectedName}の職業：${selectedState.profession || '未定'}`);
         safeUpdate(SEL_G.FINANCIALS.D_CASH, `${selectedName}の所持金：$${toCurrency(selectedFinancials.cash)}`);
 
-        const isTurnUser = cachedRoom?.current_turn_user_id === currentUserId;
-
         let assetsHTML = "<table border='1' width='100%'><tr><th>資産名</th><th>単価</th><th>数量</th><th>CF</th></tr>";
         let liabHTML = "<table border='1' width='100%'><tr><th>負債名</th><th>負債残高</th><th>CF</th></tr>";
         let optionsHTML = '<option value="">対象の資産・負債を選択</option>';
@@ -135,6 +136,7 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
                 passiveIncome += cfVal;
             }
 
+            // --- 資産の表示と売却判定 ---
             if (costVal > 0 || (liabVal === 0 && cfVal > 0)) {
                 const cfStr = cfVal <= 0 ? toCurrency(cfVal) : `+${toCurrency(cfVal)}`;
                 const unitPrice = toCurrency(costVal);
@@ -145,17 +147,40 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
                 
                 if (costVal > 0) {
                     let canSell = false;
-                    if (activeCard && activeCard.sell === 'all') {
-                        if (activeCard.asset_type === item.asset_type) {
-                            canSell = true;
+                    
+                    // バックエンド(operate_participant_item_v2)と整合させた売却可否判定
+                    if (activeCard) {
+                        // 1. 売却権限のチェック
+                        const hasSellRight = (activeCard.sell === 'all') || (activeCard.sell === 'owner' && isTurnUser);
+                        
+                        if (hasSellRight) {
+                            // 2. 対象資産の合致判定 (SQLの3パターンと同等)
+                            const cardActionRule = activeCard.action_rule || {};
+                            
+                            // パターン1: target_symbolの完全一致
+                            if (cardActionRule.target_symbol && cardActionRule.target_symbol === item.asset_type) {
+                                canSell = true;
+                            }
+                            // パターン2: target_asset 配列に含まれるか
+                            else if (Array.isArray(cardActionRule.target_asset) && cardActionRule.target_asset.includes(item.asset_type)) {
+                                canSell = true;
+                            }
+                            // パターン3: 通常のasset_type一致
+                            else if (activeCard.asset_type && activeCard.asset_type !== 'other' && activeCard.asset_type === item.asset_type) {
+                                canSell = true;
+                            }
+                            
+                            // ※フロントエンドでは複雑化を防ぐため、min_units(最低部屋数)のチェックは省略し、サーバー側で弾かせる運用とする
                         }
                     }
+                    
                     if (canSell) {
                         optionsHTML += `<option value="${item.id}">【売却】${item.title} (単価: $${unitPrice}, 数量: ${quantityStr})</option>`;
                     }
                 }
             }
 
+            // --- 負債の表示と返済判定 ---
             if (liabVal > 0 || (cfVal < 0 && costVal === 0)) {
                 let displayName = item.title;
                 let displayCF = cfVal;
