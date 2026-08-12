@@ -143,7 +143,10 @@ export const DOM_SELECTORS = {
         // ホスト用盤面モニターID生成用のプレフィックス
         BOARD: {
             CELL_PREFIX: 'rat-cell-'
-        }
+        },
+
+        // ★追加: 拡張情報表示用コンテナ
+        EXTRA_INFO_CONTAINER: 'host-extra-info-container'
     }
 };
 
