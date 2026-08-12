@@ -47,20 +47,15 @@
         </table>
 
         <br>
-        
+        <div id="host-extra-info-container"></div>
+        <br>
         <fieldset>
-            <p>
-                現在の部屋ステータス: <b id="host-room-status">waiting (準備中)</b>
-            </p>
-            <p>
+                現在の部屋ステータス: <span id="host-room-status">waiting (準備中)</span><br>
                 <button id="btn-initial-shuffle-start">O 初期シャッフル＆ゲーム開始</button>
-                <button id="btn-force-game-end">O 全員強制退室＆ゲーム終了</button>
-            </p>
-            <p>
+                <button id="btn-force-game-end">O 全員強制退室＆ゲーム終了</button><br>
                 <label for="input-kick-order">退室者の番号: </label>
                 <input type="number" id="input-kick-order" min="1" placeholder="例: 4" size="4">
                 <button id="btn-kick-participant">O 退室させる</button>
-            </p>
         </fieldset>
 
         <br>
@@ -122,10 +117,6 @@
                 </tr>
             </tbody>
         </table>
-
-        <br>
-        <div id="host-extra-info-container"></div>
-        <br>
 
         <table border="1" cellpadding="2">
             <thead>
