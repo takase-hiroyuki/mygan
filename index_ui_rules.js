@@ -27,6 +27,12 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
         if (el) el.textContent = text;
     };
 
+    // HTMLとして出力するため、innerHTMLを更新する内部関数を用意
+    const updateCardDisplay = (html) => {
+        const el = document.getElementById(SEL_G.TRADE.THIS_CARD);
+        if (el) el.innerHTML = html;
+    };
+
     const turnUserRecord = cachedParticipants.find(p => p.user_id === turnUserId);
     const turnUserState = turnUserRecord ? turnUserRecord.state : {};
     const turnUserFlags = turnUserState.flags || {};
@@ -45,38 +51,26 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
     const isTurnUserOnCharity = [3, 16].includes(parseInt(turnUserState.position, 10));
 
     if (activeCard) {
-        let cardText = `【${activeCard.title}】\n`;
+        let cardHTML = `【${activeCard.title}】<br>`;
         
-        let descText = activeCard.description_jp || activeCard.description || '';
-        if (activeCard.description_jp2) {
-            descText += `\n${activeCard.description_jp2}`;
-        }
-        cardText += `${descText}\n`;
+        let descText = activeCard.description_jp2 || activeCard.description_jp || activeCard.description || '';
+        cardHTML += `${descText}<br>`;
         
         if (activeCard.cost > 0) {
-            let costStr = `$${toCurrency(activeCard.cost)}`;
-            if (activeCard.cost2 !== undefined && activeCard.cost2 !== null) {
-                costStr += ` (${toCurrency(activeCard.cost2)}円)`;
-            }
-            cardText += `\n価格: ${costStr}`;
+            let costStr = activeCard.cost2_disp ? `${activeCard.cost2_disp}円` : `$${toCurrency(activeCard.cost)}`;
+            cardHTML += `<br>価格: ${costStr}`;
 
             if (activeCard.down_payment > 0 && activeCard.down_payment !== activeCard.cost) {
-                let dpStr = `$${toCurrency(activeCard.down_payment)}`;
-                if (activeCard.down_payment2 !== undefined && activeCard.down_payment2 !== null) {
-                    dpStr += ` (${toCurrency(activeCard.down_payment2)}円)`;
-                }
-                cardText += ` (頭金: ${dpStr})`;
+                let dpStr = activeCard.down_payment2_disp ? `${activeCard.down_payment2_disp}円` : `$${toCurrency(activeCard.down_payment)}`;
+                cardHTML += ` (頭金: ${dpStr})`;
             }
         }
         if (activeCard.passive_income !== 0 && activeCard.passive_income !== null && activeCard.passive_income !== undefined) {
-            let piStr = `$${toCurrency(activeCard.passive_income)}`;
-            if (activeCard.passive_income2 !== undefined && activeCard.passive_income2 !== null) {
-                piStr += ` (${toCurrency(activeCard.passive_income2)}円)`;
-            }
-            cardText += `\nキャッシュフロー: ${piStr}`;
+            let piStr = activeCard.passive_income2_disp ? `${activeCard.passive_income2_disp}円` : `$${toCurrency(activeCard.passive_income)}`;
+            cardHTML += `<br>キャッシュフロー: ${piStr}`;
         }
         
-        safeUpdate(SEL_G.TRADE.THIS_CARD, cardText);
+        updateCardDisplay(cardHTML);
         
         if (elNumProcess) {
             const qtyRequiredTypes = ['MYT4U', 'OK4U', 'ON2U', '2BIG', 'GR4US', '10pGold', '8pGold'];
@@ -138,14 +132,20 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
             const totalIncome = items.filter(i => (i.cashflow || 0) > 0).reduce((sum, i) => sum + Number(i.cashflow), 0);
             const donateAmount = totalIncome * 0.1;
             
-            safeUpdate(SEL_G.TRADE.THIS_CARD, `【寄付】\n総収入の10% ($${toCurrency(donateAmount)}) を支払うことで、以降3ターンの間サイコロを2個振ることができます。`);
+            // 日本円換算 (1ドル=160円) を用いて、ドル表記を削除し日本円のみ表示
+            const donateAmountYen = donateAmount * 160;
+            const donateStr = donateAmountYen >= 10000 
+                ? `${toCurrency(Math.floor(donateAmountYen / 10000))}万${toCurrency(donateAmountYen % 10000)}円`.replace(/0円$/, '円') 
+                : `${toCurrency(donateAmountYen)}円`;
+
+            updateCardDisplay(`【寄付】<br>総収入の10% (${donateStr}) を支払うことで、以降3ターンの間サイコロを2個振ることができます。`);
             
             setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, true);
             setButtonActive(SEL_G.TRADE.BTN_PASS_CARD, true);
             if (elBtnProcess) elBtnProcess.textContent = '寄付する';
             if (elBtnPass) elBtnPass.textContent = '見送る（パスする）';
         } else {
-            safeUpdate(SEL_G.TRADE.THIS_CARD, `${turnUserState.name || '他のプレイヤー'} が寄付を検討中です...`);
+            updateCardDisplay(`${turnUserState.name || '他のプレイヤー'} が寄付を検討中です...`);
             setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, false);
             setButtonActive(SEL_G.TRADE.BTN_PASS_CARD, false);
         }
@@ -158,11 +158,11 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
 
     } else if (turnUserFlags.has_rolled_dice && CELLS_OPPORTUNITY.includes(parseInt(turnUserState.position, 10)) && !turnUserFlags.is_card_drawn) {
         if (isMyTurn) {
-            safeUpdate(SEL_G.TRADE.THIS_CARD, "普通の商売、または大きな商売、のどちらかをひいてください");
+            updateCardDisplay("普通の商売、または大きな商売、のどちらかをひいてください");
             setButtonActive(SEL_G.CARD.BTN_SMALL_DEAL, true);
             setButtonActive(SEL_G.CARD.BTN_BIG_DEAL, true);
         } else {
-            safeUpdate(SEL_G.TRADE.THIS_CARD, `${turnUserState.name || '他のプレイヤー'} が商売カードを選択中です...`);
+            updateCardDisplay(`${turnUserState.name || '他のプレイヤー'} が商売カードを選択中です...`);
             setButtonActive(SEL_G.CARD.BTN_SMALL_DEAL, false);
             setButtonActive(SEL_G.CARD.BTN_BIG_DEAL, false);
         }
@@ -176,7 +176,7 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
         if (elBtnProcess) elBtnProcess.textContent = '購入する・支払う';
         if (elBtnPass) elBtnPass.textContent = '見送る（パスする）';
     } else {
-        safeUpdate(SEL_G.TRADE.THIS_CARD, "あなたの手番を待つか、サイコロを振ってください。");
+        updateCardDisplay("あなたの手番を待つか、サイコロを振ってください。");
         setButtonActive(SEL_G.TRADE.BTN_SELL, false);
         setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, false);
         setButtonActive(SEL_G.TRADE.BTN_PASS_CARD, false);
@@ -280,7 +280,12 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
     if (tradeOffer) {
         if (tradeOffer.to === currentUserId) {
             const fromUser = cachedParticipants.find(p => p.user_id === tradeOffer.from);
-            safeUpdate(SEL_G.TRADE.TRADE_MESSAGE, `${fromUser?.state?.name || "他のプレイヤー"} さんから $${toCurrency(tradeOffer.price)} で権利を買う提案が来ています。`);
+            // トレード提案時の価格も日本円表記に変更
+            const offerPriceYen = tradeOffer.price * 160;
+            const offerStr = offerPriceYen >= 10000 
+                ? `${toCurrency(Math.floor(offerPriceYen / 10000))}万${toCurrency(offerPriceYen % 10000)}円`.replace(/0円$/, '円')
+                : `${toCurrency(offerPriceYen)}円`;
+            safeUpdate(SEL_G.TRADE.TRADE_MESSAGE, `${fromUser?.state?.name || "他のプレイヤー"} さんから ${offerStr} で権利を買う提案が来ています。`);
             setButtonActive(SEL_G.TRADE.BTN_ACCEPT, true);
             setButtonActive(SEL_G.TRADE.BTN_REJECT, true);
         } else if (tradeOffer.from === currentUserId) {
