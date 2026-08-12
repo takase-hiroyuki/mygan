@@ -192,6 +192,36 @@ export function resetMessageDisplayState() {
     }
 }
 
+/**
+ * ドル数値を日本円（1ドル160円換算）の文字列に変換する関数
+ * 「◯億◯万◯千円」のような日本語フォーマットで出力する
+ */
+export function toYenFormat(dollarValue) {
+    const yen = Number(dollarValue || 0) * 160;
+    if (yen === 0) return "0円";
+    
+    let isNegative = false;
+    let absYen = yen;
+    if (yen < 0) {
+        isNegative = true;
+        absYen = -yen;
+    }
+
+    const oku = Math.floor(absYen / 100000000);
+    const man = Math.floor((absYen % 100000000) / 10000);
+    const sen = absYen % 10000;
+
+    let result = '';
+    if (oku > 0) result += `${oku.toLocaleString()}億`;
+    if (man > 0) result += `${man.toLocaleString()}万`;
+    if (sen > 0) result += `${sen.toLocaleString()}`;
+
+    if (result === '') result = '0';
+    result += '円';
+
+    return isNegative ? `-${result}` : result;
+}
+
 /*
 // --- ★ ここからメッセージキュー管理の追加・修正部分 ---
 
