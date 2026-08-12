@@ -99,22 +99,22 @@ button:disabled {
     min-width: 300px;
     border-collapse: collapse;
     background-color: #ffffff;
-    font-size: 12px;
+    font-size: inherit; /* 他の字と同じサイズに継承 */
 }
 
 .board-table td {
     padding: 6px 4px;
     text-align: center;
     border: 1px solid #cbd5e1;
-    width: 16.66%;
+    width: 25%; /* 4列構成に合わせて25%に変更 */
 }
 
 .occupants {
     display: block;
     color: #e11d48;
     font-weight: bold;
-    font-size: 11px;
-    min-height: 14px;
+    font-size: inherit; /* 他の字と同じサイズに継承 */
+    min-height: 1.2em;
 }
 
 /* Message & Trade Area */
@@ -126,7 +126,7 @@ button:disabled {
 }
 
 .card-message {
-    font-size: 14px;
+    font-size: inherit;
     margin-bottom: 10px;
     line-height: 1.5;
 }
@@ -183,7 +183,7 @@ table {
     width: 100%;
     border-collapse: collapse;
     background-color: #ffffff;
-    font-size: 13px;
+    font-size: inherit;
 }
 
 th {
