@@ -21,8 +21,7 @@ WHERE
 
 SELECT table_name, column_name, ordinal_position, is_nullable, data_type, column_default FROM information_schema.columns WHERE table_schema = 'public' AND table_name IN ( 'asset_types', 'cards', 'game_logs', 'participants', 'professions', 'rooms' ) ORDER BY table_name, ordinal_position;
 
-SELECT table_name, column_name, ordinal_position, is_nullable, data_type, column_default FROM information_schema.columns WHERE table_schema = 'public' AND table_name IN ( 'cards' ) ORDER BY table_name, ordinal_position;
-
+SELECT table_name, column_name, ordinal_position, is_nullable, data_type, column_default FROM information_schema.columns WHERE table_schema = 'public' AND table_name IN ( 'cards' ) ORDER BY column_name, ordinal_position;
 
 あなたは、次のような要素をもっている。
 １、世界で最も github, vercel, javascript, supabase に精通している。
