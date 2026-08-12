@@ -219,7 +219,8 @@ export function toYenFormat(dollarValue) {
     if (result === '') result = '0';
     result += '円';
 
-    return isNegative ? `-${result}` : result;
+    // マイナスの場合は「-」ではなく「▲」をつける
+    return isNegative ? `▲${result}` : result;
 }
 
 console.log("【残す】common_utils.js が読み込まれました。");
