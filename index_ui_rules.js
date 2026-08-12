@@ -45,7 +45,13 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
     const isTurnUserOnCharity = [3, 16].includes(parseInt(turnUserState.position, 10));
 
     if (activeCard) {
-        let cardText = `【${activeCard.title}】\n${activeCard.description_jp || activeCard.description || ''}\n`;
+        let cardText = `【${activeCard.title}】\n`;
+        
+        let descText = activeCard.description_jp || activeCard.description || '';
+        if (activeCard.description_jp2) {
+            descText += `\n${activeCard.description_jp2}`;
+        }
+        cardText += `${descText}\n`;
         
         if (activeCard.cost > 0) {
             cardText += `\n価格: $${toCurrency(activeCard.cost)}`;
