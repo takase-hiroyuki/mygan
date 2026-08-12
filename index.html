@@ -20,13 +20,13 @@
             <span id="hit" style="color: #d32f2f; font-weight: bold; font-size: 1.2em;"></span>
             名前: <span id="g-name">未定</span> / 
             子供: <span id="g-child-count">0</span> 人 / 
-            養育費 $<span id="g-child-expense">0</span>(1人あたり)<br>
+            養育費 <span id="g-child-expense">0</span><br>
             職業: <span id="g-profession"></span>
         </p>
 
         <!-- ★上部は常に「自分」の現金を表示するための current-cash -->
         <p>
-            現金: $<span id="current-cash">0</span> / 
+            現金: <span id="current-cash">0</span> / 
             <span id="dice-result">現在地</span> / 
             <span id="dice-user">手番</span><br>
         </p>
@@ -83,7 +83,7 @@
     <span id="main-msg">あなたの手番を待つか、サイコロを振ってください。</span>
 <hr>
     <!-- 自分用アクションエリア -->
-        <label for="num-process-self">　</label>
+        <label for="num-process-self"> </label>
         <input type="number" id="num-process-self" placeholder="任意の場合のみ入力">
         <button id="btn-process-self">購入する・支払う</button>
         <button id="btn-pass-card">パスする</button>
