@@ -54,13 +54,26 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
         cardText += `${descText}\n`;
         
         if (activeCard.cost > 0) {
-            cardText += `\n価格: $${toCurrency(activeCard.cost)}`;
+            let costStr = `$${toCurrency(activeCard.cost)}`;
+            if (activeCard.cost2 !== undefined && activeCard.cost2 !== null) {
+                costStr += ` (${toCurrency(activeCard.cost2)}円)`;
+            }
+            cardText += `\n価格: ${costStr}`;
+
             if (activeCard.down_payment > 0 && activeCard.down_payment !== activeCard.cost) {
-                cardText += ` (頭金: $${toCurrency(activeCard.down_payment)})`;
+                let dpStr = `$${toCurrency(activeCard.down_payment)}`;
+                if (activeCard.down_payment2 !== undefined && activeCard.down_payment2 !== null) {
+                    dpStr += ` (${toCurrency(activeCard.down_payment2)}円)`;
+                }
+                cardText += ` (頭金: ${dpStr})`;
             }
         }
         if (activeCard.passive_income !== 0 && activeCard.passive_income !== null && activeCard.passive_income !== undefined) {
-            cardText += `\nキャッシュフロー: $${toCurrency(activeCard.passive_income)}`;
+            let piStr = `$${toCurrency(activeCard.passive_income)}`;
+            if (activeCard.passive_income2 !== undefined && activeCard.passive_income2 !== null) {
+                piStr += ` (${toCurrency(activeCard.passive_income2)}円)`;
+            }
+            cardText += `\nキャッシュフロー: ${piStr}`;
         }
         
         safeUpdate(SEL_G.TRADE.THIS_CARD, cardText);
