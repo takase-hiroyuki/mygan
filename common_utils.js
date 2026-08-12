@@ -149,7 +149,52 @@ export async function insertSystemMessage(supabase, targetName, message) {
     return { data: null, error: null };
 }
 
+import { SEL_G } from './common_dom_selectors.js';
 
+/**
+ * システムメッセージを表示するためのシンプルな関数
+ * キューを使わず、既存の画面上部にメッセージを追記していく方式
+ */
+export function displaySystemMessage(target, body) {
+    const el = document.getElementById(SEL_G.TRADE.THIS_CARD);
+    if (!el) return;
+
+    // メッセージ用のコンテナを特定、なければ作成
+    let msgContainer = document.getElementById('sys-msg-container');
+    if (!msgContainer) {
+        msgContainer = document.createElement('div');
+        msgContainer.id = 'sys-msg-container';
+        // コンテナを常に一番上に表示
+        el.insertBefore(msgContainer, el.firstChild);
+    }
+
+    // 新しいメッセージ要素を作成
+    const newMsg = document.createElement('div');
+    newMsg.style.color = '#d32f2f';
+    newMsg.style.fontWeight = 'bold';
+    newMsg.style.margin = '4px 0';
+    newMsg.style.border = '1px solid #d32f2f';
+    newMsg.style.padding = '5px';
+    newMsg.style.backgroundColor = '#fff0f0';
+    newMsg.innerHTML = `【${new Date().toLocaleTimeString()} 通知: ${target}】${body}`;
+
+    // コンテナの先頭に新しいメッセージを追加
+    msgContainer.insertBefore(newMsg, msgContainer.firstChild);
+}
+
+/**
+ * 画面が大きく再描画された際にメッセージコンテナが消えるのを防ぐため、
+ * 再描画後に呼び出すか、CSSなどで制御してください。
+ */
+export function resetMessageDisplayState() {
+    // 必要に応じてコンテナをクリアする関数
+    const msgContainer = document.getElementById('sys-msg-container');
+    if (msgContainer) {
+        msgContainer.innerHTML = '';
+    }
+}
+
+/*
 // --- ★ ここからメッセージキュー管理の追加・修正部分 ---
 
 const messageQueue = []; // 未読メッセージを保持するキュー
@@ -209,5 +254,6 @@ export function resetMessageDisplayState() {
     isMessageShowing = false;
     processNextMessage();
 }
+*/
 
 console.log("【残す】common_utils.js が読み込まれました。");
