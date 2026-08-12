@@ -14,20 +14,29 @@ export async function actionProposeTrade(supabase, currentUserId) {
 
     const targetUserId = elTarget.value;
     const priceStr = elPrice.value;
-    const price = parseInt(priceStr, 10);
+    const priceYen = parseInt(priceStr, 10);
     const playerName = getLocalPlayerName();
 
-    console.log("[DEBUG] actionProposeTrade 開始:", { targetUserId, price });
+    console.log("[DEBUG] actionProposeTrade 開始:", { targetUserId, priceYen });
 
     if (!targetUserId) {
         await insertSystemMessage(supabase, playerName, "交渉相手を選択してください。");
         return;
     }
 
-    if (isNaN(price) || price < 0) {
+    if (isNaN(priceYen) || priceYen < 0) {
         await insertSystemMessage(supabase, playerName, "有効な金額を入力してください。");
         return;
     }
+
+    // 160未満（商が0になる場合）は受け付けない
+    if (priceYen < 160) {
+        await insertSystemMessage(supabase, playerName, "160円以上の金額を入力してください。");
+        return;
+    }
+
+    // 整数同士の割り算を行い、余りを無視して商（整数）を求める（Math.floorにより小数にならないことを担保）
+    const priceUsd = Math.floor(priceYen / 160);
 
     if (elBtnSell) elBtnSell.disabled = true;
 
@@ -36,7 +45,7 @@ export async function actionProposeTrade(supabase, currentUserId) {
             p_room_id: roomId,
             p_seller_id: currentUserId,
             p_buyer_id: targetUserId,
-            p_price: price
+            p_price: priceUsd
         });
         await insertSystemMessage(supabase, playerName, "交渉を持ちかけました。相手の返答を待っています。");
         console.log("[DEBUG] 交渉データの送信完了");
