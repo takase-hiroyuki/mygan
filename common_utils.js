@@ -27,13 +27,10 @@ export function writeLog(supabaseClient, target, title, body) {
     });
 }
 
-// index.js と host.js の両方から参照される関数群
-
 // SupabaseのRPC関数を安全に呼び出し、入出力をデバッグするためのラッパー関数。
 export async function callRpcWithDebug(supabaseClient, rpcName, params = {}) {
     const startTime = performance.now();
     
-    // ★ 修正: console.log を writeLog に置き換え
     writeLog(supabaseClient, "System", "RPC_CALL_START", `RPC: ${rpcName}\nParams: ${JSON.stringify(params, null, 2)}`);
     
     const { data, error } = await supabaseClient.rpc(rpcName, params);
@@ -148,23 +145,71 @@ export function getLocalPlayerName() {
 }
 
 export async function insertSystemMessage(supabase, targetName, message) {
-    // ★ 修正: ダミー化されていた機能を writeLog に接続し復活させる
     writeLog(supabase, targetName, "Message", message);
     return { data: null, error: null };
 }
 
-/**
- * システムメッセージをメッセージエリアに一時的に追記する関数
- * @param {string} target - メッセージの宛先や種類
- * @param {string} body - メッセージ本文
- */
+
+// --- ★ ここからメッセージキュー管理の追加・修正部分 ---
+
+const messageQueue = []; // 未読メッセージを保持するキュー
+let isMessageShowing = false;
+
+// システムメッセージをキューに積み、表示可能なら表示を開始する
 export function displaySystemMessage(target, body) {
+    messageQueue.push({ target, body });
+    processNextMessage();
+}
+
+// 次のメッセージを表示する
+function processNextMessage() {
+    // 既に何か表示中で、画面のカード描画などに上書きされていないか確認
     const el = document.getElementById(SEL_G.TRADE.THIS_CARD);
-    if (el) {
-        // 画面の自動更新で一瞬で消えるのを防ぐため、現在の表示内容の上部に赤字で追記する
-        const alertHtml = `<div style="color: #d32f2f; font-weight: bold; margin-bottom: 8px;">【通知: ${target}】${body}</div>`;
-        el.innerHTML = alertHtml + el.innerHTML;
+    const hasCurrentAlert = el && el.innerHTML.includes('id="sys-msg-alert"');
+
+    // 既にアラートが表示中の場合はキューに積んだまま待機
+    if (isMessageShowing && hasCurrentAlert) {
+        return; 
     }
+
+    if (messageQueue.length > 0 && el) {
+        const msg = messageQueue[0];
+        isMessageShowing = true;
+        
+        // 元の内容を一時退避（次へボタンで復元するため）
+        if (!el.dataset.originalHtml) {
+            el.dataset.originalHtml = el.innerHTML;
+        }
+
+        // 赤字のアラートと「次へ」ボタンを描画
+        const alertHtml = `
+            <div id="sys-msg-alert" style="color: #d32f2f; font-weight: bold; margin-bottom: 8px; border: 1px solid #d32f2f; padding: 5px;">
+                【通知: ${msg.target}】${msg.body}
+                <div style="margin-top: 5px;">
+                    <button id="btn-next-msg" style="padding: 2px 8px; cursor: pointer;">次へ (残り: ${messageQueue.length - 1})</button>
+                </div>
+            </div>
+        `;
+        el.innerHTML = alertHtml + el.dataset.originalHtml;
+
+        // 「次へ」ボタンのイベントリスナー
+        const btnNext = document.getElementById('btn-next-msg');
+        if (btnNext) {
+            btnNext.onclick = () => {
+                messageQueue.shift(); // キューから削除
+                isMessageShowing = false;
+                el.innerHTML = el.dataset.originalHtml; // 元の画面に復元
+                delete el.dataset.originalHtml;
+                processNextMessage(); // 次のメッセージがあれば再帰呼び出し
+            };
+        }
+    }
+}
+
+// 外部（State更新や画面再描画時）から呼ばれて、画面上書き時に表示状態をリセットするための関数
+export function resetMessageDisplayState() {
+    isMessageShowing = false;
+    processNextMessage();
 }
 
 console.log("【残す】common_utils.js が読み込まれました。");
