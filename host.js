@@ -175,13 +175,6 @@ function drawHostScreen() {
     const extraContainer = document.getElementById(DOM_SELECTORS.HOST.EXTRA_INFO_CONTAINER);
     if (extraContainer) {
         let extraHtml = ``;
-        const currentCard = state.current_card;
-        if (currentCard) {
-            extraHtml += `<p>タイトル: ${currentCard.title}  asset_type: ${currentCard.asset_type}</p>`;
-        } else {
-            extraHtml += `<p>現在、場に出ているカードはありません。</p>`;
-        }
-
         extraHtml += `<table border="1" width="100%">`;
         extraHtml += `<tr><th>名前</th><th>給料</th><th>不労所得</th><th>経費</th><th>キャッシュフロー</th><th>ファーストトラックまで</th></tr>`;
 
@@ -223,6 +216,13 @@ function drawHostScreen() {
             </tr>`;
         });
         extraHtml += `</table><br>`;
+        
+        const currentCard = state.current_card;
+        if (currentCard) {
+            extraHtml += `<p>タイトル: ${currentCard.title}  asset_type: ${currentCard.asset_type}</p>`;
+        } else {
+            extraHtml += `<p>現在、場に出ているカードはありません。</p>`;
+        }
 
         extraHtml += `<table border="1" width="100%">`;
         extraHtml += `<tr><th>名前</th><th>保有資産一覧</th></tr>`;
