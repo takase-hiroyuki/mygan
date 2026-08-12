@@ -181,18 +181,16 @@ function processNextMessage() {
             el.dataset.originalHtml = el.innerHTML;
         }
 
-        // 赤字のアラートと「次へ」ボタンを描画
         const alertHtml = `
-            <div id="sys-msg-alert" style="color: #d32f2f; font-weight: bold; margin-bottom: 8px; border: 1px solid #d32f2f; padding: 5px;">
-                【通知: ${msg.target}】${msg.body}
-                <div style="margin-top: 5px;">
-                    <button id="btn-next-msg" style="padding: 2px 8px; cursor: pointer;">次へ (残り: ${messageQueue.length - 1})</button>
-                </div>
-            </div>
+        <div style="margin-top: 5px;">
+        <button id="btn-next-msg">次へ (残り: ${messageQueue.length - 1})</button>
+        </div>
+        <div id="sys-msg-alert">
+        【通知: ${msg.target}】${msg.body}
+        </div>
         `;
         el.innerHTML = alertHtml + el.dataset.originalHtml;
 
-        // 「次へ」ボタンのイベントリスナー
         const btnNext = document.getElementById('btn-next-msg');
         if (btnNext) {
             btnNext.onclick = () => {
