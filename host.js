@@ -174,16 +174,15 @@ function drawHostScreen() {
 
     const extraContainer = document.getElementById(DOM_SELECTORS.HOST.EXTRA_INFO_CONTAINER);
     if (extraContainer) {
-        let extraHtml = `<h2>現在のカード情報</h2>`;
+        let extraHtml = ``;
         const currentCard = state.current_card;
         if (currentCard) {
-            extraHtml += `<p>タイトル: ${currentCard.title} <br> asset_type: <strong>${currentCard.asset_type}</strong></p>`;
+            extraHtml += `<p>タイトル: ${currentCard.title}  asset_type: ${currentCard.asset_type}</p>`;
         } else {
             extraHtml += `<p>現在、場に出ているカードはありません。</p>`;
         }
 
-        extraHtml += `<h2>財務状況一覧</h2>`;
-        extraHtml += `<table border="1" width="100%">`;
+        extraHtml += `<table border="1">`;
         extraHtml += `<tr><th>名前</th><th>給料</th><th>不労所得</th><th>経費</th><th>キャッシュフロー</th><th>ファーストトラックまで</th></tr>`;
 
         currentParticipants.forEach(p => {
@@ -223,19 +222,17 @@ function drawHostScreen() {
                 <td>${ftText}</td>
             </tr>`;
         });
-        extraHtml += `</table>`;
+        extraHtml += `</table><br>`;
 
-        extraHtml += `<h2>資産保有状況 (asset_type)</h2>`;
-        extraHtml += `<table border="1" width="100%">`;
-        extraHtml += `<tr><th>名前</th><th>保有資産一覧</th></tr>`;
+        extraHtml += `<table border="1">`;
+        extraHtml += `<tr></tr>`;
 
         currentParticipants.forEach(p => {
             const pState = p.state || {};
             const items = pState.items || [];
             
             const assets = items.filter(item => Number(item.cost || 0) > 0 || (item.asset_type !== 'Salary' && item.asset_type !== 'ChildExpense' && item.asset_type !== 'InstantDebt' && item.asset_type !== 'BankLoan'));
-            
-            const assetStrs = assets.map(item => `[${item.asset_type}] ${item.title}`).join('<br>');
+            const assetStrs = assets.map(item => `[${item.asset_type}] ${item.title}`).join(' ');
             
             extraHtml += `<tr>
                 <td>${pState.name || '不明'}</td>
