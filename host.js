@@ -1,12 +1,12 @@
 // host.js
 import { roomId, SUPABASE_URL, SUPABASE_KEY } from './common_config.js';
 import { DOM_SELECTORS } from './common_dom_selectors.js';
-// ★修正: toYenFormat 関数を追加インポート
 import { setButtonActive, BOARD_CELL_NAMES, waitForSupabase, callRpcWithDebug, insertSystemMessage, writeLog, toYenFormat } from './common_utils.js';
 
 let supabase = null;
 const listBody = document.getElementById(DOM_SELECTORS.HOST.PARTICIPANT_LIST);
 const flagsListBody = document.getElementById(DOM_SELECTORS.HOST.FLAGS_LIST);
+
 const displayRoomStatus = document.getElementById(DOM_SELECTORS.HOST.LIFECYCLE.DISPLAY_ROOM_STATUS);
 const btnInitialShuffleStart = document.getElementById(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE);
 const btnForceGameEnd = document.getElementById(DOM_SELECTORS.HOST.LIFECYCLE.BTN_FORCE_GAME_END);
@@ -108,9 +108,27 @@ function drawHostScreen() {
     if (listBody) listBody.innerHTML = '';
     if (flagsListBody) flagsListBody.innerHTML = ''; 
     
+    // 静的テーブルへの参照
+    const tbodyAssetList = document.getElementById(DOM_SELECTORS.HOST.ASSET_LIST);
+    const tbodyFinSummary = document.getElementById(DOM_SELECTORS.HOST.FINANCIAL_SUMMARY);
+    if (tbodyAssetList) tbodyAssetList.innerHTML = '';
+    if (tbodyFinSummary) tbodyFinSummary.innerHTML = '';
+    
     for (let i = 0; i < 24; i++) {
         const cell = document.getElementById(`${boardSEL.CELL_PREFIX}${i}`);
         if (cell) cell.innerHTML = '';
+    }
+
+    // 場に出ているカードの表示更新
+    const elCardInfo = document.getElementById(DOM_SELECTORS.HOST.CURRENT_CARD_INFO);
+    const currentCard = state.current_card;
+    if (elCardInfo) {
+        if (currentCard) {
+            elCardInfo.innerHTML = `<p>タイトル: ${currentCard.title}  asset_type: ${currentCard.asset_type}</p>
+            <p>cost: $${toCurrency(currentCard.cost)}  down_payment: $${toCurrency(currentCard.down_payment)}  mortgage: $${toCurrency(currentCard.mortgage)}  passive_income: $${toCurrency(currentCard.passive_income)}</p>`;
+        } else {
+            elCardInfo.innerHTML = `<p>現在、場に出ているカードはありません。</p>`;
+        }
     }
 
     currentParticipants.forEach((p, idx) => {
@@ -118,10 +136,12 @@ function drawHostScreen() {
         const financials = pState.financials || {};
         const position = pState.position ?? 0;
         const flags = pState.flags || {}; 
+        const items = pState.items || [];
 
         const isCurrentTurn = (p.user_id === currentTurnUserId);
         const displayName = (isCurrentTurn ? '★' : '') + (pState.name || '不明');
 
+        // 1. 基本参加者リスト
         const tr = document.createElement('tr');
         tr.classList.add(itemSEL.ROW_CLASS);
         tr.innerHTML = `
@@ -134,10 +154,10 @@ function drawHostScreen() {
         `;
         if (listBody) listBody.appendChild(tr);
 
+        // 2. フラグ一覧
         if (flagsListBody) {
             const charityLeft = parseInt(flags.charity_turns_left || 0, 10);
             const downsizedLeft = parseInt(flags.downsized_turns_left || 0, 10);
-            
             const drawnCardTitle = pState.drawn_card ? `🎴 ${pState.drawn_card.title}` : 'なし';
 
             const trFlags = document.createElement('tr');
@@ -156,6 +176,80 @@ function drawHostScreen() {
             flagsListBody.appendChild(trFlags);
         }
 
+        // 3. 財務計算（サマリー用）
+        let salary = 0;
+        let passiveIncome = 0;
+        let totalExpenses = 0;
+        
+        items.forEach(item => {
+            const costVal = Number(item.cost || 0);
+            const liabVal = Number(item.liability || 0);
+            const cfVal = Number(item.cashflow || 0);
+            
+            if (cfVal < 0) {
+                totalExpenses += Math.abs(cfVal);
+            } else if (cfVal > 0) {
+                if (costVal > 0 || liabVal > 0) {
+                    passiveIncome += cfVal;
+                } else {
+                    salary += cfVal;
+                }
+            }
+        });
+        
+        const cashflow = salary + passiveIncome - totalExpenses;
+        const ftDiff = totalExpenses - passiveIncome;
+        const ftText = ftDiff > 0 ? `あと $${ftDiff.toLocaleString()}` : "移行可能！";
+        
+        // 財務サマリー（全員一覧）追加
+        if (tbodyFinSummary) {
+            const trFin = document.createElement('tr');
+            trFin.innerHTML = `
+                <td>${pState.name || '不明'}</td>
+                <td>$${salary.toLocaleString()}</td>
+                <td>$${passiveIncome.toLocaleString()}</td>
+                <td>$${totalExpenses.toLocaleString()}</td>
+                <td>$${cashflow.toLocaleString()}</td>
+                <td>${ftText}</td>
+            `;
+            tbodyFinSummary.appendChild(trFin);
+        }
+
+        // 4. 保有資産一覧用
+        const assets = items.filter(item => Number(item.cost || 0) > 0 || (item.asset_type !== 'Salary' && item.asset_type !== 'ChildExpense' && item.asset_type !== 'InstantDebt' && item.asset_type !== 'BankLoan'));
+        
+        const assetStrs = assets.map(item => {
+            let isHit = false;
+            if (currentCard) {
+                if (currentCard.asset_type !== 'other') {
+                    isHit = (item.asset_type === currentCard.asset_type);
+                } else if (currentCard.action_rule) {
+                    if (currentCard.action_rule.target_symbol && item.asset_type === currentCard.action_rule.target_symbol) {
+                        isHit = true;
+                    }
+                    if (Array.isArray(currentCard.action_rule.target_asset) && currentCard.action_rule.target_asset.includes(item.asset_type)) {
+                        isHit = true;
+                    }
+                }
+            }
+            
+            const baseText = `[${item.asset_type}] ${item.title}`;
+            if (isHit) {
+                return `<span style="background-color: yellow; color: red; font-weight: bold;">★${baseText}</span>`;
+            }
+            return baseText;
+        }).join(' ');
+        
+        if (tbodyAssetList) {
+            const trAsset = document.createElement('tr');
+            trAsset.innerHTML = `
+                <td>${pState.name || '不明'}</td>
+                <td>${assetStrs || 'なし'}</td>
+            `;
+            tbodyAssetList.appendChild(trAsset);
+        }
+
+        // 5. 盤面の更新
         const targetCell = document.getElementById(`${boardSEL.CELL_PREFIX}${position}`);
         if (targetCell) {
             const table = document.createElement('table');
@@ -180,7 +274,9 @@ function drawHostScreen() {
         }
     });
 
-    // ★ 追加: ホスト用の個別の財務諸表プルダウンビューア処理
+    // ===============================================
+    // プルダウンによる個別財務諸表プレビューの処理
+    // ===============================================
     const playerSelect = document.getElementById('player-select');
     if (playerSelect) {
         const currentValue = playerSelect.value;
@@ -292,100 +388,6 @@ function drawHostScreen() {
                 }
             }
         }
-    }
-
-    const extraContainer = document.getElementById(DOM_SELECTORS.HOST.EXTRA_INFO_CONTAINER);
-    if (extraContainer) {
-        let extraHtml = ``;
-        extraHtml += `<table border="1" width="100%">`;
-        extraHtml += `<tr><th>名前</th><th>給料</th><th>不労所得</th><th>経費</th><th>キャッシュフロー</th><th>ファーストトラックまで</th></tr>`;
-
-        currentParticipants.forEach(p => {
-            const pState = p.state || {};
-            const items = pState.items || [];
-            
-            let salary = 0;
-            let passiveIncome = 0;
-            let totalExpenses = 0;
-            
-            items.forEach(item => {
-                const costVal = Number(item.cost || 0);
-                const liabVal = Number(item.liability || 0);
-                const cfVal = Number(item.cashflow || 0);
-                
-                if (cfVal < 0) {
-                    totalExpenses += Math.abs(cfVal);
-                } else if (cfVal > 0) {
-                    if (costVal > 0 || liabVal > 0) {
-                        passiveIncome += cfVal;
-                    } else {
-                        salary += cfVal;
-                    }
-                }
-            });
-            
-            const cashflow = salary + passiveIncome - totalExpenses;
-            const ftDiff = totalExpenses - passiveIncome;
-            const ftText = ftDiff > 0 ? `あと $${ftDiff.toLocaleString()}` : "移行可能！";
-            
-            extraHtml += `<tr>
-                <td>${pState.name || '不明'}</td>
-                <td>$${salary.toLocaleString()}</td>
-                <td>$${passiveIncome.toLocaleString()}</td>
-                <td>$${totalExpenses.toLocaleString()}</td>
-                <td>$${cashflow.toLocaleString()}</td>
-                <td>${ftText}</td>
-            </tr>`;
-        });
-        extraHtml += `</table><br>`;
-        
-        const currentCard = state.current_card;
-        if (currentCard) {
-            extraHtml += `<p>タイトル: ${currentCard.title}  asset_type: ${currentCard.asset_type}</p>`;
-            extraHtml += `<p>cost: $${toCurrency(currentCard.cost)}  down_payment: $${toCurrency(currentCard.down_payment)}  mortgage: $${toCurrency(currentCard.mortgage)}  passive_income: $${toCurrency(currentCard.passive_income)}</p>`;
-        } else {
-            extraHtml += `<p>現在、場に出ているカードはありません。</p>`;
-        }
-
-        extraHtml += `<table border="1" width="100%">`;
-        extraHtml += `<tr><th>名前</th><th>保有資産一覧</th></tr>`;
-
-        currentParticipants.forEach(p => {
-            const pState = p.state || {};
-            const items = pState.items || [];
-            
-            const assets = items.filter(item => Number(item.cost || 0) > 0 || (item.asset_type !== 'Salary' && item.asset_type !== 'ChildExpense' && item.asset_type !== 'InstantDebt' && item.asset_type !== 'BankLoan'));
-            
-            const assetStrs = assets.map(item => {
-                let isHit = false;
-                if (currentCard) {
-                    if (currentCard.asset_type !== 'other') {
-                        isHit = (item.asset_type === currentCard.asset_type);
-                    } else if (currentCard.action_rule) {
-                        if (currentCard.action_rule.target_symbol && item.asset_type === currentCard.action_rule.target_symbol) {
-                            isHit = true;
-                        }
-                        if (Array.isArray(currentCard.action_rule.target_asset) && currentCard.action_rule.target_asset.includes(item.asset_type)) {
-                            isHit = true;
-                        }
-                    }
-                }
-                
-                const baseText = `[${item.asset_type}] ${item.title}`;
-                if (isHit) {
-                    return `<span style="background-color: yellow; color: red; font-weight: bold;">★${baseText}</span>`;
-                }
-                return baseText;
-            }).join(' ');
-            
-            extraHtml += `<tr>
-                <td>${pState.name || '不明'}</td>
-                <td>${assetStrs || 'なし'}</td>
-            </tr>`;
-        });
-        extraHtml += `</table>`;
-
-        extraContainer.innerHTML = extraHtml;
     }
 }
 
