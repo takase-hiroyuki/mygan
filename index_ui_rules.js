@@ -81,24 +81,24 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
 
         if (elBtnProcess && elBtnPass) {
             if (activeCard.deck_type === 'doodad') {
-                elBtnProcess.textContent = '支払う';
-                elBtnPass.textContent = 'パスする'; 
+                elBtnProcess.textContent = 'O 支払う';
+                elBtnPass.textContent = 'X パスする'; 
                 canProcess = true;
                 canPass = false; 
             } else if (activeCard.deck_type === 'market') {
-                elBtnProcess.textContent = '実行する'; 
-                elBtnPass.textContent = '確認して手番を進める';
+                elBtnProcess.textContent = 'O 実行する'; 
+                elBtnPass.textContent = 'O パスする';
                 canProcess = false; 
                 canPass = true;
             } else {
                 if (activeCard.asset_type === 'other') {
-                    elBtnProcess.textContent = '実行する（適用）';
-                    elBtnPass.textContent = 'パスする';
+                    elBtnProcess.textContent = 'O 適用する';
+                    elBtnPass.textContent = 'O パスする';
                     canProcess = true;
                     canPass = false; 
                 } else {
-                    elBtnProcess.textContent = '購入する';
-                    elBtnPass.textContent = 'パスする';
+                    elBtnProcess.textContent = 'O 購入する';
+                    elBtnPass.textContent = 'O パスする';
                     canProcess = true;
                     canPass = true; 
                 }
@@ -133,8 +133,8 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
             
             setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, true);
             setButtonActive(SEL_G.TRADE.BTN_PASS_CARD, true);
-            if (elBtnProcess) elBtnProcess.textContent = '寄付する';
-            if (elBtnPass) elBtnPass.textContent = '見送る（パスする）';
+            if (elBtnProcess) elBtnProcess.textContent = 'O 寄付する';
+            if (elBtnPass) elBtnPass.textContent = 'O パスする';
         } else {
             updateCardDisplay(`${turnUserState.name || '他のプレイヤー'} が寄付を検討中です...`);
             setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, false);
