@@ -164,8 +164,8 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
         if (elNumProcess) elNumProcess.hidden = true;
         if (elSellTarget) elSellTarget.disabled = true;
         if (elSellPrice) elSellPrice.disabled = true;
-        if (elBtnProcess) elBtnProcess.textContent = '購入する・支払う';
-        if (elBtnPass) elBtnPass.textContent = '見送る（パスする）';
+        if (elBtnProcess) elBtnProcess.textContent = 'O 購入する・支払う';
+        if (elBtnPass) elBtnPass.textContent = 'O パスする';
     } else {
         updateCardDisplay("あなたの手番を待つか、サイコロを振ってください。");
         setButtonActive(SEL_G.TRADE.BTN_SELL, false);
@@ -177,8 +177,8 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
         if (elNumProcess) elNumProcess.hidden = true;
         if (elSellTarget) elSellTarget.disabled = true;
         if (elSellPrice) elSellPrice.disabled = true;
-        if (elBtnProcess) elBtnProcess.textContent = '購入する・支払う';
-        if (elBtnPass) elBtnPass.textContent = '見送る（パスする）';
+        if (elBtnProcess) elBtnProcess.textContent = 'O 購入する・支払う';
+        if (elBtnPass) elBtnPass.textContent = 'O パスする';
     }
     
     if (!isPlaying) {
