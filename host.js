@@ -136,6 +136,9 @@ function drawHostScreen() {
         if (flagsListBody) {
             const charityLeft = parseInt(flags.charity_turns_left || 0, 10);
             const downsizedLeft = parseInt(flags.downsized_turns_left || 0, 10);
+            
+            // ★追加: 各プレイヤーの手札（drawn_card）のタイトルを取得
+            const drawnCardTitle = pState.drawn_card ? `🎴 ${pState.drawn_card.title}` : 'なし';
 
             const trFlags = document.createElement('tr');
             trFlags.innerHTML = `
@@ -148,6 +151,7 @@ function drawHostScreen() {
                 <td>${charityLeft}</td>
                 <td>${downsizedLeft}</td>
                 <td>${!!flags.is_negative_cash_flow}</td>
+                <td style="color: ${pState.drawn_card ? 'red' : 'inherit'}; font-weight: ${pState.drawn_card ? 'bold' : 'normal'};">${drawnCardTitle}</td>
             `;
             flagsListBody.appendChild(trFlags);
         }
@@ -437,7 +441,7 @@ btnFetchCurrentGameLogs?.addEventListener('click', async () => {
         if (error) throw error;
 
         if (data && hostLogTextarea) {
-            hostLogTextarea.value = data.reverse().map(log => 
+            hostLogTextarea.value = data.reverse().log => 
                 `[${new Date(log.created_at).toLocaleString()}] Target: ${log.target} | Title: ${log.title}\n${log.body}`
             ).join('\n----------------------------------------\n');
         }
