@@ -1,6 +1,6 @@
 // common_utils.js
 
-import { roomId } from './common_config.js';
+import { roomId, EXCHANGE_RATE } from './common_config.js';
 import { SEL_G } from './common_dom_selectors.js';
 
 let localSeqCounter = 0;
@@ -193,11 +193,11 @@ export function resetMessageDisplayState() {
 }
 
 /**
- * ドル数値を日本円（1ドル160円換算）の文字列に変換する関数
+ * ドル数値を日本円（設定されたEXCHANGE_RATE換算）の文字列に変換する関数
  * 「◯億◯万◯千円」のような日本語フォーマットで出力する
  */
 export function toYenFormat(dollarValue) {
-    const yen = Number(dollarValue || 0) * 160;
+    const yen = Number(dollarValue || 0) * EXCHANGE_RATE;
     if (yen === 0) return "0円";
     
     let isNegative = false;
