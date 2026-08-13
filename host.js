@@ -441,9 +441,9 @@ btnFetchCurrentGameLogs?.addEventListener('click', async () => {
         if (error) throw error;
 
         if (data && hostLogTextarea) {
-            hostLogTextarea.value = data.reverse().log => 
-                `[${new Date(log.created_at).toLocaleString()}] Target: ${log.target} | Title: ${log.title}\n${log.body}`
-            ).join('\n----------------------------------------\n');
+            hostLogTextarea.value = data.reverse().map(log => 
+    `[${new Date(log.created_at).toLocaleString()}] Target: ${log.target} | Title: ${log.title}\n${log.body}`
+).join('\n----------------------------------------\n');
         }
     } catch (err) {
         if (hostLogTextarea) hostLogTextarea.value = `エラー: ${err.message}`;
