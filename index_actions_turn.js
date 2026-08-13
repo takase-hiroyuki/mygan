@@ -7,7 +7,8 @@ import { callRpcWithDebug,
          CELLS_DOODAD,
          CELLS_MARKET,
          insertSystemMessage,
-         getLocalPlayerName } from './common_utils.js';
+         getLocalPlayerName,
+         writeLog } from './common_utils.js';
 
 async function getCurrentPlayerState(supabase, userId) {
     const { data, error } = await supabase
@@ -38,7 +39,7 @@ export async function actionDrawCard(supabase, currentUserId, deckType) {
         });
     } catch (error) {
         const playerName = getLocalPlayerName();
-        await insertSystemMessage(supabase, playerName, `カード取得エラー: ${error.message}`);
+        writeLog(supabase, playerName, "Error", `カード取得エラー: ${error.message}`);
         if (btnSmall) btnSmall.disabled = false;
         if (btnBig) btnBig.disabled = false;
     }
@@ -82,7 +83,7 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
         }
         
     } catch (error) {
-        await insertSystemMessage(supabase, playerName, `エラー: ${error.message}`);
+        writeLog(supabase, playerName, "Error", `エラー: ${error.message}`);
     }
 }
 
@@ -118,7 +119,7 @@ export async function actionProcessSelf(supabase, currentUserId, qty = 1) {
             });
         }
     } catch (error) {
-        await insertSystemMessage(supabase, playerName, `エラー: ${error.message}`);
+        writeLog(supabase, playerName, "Error", `エラー: ${error.message}`);
     }
 }
 
@@ -132,7 +133,7 @@ export async function actionPass(supabase, currentUserId) {
             p_user_id: currentUserId
         });
     } catch (error) {
-        await insertSystemMessage(supabase, playerName, `エラー: ${error.message}`);
+        writeLog(supabase, playerName, "Error", `エラー: ${error.message}`);
     }
 }
 
@@ -160,7 +161,7 @@ export async function actionEndTurn(supabase, currentUserId) {
             window.location.reload();
             return;
         } catch (error) {
-            await insertSystemMessage(supabase, playerName, `エラー: ${error.message}`);
+            writeLog(supabase, playerName, "Error", `エラー: ${error.message}`);
             return;
         }
     }
@@ -171,7 +172,7 @@ export async function actionEndTurn(supabase, currentUserId) {
             p_user_id: currentUserId 
         });
     } catch (error) {
-        await insertSystemMessage(supabase, playerName, `エラー: ${error.message}`);
+        writeLog(supabase, playerName, "Error", `エラー: ${error.message}`);
     }
 }
 
