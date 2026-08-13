@@ -7,12 +7,10 @@ let localSeqCounter = 0;
 export function writeLog(supabaseClient, target, title, body) {
     if (!supabaseClient) return;
     
-    // sequence_numは integer 型 (上限約21.4億) のため、現在時刻(秒) + ローカルカウンターで一意性と順序を担保
     const seqNum = Math.floor(Date.now() / 1000) + (localSeqCounter++); 
     
     const bodyStr = typeof body === 'object' ? JSON.stringify(body, null, 2) : String(body);
     
-    // ※UI処理をブロックしないよう、awaitせずに非同期でINSERTを投げる
     supabaseClient.from('game_logs').insert([{
         room_id: roomId,
         sequence_num: seqNum,
@@ -21,13 +19,11 @@ export function writeLog(supabaseClient, target, title, body) {
         body: bodyStr
     }]).then(({ error }) => {
         if (error) {
-            // スクリプトエラー等でDBに書き込めない異常事態のみ、コンソールに残す
             console.error("【残す】game_logsへの保存エラー:", error);
         }
     });
 }
 
-// SupabaseのRPC関数を安全に呼び出し、入出力をデバッグするためのラッパー関数。
 export async function callRpcWithDebug(supabaseClient, rpcName, params = {}) {
     const startTime = performance.now();
     
@@ -46,7 +42,6 @@ export async function callRpcWithDebug(supabaseClient, rpcName, params = {}) {
     const responseBody = data !== null ? JSON.stringify(data, null, 2) : 'No returning data (void)';
     writeLog(supabaseClient, "System", "RPC_CALL_SUCCESS", `RPC: ${rpcName} (${executionTime}ms)\nResult: ${responseBody}`);
 
-    // 整合性監視: RPC関数側で定義された論理エラー（JSONBのstatus: 'error'）の検知
     if (data && typeof data === 'object' && data.status === 'error') {
         writeLog(supabaseClient, "System", "RPC_LOGICAL_WARNING", `RPC: ${rpcName} はエラー状態を返却しました。\nMessage: ${data.message}`);
     }
@@ -54,7 +49,6 @@ export async function callRpcWithDebug(supabaseClient, rpcName, params = {}) {
     return data;
 }
 
-// 単一のボタンの有効/無効とテキストプレフィックス(O/X)を同期する
 export function setButtonActive(id, isActive) {
     const btn = document.getElementById(id);
     if (!btn) return;
@@ -63,7 +57,6 @@ export function setButtonActive(id, isActive) {
     btn.innerText = (isActive ? 'O ' : 'X ') + baseText;
 }
 
-// 複数のボタンの一括状態変更を行う
 export function setMultipleButtonsActive(ids, isActive) {
     ids.forEach(id => setButtonActive(id, isActive));
 }
@@ -74,7 +67,6 @@ export const BOARD_CELL_NAMES = [
     "寄付", "商売", "入金", "商売", "解雇", "商売", "市場", "商売"
 ];
 
-// window.supabase のロードを安全に待機する関数
 export function waitForSupabase() {
     return new Promise((resolve) => {
         if (window.supabase) {
@@ -90,16 +82,14 @@ export function waitForSupabase() {
     });
 }
 
-// 盤面の特定のマスを示す定数 (CELLS_... 形式に統一)
-export const CELLS_PAYDAY = [0, 5, 11, 18];        // 入金（給料マイナス経費）
-export const CELLS_OPPORTUNITY = [2, 4, 6, 8, 10, 13, 15, 17, 19, 21, 23]; // 商売
-export const CELLS_DOODAD = [1, 7, 14];            // 娯楽
-export const CELLS_MARKET = [12, 22];              // 市場
-export const CELLS_BABY = [9];                     // 子供
-export const CELLS_CHARITY = [3, 16];              // 寄付
-export const CELLS_DOWNSIZED = [20];               // 解雇
+export const CELLS_PAYDAY = [0, 5, 11, 18];
+export const CELLS_OPPORTUNITY = [2, 4, 6, 8, 10, 13, 15, 17, 19, 21, 23];
+export const CELLS_DOODAD = [1, 7, 14];
+export const CELLS_MARKET = [12, 22];
+export const CELLS_BABY = [9];
+export const CELLS_CHARITY = [3, 16];
+export const CELLS_DOWNSIZED = [20];
 
-// プレイヤーの初期登録データを生成する関数
 export function getInitialRegistrationState(username) {
     return {
         name: username,
@@ -110,10 +100,7 @@ export function getInitialRegistrationState(username) {
         last_dice: 0,
         calculation_phase: "none",
         children_count: 0,
-
-        // すべての資産・負債・固定費・給料はここにアイテムとして入る
         items: [], 
-
         flags: {
             has_rolled_dice: false,
             is_card_drawn: false,
@@ -124,10 +111,7 @@ export function getInitialRegistrationState(username) {
             downsized_turns_left: 0,
             pending_paydays: 0
         },
-        
         financials: {
-            // お財布の状況（現金）や、キャッシュフローの合計値など、
-            // 「アイテムの計算結果」や「現在の状態」を入れる場所だけ残す
             cash: 0, 
             total_income: 0, 
             total_expenses: 0, 
@@ -138,62 +122,52 @@ export function getInitialRegistrationState(username) {
     };
 }
 
-// 画面（DOM）から現在のプレイヤー名を取得するヘルパー関数
 export function getLocalPlayerName() {
     const nameEl = document.getElementById(SEL_G.STATUS.NAME);
     return (nameEl && nameEl.textContent !== '未定') ? nameEl.textContent : 'プレイヤー';
 }
 
-export async function insertSystemMessage(supabase, targetName, message) {
-    writeLog(supabase, targetName, "Message", message);
-    return { data: null, error: null };
+// 接続中の全プレイヤーへ直接メッセージを送信し、同時にログへ記録する関数
+export function sendGameProgressMessage(supabaseClient, currentRoomId, targetName, message) {
+    if (!supabaseClient) return;
+    
+    // 画面表示用：Broadcast機能で直接送信
+    supabaseClient.channel(`room_broadcast_${currentRoomId}`).send({
+        type: 'broadcast',
+        event: 'progress_update',
+        payload: { target: targetName, body: message }
+    });
+
+    // 記録用：game_logs テーブルへ保存
+    writeLog(supabaseClient, targetName, "Message", message);
 }
 
-/**
- * システムメッセージを表示するためのシンプルな関数
- * キューを使わず、既存の画面上部にメッセージを追記していく方式
- */
-export function displaySystemMessage(target, body) {
+// 受信したメッセージを画面に描画する関数
+export function displayGameProgressMessage(target, body) {
     const el = document.getElementById(SEL_G.TRADE.THIS_CARD);
     if (!el) return;
 
-    // メッセージ用のコンテナを特定、なければ作成
-    let msgContainer = document.getElementById('sys-msg-container');
+    let msgContainer = document.getElementById('game-progress-container');
     if (!msgContainer) {
         msgContainer = document.createElement('div');
-        msgContainer.id = 'sys-msg-container';
-        // コンテナを常に一番上に表示
+        msgContainer.id = 'game-progress-container';
         el.insertBefore(msgContainer, el.firstChild);
     }
 
-    // 新しいメッセージ要素を作成
     const newMsg = document.createElement('div');
-    newMsg.style.margin = '4px 0';
-    newMsg.style.border = '1px solid #d32f2f';
-    newMsg.style.padding = '5px';
-    newMsg.style.backgroundColor = '#fff0f0';
+    newMsg.className = 'game-progress-message';
     newMsg.innerHTML = `【${new Date().toLocaleTimeString()} 通知: ${target}】${body}`;
 
-    // コンテナの先頭に新しいメッセージを追加
     msgContainer.insertBefore(newMsg, msgContainer.firstChild);
 }
 
-/**
- * 画面が大きく再描画された際にメッセージコンテナが消えるのを防ぐため、
- * 再描画後に呼び出すか、CSSなどで制御してください。
- */
 export function resetMessageDisplayState() {
-    // 必要に応じてコンテナをクリアする関数
-    const msgContainer = document.getElementById('sys-msg-container');
+    const msgContainer = document.getElementById('game-progress-container');
     if (msgContainer) {
         msgContainer.innerHTML = '';
     }
 }
 
-/**
- * ドル数値を日本円（設定されたEXCHANGE_RATE換算）の文字列に変換する関数
- * 「◯億◯万◯千円」のような日本語フォーマットで出力する
- */
 export function toYenFormat(dollarValue) {
     const yen = Number(dollarValue || 0) * EXCHANGE_RATE;
     if (yen === 0) return "0円";
@@ -217,7 +191,6 @@ export function toYenFormat(dollarValue) {
     if (result === '') result = '0';
     result += '円';
 
-    // マイナスの場合は「-」ではなく「▲」をつける
     return isNegative ? `▲${result}` : result;
 }
 
