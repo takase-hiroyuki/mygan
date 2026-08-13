@@ -153,7 +153,7 @@ export async function insertSystemMessage(supabase, targetName, message) {
  * システムメッセージを表示するためのシンプルな関数
  * キューを使わず、既存の画面上部にメッセージを追記していく方式
  */
-export function displaySystemMessage(target, body) {
+export function x_displaySystemMessage(target, body) {
     const el = document.getElementById(SEL_G.TRADE.THIS_CARD);
     if (!el) return;
 
