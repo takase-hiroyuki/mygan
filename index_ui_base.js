@@ -136,6 +136,7 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
             if (costVal > 0 || (liabVal === 0 && cfVal > 0)) {
                 let cfStr = toYenFormat(cfVal);
                 if (cfStr === "0円") cfStr = "";
+                else if (cfVal > 0) cfStr = `+${cfStr}`;
                 
                 let unitPrice = toYenFormat(costVal);
                 if (unitPrice === "0円") unitPrice = "";
@@ -148,18 +149,24 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
                 if (costVal > 0) {
                     let canSell = false;
                     
+                    // バックエンド(operate_participant_item_v2)と整合させた売却可否判定
                     if (activeCard) {
+                        // 1. 売却権限のチェック
                         const hasSellRight = (activeCard.sell === 'all') || (activeCard.sell === 'owner' && isTurnUser);
                         
                         if (hasSellRight) {
+                            // 2. 対象資産の合致判定 (SQLの3パターンと同等)
                             const cardActionRule = activeCard.action_rule || {};
                             
+                            // パターン1: target_symbolの完全一致
                             if (cardActionRule.target_symbol && cardActionRule.target_symbol === item.asset_type) {
                                 canSell = true;
                             }
+                            // パターン2: target_asset 配列に含まれるか
                             else if (Array.isArray(cardActionRule.target_asset) && cardActionRule.target_asset.includes(item.asset_type)) {
                                 canSell = true;
                             }
+                            // パターン3: 通常のasset_type一致
                             else if (activeCard.asset_type && activeCard.asset_type !== 'other' && activeCard.asset_type === item.asset_type) {
                                 canSell = true;
                             }
@@ -184,6 +191,7 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
 
                 let cfStr = toYenFormat(displayCF);
                 if (cfStr === "0円") cfStr = "";
+                else if (displayCF > 0) cfStr = `+${cfStr}`;
 
                 let liabStr = toYenFormat(liabVal);
                 if (liabStr === "0円") liabStr = "";
