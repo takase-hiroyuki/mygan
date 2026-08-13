@@ -77,6 +77,7 @@ td[align="center"] {
 ============================== */
 .board-table {
     min-width: 1200px; /* 12マスあるため、スクロール前提で広めに確保 */
+    width: 100%;
     table-layout: fixed; /* ★重要: セルの幅を中身に依存せず強制的に固定する */
 }
 
@@ -86,6 +87,24 @@ td[align="center"] {
     padding: 6px 4px;
     vertical-align: top; /* 複数のコマが入った時に上から整列させる */
     text-align: center;
+    overflow: hidden; /* マス目からの中身のはみ出しを防止 */
+}
+
+/* ★追加: JSで生成される「プレイヤーのコマ（ネストされたテーブル）」が横に伸びるのを防ぐ */
+.player-occupants table {
+    min-width: 0 !important; /* max-contentの広がる力を完全に打ち消す */
+    width: 100% !important; /* マス目の幅に合わせる */
+    table-layout: fixed; /* コマ自体の幅も固定 */
+    margin-top: 4px;
+    border: none;
+}
+
+.player-occupants table td {
+    padding: 4px;
+    border: none; /* コマ内部の不要な枠線を消す */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* 名前やIDが長すぎる場合は自動的に「...」にする */
 }
 
 /* ==============================
@@ -149,13 +168,10 @@ button:disabled {
     font-weight: bold;
 }
 
-/* 盤面モニターのコマ */
+/* 盤面モニターのコマの文字設定 */
 .player-occupants font {
     display: inline-block;
-    background-color: #dc2626;
     color: #ffffff !important;
-    padding: 2px 6px;
-    margin: 2px;
-    border-radius: 3px;
     font-weight: bold;
+    width: 100%; /* セル幅いっぱいにする */
 }
