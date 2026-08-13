@@ -33,10 +33,9 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
     const turnUserState = turnUserRecord ? turnUserRecord.state : {};
     const turnUserFlags = turnUserState.flags || {};
 
-    const cardHolderRecord = cachedParticipants.find(p => p.state && p.state.drawn_card);
-    const activeCard = cardHolderRecord ? cardHolderRecord.state.drawn_card : null;
-    const cardHolderId = cardHolderRecord ? cardHolderRecord.user_id : null;
-    const iAmCardHolder = (cardHolderId === currentUserId);
+    // ★修正: 自分の手札を最優先とし、無ければ部屋の場札を参照する。自分が手札を持っているかを正確に判定。
+    const activeCard = state.drawn_card || cachedRoom?.game_state?.current_card || null;
+    const iAmCardHolder = !!state.drawn_card;
 
     const elNumProcess = document.getElementById(SEL_G.TRADE.NUM_PROCESS_SELF);
     const elBtnProcess = document.getElementById(SEL_G.TRADE.BTN_PROCESS_SELF);
@@ -52,7 +51,6 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
         let descText = activeCard.description_jp2 || activeCard.description_jp || activeCard.description || '';
         cardHTML += `${descText}<br>`;
         
-        // ★ toYenFormatを用いて米ドル数値を動的に日本円に変換
         if (activeCard.cost > 0) {
             let costStr = toYenFormat(activeCard.cost);
             cardHTML += `<br>価格: ${costStr}`;
@@ -129,7 +127,6 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
             const totalIncome = items.filter(i => (i.cashflow || 0) > 0).reduce((sum, i) => sum + Number(i.cashflow), 0);
             const donateAmount = totalIncome * 0.1;
             
-            // ★ ハードコーディングと複雑な文字列結合を排除し、toYenFormatを使用
             const donateStr = toYenFormat(donateAmount);
 
             updateCardDisplay(`【寄付】<br>総収入の10% (${donateStr}) を支払うことで、以降3ターンの間サイコロを2個振ることができます。`);
@@ -274,7 +271,6 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
     if (tradeOffer) {
         if (tradeOffer.to === currentUserId) {
             const fromUser = cachedParticipants.find(p => p.user_id === tradeOffer.from);
-            // ★ ハードコーディングを排除し、toYenFormatを使用
             const offerStr = toYenFormat(tradeOffer.price);
             safeUpdate(SEL_G.TRADE.TRADE_MESSAGE, `${fromUser?.state?.name || "他のプレイヤー"} さんから ${offerStr} で権利を買う提案が来ています。`);
             setButtonActive(SEL_G.TRADE.BTN_ACCEPT, true);
