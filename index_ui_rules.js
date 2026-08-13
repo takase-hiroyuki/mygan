@@ -1,10 +1,6 @@
 // index_ui_rules.js
 import { SEL_G } from './common_dom_selectors.js'; 
-import { setButtonActive, setMultipleButtonsActive, CELLS_OPPORTUNITY, CELLS_DOODAD, CELLS_MARKET } from './common_utils.js';
-
-function toCurrency(value) {
-    return Number(value || 0).toLocaleString();
-}
+import { setButtonActive, setMultipleButtonsActive, CELLS_OPPORTUNITY, CELLS_DOODAD, CELLS_MARKET, toYenFormat } from './common_utils.js';
 
 export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
     const record = cachedParticipants.find(p => p.user_id === currentUserId);
@@ -56,17 +52,18 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
         let descText = activeCard.description_jp2 || activeCard.description_jp || activeCard.description || '';
         cardHTML += `${descText}<br>`;
         
+        // ★ toYenFormatを用いて米ドル数値を動的に日本円に変換
         if (activeCard.cost > 0) {
-            let costStr = activeCard.cost2_disp ? `${activeCard.cost2_disp}円` : `$${toCurrency(activeCard.cost)}`;
+            let costStr = toYenFormat(activeCard.cost);
             cardHTML += `<br>価格: ${costStr}`;
 
             if (activeCard.down_payment > 0 && activeCard.down_payment !== activeCard.cost) {
-                let dpStr = activeCard.down_payment2_disp ? `${activeCard.down_payment2_disp}円` : `$${toCurrency(activeCard.down_payment)}`;
+                let dpStr = toYenFormat(activeCard.down_payment);
                 cardHTML += ` (頭金: ${dpStr})`;
             }
         }
         if (activeCard.passive_income !== 0 && activeCard.passive_income !== null && activeCard.passive_income !== undefined) {
-            let piStr = activeCard.passive_income2_disp ? `${activeCard.passive_income2_disp}円` : `$${toCurrency(activeCard.passive_income)}`;
+            let piStr = toYenFormat(activeCard.passive_income);
             cardHTML += `<br>キャッシュフロー: ${piStr}`;
         }
         
@@ -132,11 +129,8 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
             const totalIncome = items.filter(i => (i.cashflow || 0) > 0).reduce((sum, i) => sum + Number(i.cashflow), 0);
             const donateAmount = totalIncome * 0.1;
             
-            // 日本円換算 (1ドル=160円) を用いて、ドル表記を削除し日本円のみ表示
-            const donateAmountYen = donateAmount * 160;
-            const donateStr = donateAmountYen >= 10000 
-                ? `${toCurrency(Math.floor(donateAmountYen / 10000))}万${toCurrency(donateAmountYen % 10000)}円`.replace(/0円$/, '円') 
-                : `${toCurrency(donateAmountYen)}円`;
+            // ★ ハードコーディングと複雑な文字列結合を排除し、toYenFormatを使用
+            const donateStr = toYenFormat(donateAmount);
 
             updateCardDisplay(`【寄付】<br>総収入の10% (${donateStr}) を支払うことで、以降3ターンの間サイコロを2個振ることができます。`);
             
@@ -280,11 +274,8 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
     if (tradeOffer) {
         if (tradeOffer.to === currentUserId) {
             const fromUser = cachedParticipants.find(p => p.user_id === tradeOffer.from);
-            // トレード提案時の価格も日本円表記に変更
-            const offerPriceYen = tradeOffer.price * 160;
-            const offerStr = offerPriceYen >= 10000 
-                ? `${toCurrency(Math.floor(offerPriceYen / 10000))}万${toCurrency(offerPriceYen % 10000)}円`.replace(/0円$/, '円')
-                : `${toCurrency(offerPriceYen)}円`;
+            // ★ ハードコーディングを排除し、toYenFormatを使用
+            const offerStr = toYenFormat(tradeOffer.price);
             safeUpdate(SEL_G.TRADE.TRADE_MESSAGE, `${fromUser?.state?.name || "他のプレイヤー"} さんから ${offerStr} で権利を買う提案が来ています。`);
             setButtonActive(SEL_G.TRADE.BTN_ACCEPT, true);
             setButtonActive(SEL_G.TRADE.BTN_REJECT, true);
