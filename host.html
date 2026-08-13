@@ -6,6 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>mygan host</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .highlight-cash { color: #047857; font-weight: bold; font-size: 1.1em; }
+        .full-width-btn { width: 100%; padding: 8px; margin-top: 5px; }
+        .table-responsive { overflow-x: auto; margin-bottom: 10px; }
+        .financial-summary { background-color: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 10px; }
+    </style>
 </head>
 <body>
 
@@ -47,6 +53,27 @@
             <tbody id="host-flags-list"></tbody>
         </table>
 
+        <br>
+        
+        <!-- ★ 追加: 参加者の財務諸表閲覧エリア -->
+        <fieldset>
+            <legend>参加者の財務諸表プレビュー</legend>
+            <select id="player-select"></select>
+            
+            <div class="financial-summary">
+                <p><span id="l-profession">◯◯の職業：★★★</span></p>
+                <p class="highlight-cash"><span id="l-cash">◯◯の所持金：★★★</span></p>
+                <button id="fast_track" class="full-width-btn" disabled>ファーストトラックまで、あと◯◯◯円</button>
+            </div>
+            
+            <div class="table-responsive">
+                <span id="l-profit">資産 table</span>
+            </div>
+            <div class="table-responsive">
+                <span id="l-loss">負債 table</span>
+            </div>
+        </fieldset>
+        
         <br>
         <div id="host-extra-info-container"></div>
         <br>
