@@ -1,88 +1,66 @@
 /* host.css */
 
-:root {
-    --bg-color: #f8fafc;
-    --text-color: #334155;
-    --border-color: #cbd5e1;
-    --surface-color: #ffffff;
-    --header-bg: #f1f5f9;
-    --accent-color: #2563eb;
-    --danger-color: #dc2626;
-    --success-color: #059669;
-}
-
-/* 全ての要素の文字サイズを強制的に均一化 */
 * {
     box-sizing: border-box;
-    font-size: 14px !important;
 }
 
 body {
     font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
     margin: 0;
     padding: 10px;
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    line-height: 1.4;
+    background-color: #f8fafc;
+    color: #334155;
+    /* すべての基準となる文字サイズを大きく統一 */
+    font-size: 16px;
+    line-height: 1.5;
 }
 
 h1 {
-    font-weight: bold;
+    font-size: 1.5rem;
     text-align: center;
-    border-bottom: 2px solid var(--border-color);
+    border-bottom: 2px solid #cbd5e1;
     padding-bottom: 10px;
     margin-bottom: 20px;
 }
 
-fieldset {
-    background-color: var(--surface-color);
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    padding: 12px;
-    margin-bottom: 15px;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-}
-
-legend {
-    background-color: var(--accent-color);
-    color: #ffffff !important;
-    padding: 4px 10px;
-    border-radius: 4px;
-    font-weight: bold;
-}
-
 /* ==============================
-   テーブル（レスポンシブ対応）
+   レイアウトの幅を100%に完全統一
 ============================== */
-.table-responsive {
+fieldset, .table-responsive {
     width: 100%;
+    margin-bottom: 20px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background-color: #ffffff;
+}
+
+fieldset {
+    padding: 15px;
+}
+
+.table-responsive {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    margin-bottom: 15px;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    background-color: var(--surface-color);
 }
 
 table {
     width: 100%;
-    min-width: 600px; /* スマホでスクロールさせるための最小幅 */
+    /* スマホで文字が縮まないよう、一定幅以下は横スクロールさせる */
+    min-width: 800px;
     border-collapse: collapse;
 }
 
-.board-table {
-    min-width: 800px; /* 盤面はさらに広く */
-}
-
+/* テーブル内の文字サイズも基準サイズ(16px)に揃える */
 th, td {
-    padding: 8px;
-    border: 1px solid var(--border-color);
+    padding: 12px;
+    border: 1px solid #cbd5e1;
     text-align: left;
     vertical-align: middle;
+    font-size: 16px;
 }
 
 th {
-    background-color: var(--header-bg);
+    background-color: #f1f5f9;
     font-weight: bold;
     white-space: nowrap;
 }
@@ -91,14 +69,25 @@ td[align="center"] {
     text-align: center;
 }
 
+legend {
+    background-color: #475569;
+    color: #ffffff;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 16px;
+}
+
 /* ==============================
    フォーム・ボタン類
 ============================== */
 input[type="number"], select, textarea {
-    padding: 6px;
-    border: 1px solid var(--border-color);
+    padding: 8px;
+    border: 1px solid #cbd5e1;
     border-radius: 4px;
     background-color: #f1f5f9;
+    font-size: 16px;
+    margin: 4px 0;
     max-width: 100%;
 }
 
@@ -108,13 +97,14 @@ textarea {
 }
 
 button {
-    background-color: var(--surface-color);
-    border: 1px solid var(--border-color);
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
     border-radius: 4px;
-    padding: 6px 12px;
+    padding: 8px 16px;
+    font-size: 16px;
     font-weight: bold;
     cursor: pointer;
-    margin: 2px;
+    margin: 4px 2px;
     touch-action: manipulation;
 }
 
@@ -133,45 +123,31 @@ button:disabled {
     margin-top: 8px;
 }
 
-/* ==============================
-   装飾ユーティリティ
-============================== */
-.highlight-cash {
-    color: var(--success-color);
-    font-weight: bold;
-}
-
 .financial-summary {
     background-color: #f1f5f9;
-    padding: 10px;
+    padding: 12px;
     border-radius: 6px;
-    border: 1px solid var(--border-color);
-    margin: 10px 0;
+    border: 1px solid #cbd5e1;
+    margin-bottom: 15px;
 }
 
 .financial-summary p {
     margin: 4px 0;
 }
 
-.player-occupants font {
-    display: inline-block;
-    background-color: var(--danger-color);
-    color: #ffffff !important;
-    padding: 2px 4px;
-    border-radius: 3px;
+.highlight-cash {
+    color: #059669;
     font-weight: bold;
 }
 
-/* スマホ用の調整 */
-@media (max-width: 600px) {
-    button {
-        width: 100%;
-        margin: 4px 0;
-    }
-    input[type="number"], select {
-        width: 100%;
-        margin: 4px 0;
-    }
+/* 盤面モニターのコマ */
+.player-occupants font {
+    display: inline-block;
+    background-color: #dc2626;
+    color: #ffffff !important;
+    padding: 2px 4px;
+    margin: 2px;
+    border-radius: 3px;
+    font-weight: bold;
+    font-size: 14px; /* コマだけはマス目に収まるよう少し小さめ */
 }
-
-/* host.css ここまで */
