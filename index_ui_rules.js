@@ -10,7 +10,9 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
     const financials = state.financials || {};
     const flags = state.flags || {}; 
     const items = state.items || []; 
-    const hasBankLoan = items.some(item => item.asset_type === 'BankLoan'); 
+    
+    // ★修正: 常に最新の items から BankLoan の有無を判定する
+    let hasBankLoan = items.some(item => item.asset_type === 'BankLoan'); 
 
     const turnUserId = cachedRoom ? cachedRoom.current_turn_user_id : null;
     const isMyTurn = (turnUserId === currentUserId);
@@ -33,7 +35,6 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
     const turnUserState = turnUserRecord ? turnUserRecord.state : {};
     const turnUserFlags = turnUserState.flags || {};
 
-    // ★修正: 自分の手札を最優先とし、無ければ部屋の場札を参照する。自分が手札を持っているかを正確に判定。
     const activeCard = state.drawn_card || cachedRoom?.game_state?.current_card || null;
     const iAmCardHolder = !!state.drawn_card;
 
