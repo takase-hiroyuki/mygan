@@ -10,9 +10,21 @@
 </head>
 <body>
 
+    <h1>mygan host</h1>
+
     <div id="section-host">
+        
+        <!-- 1. 最新のサイコロ出目 -->
+        <fieldset>
+            <legend>最新のサイコロ出目（ホスト監視用）</legend>
+            <div id="host-dice-monitor">
+                まだサイコロは振られていません
+            </div>
+        </fieldset>
+
         <!-- 2. 場に出ているカード情報 -->
         <fieldset>
+            <legend>場に出ているカード</legend>
             <div id="host-current-card-info">
                 現在、場に出ているカードはありません。
             </div>
@@ -73,6 +85,8 @@
         <!-- ここから下はその他の要素群 -->
         <!-- ========================================== -->
 
+        <hr>
+
         <!-- 参加者基本リスト -->
         <div class="table-responsive">
             <table cellpadding="0" cellspacing="0">
@@ -114,13 +128,13 @@
         <!-- 部屋とゲームの制御エリア -->
         <fieldset>
             <legend>ゲーム制御</legend>
-            現在: <span id="host-room-status" style="font-weight: bold; color: var(--accent-color);">waiting (準備中)</span>
+            <p>現在の部屋ステータス: <span id="host-room-status" style="font-weight: bold; color: var(--accent-color);">waiting (準備中)</span></p>
             <button id="btn-initial-shuffle-start">O 初期シャッフル＆ゲーム開始</button>
             <button id="btn-force-game-end">O 全員強制退室＆ゲーム終了</button>
             <hr style="border: none; border-top: 1px dashed var(--border-color); margin: 15px 0;">
             <label for="input-kick-order">退室者の番号: </label>
             <input type="number" id="input-kick-order" min="1" placeholder="例: 4">
-            <button id="btn-kick-participant">O 退室させる</button>　／　
+            <button id="btn-kick-participant">O 退室させる</button> ／ 
             <input type="number" id="input-next-turn-order" placeholder="入室順を入力" min="1">
             <button id="btn-set-turn">O を手番にする</button>
         </fieldset>
@@ -199,10 +213,10 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td align="center"><span id="deck-count-small-deal" style="font-weight: bold; font-size: 1.2rem;">0</span> 枚</td>
-                        <td align="center"><span id="deck-count-big-deal" style="font-weight: bold; font-size: 1.2rem;">0</span> 枚</td>
-                        <td align="center"><span id="deck-count-market" style="font-weight: bold; font-size: 1.2rem;">0</span> 枚</td>
-                        <td align="center"><span id="deck-count-doodad" style="font-weight: bold; font-size: 1.2rem;">0</span> 枚</td>
+                        <td align="center"><span id="deck-count-small-deal" style="font-weight: bold;">0</span> 枚</td>
+                        <td align="center"><span id="deck-count-big-deal" style="font-weight: bold;">0</span> 枚</td>
+                        <td align="center"><span id="deck-count-market" style="font-weight: bold;">0</span> 枚</td>
+                        <td align="center"><span id="deck-count-doodad" style="font-weight: bold;">0</span> 枚</td>
                     </tr>
                     <tr>
                         <td align="center"><button id="btn-reshuffle-small-deal" class="full-width-btn">O シャッフル</button></td>
@@ -214,6 +228,7 @@
             </table>
         </div>
 
+        <!-- システムログ管理 -->
         <fieldset>
             <legend>システムログ管理</legend>
             <button id="btn-fetch-current-game-logs">O 今回のゲームログのみ取得</button>
