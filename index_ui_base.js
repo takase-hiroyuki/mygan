@@ -23,9 +23,9 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
         if (el) el.textContent = text;
     };
 
-    // 場に出ているカード（current_card）を取得（部屋データから優先、なければ誰かのdrawn_cardから）
-    const activeCard = cachedRoom?.game_state?.current_card || 
-                       cachedParticipants.find(p => p.state && p.state.drawn_card)?.state.drawn_card || null;
+    // ★修正: 誰かの手札を無作為に探すのをやめ、「自分の手札」を最優先とし、無ければ「部屋の場札」を見る
+    const activeCard = state.drawn_card || cachedRoom?.game_state?.current_card || null;
+    
     const currentTurnUserId = cachedRoom?.current_turn_user_id;
     const isTurnUser = currentTurnUserId === currentUserId;
 
@@ -149,24 +149,18 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
                 if (costVal > 0) {
                     let canSell = false;
                     
-                    // バックエンド(operate_participant_item_v2)と整合させた売却可否判定
                     if (activeCard) {
-                        // 1. 売却権限のチェック
                         const hasSellRight = (activeCard.sell === 'all') || (activeCard.sell === 'owner' && isTurnUser);
                         
                         if (hasSellRight) {
-                            // 2. 対象資産の合致判定 (SQLの3パターンと同等)
                             const cardActionRule = activeCard.action_rule || {};
                             
-                            // パターン1: target_symbolの完全一致
                             if (cardActionRule.target_symbol && cardActionRule.target_symbol === item.asset_type) {
                                 canSell = true;
                             }
-                            // パターン2: target_asset 配列に含まれるか
                             else if (Array.isArray(cardActionRule.target_asset) && cardActionRule.target_asset.includes(item.asset_type)) {
                                 canSell = true;
                             }
-                            // パターン3: 通常のasset_type一致
                             else if (activeCard.asset_type && activeCard.asset_type !== 'other' && activeCard.asset_type === item.asset_type) {
                                 canSell = true;
                             }
