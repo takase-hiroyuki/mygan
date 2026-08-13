@@ -20,6 +20,8 @@ import { actionProposeTrade, actionAcceptTrade, actionRejectTrade } from './inde
 
 let supabase = null;
 let currentUserId = null;
+// ★追加: ユーザー名をログ出力時に取得するために最新の参加者リストを保持する変数
+let cachedParticipantsList = []; 
 
 const inputUsername = document.getElementById(SEL_G.LOGIN.INPUT_USERNAME);
 const btnLogin = document.getElementById(SEL_G.LOGIN.BTN_LOGIN);
@@ -42,6 +44,9 @@ const btnTradeAccept = document.getElementById(SEL_G.TRADE.BTN_ACCEPT);
 const btnTradeReject = document.getElementById(SEL_G.TRADE.BTN_REJECT);
 
 function updateUI(userId, participants, room) {
+    // 参加者リストをキャッシュしておく（ログ出力などで利用するため）
+    cachedParticipantsList = participants;
+    
     renderBaseUI(userId, participants, room, () => {
         updateUI(userId, participants, room);
     });
@@ -132,8 +137,12 @@ btnSellCard?.addEventListener('click', () => {
     actionProposeTrade(supabase, currentUserId);
 });
 
+// ★修正: ファーストトラック移行ボタンのリスナーで、実行者の名前をログに出力する
 btnFastTrack?.addEventListener('click', () => {
-    writeLog(supabase, "System", "UI", "ファーストトラック移行ボタンが押下されました。(現在はダミーリスナー)");
+    const record = cachedParticipantsList.find(p => p.user_id === currentUserId);
+    const userName = record?.state?.name || currentUserId || "不明なユーザー";
+    
+    writeLog(supabase, userName, "UI", "ファーストトラック移行ボタンが押下されました。(現在はダミーリスナー)");
 });
 
 btnProcessSelf?.addEventListener('click', () => {
