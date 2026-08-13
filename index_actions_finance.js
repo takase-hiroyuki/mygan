@@ -1,7 +1,7 @@
 // index_actions_finance.js
 import { roomId } from './common_config.js';
 import { SEL_G } from './common_dom_selectors.js'; 
-import { callRpcWithDebug, displaySystemMessage, insertSystemMessage, getLocalPlayerName } from './common_utils.js';
+import { callRpcWithDebug, displaySystemMessage, insertSystemMessage, getLocalPlayerName, writeLog } from './common_utils.js';
 
 export async function actionClaimPaycheck(supabase, currentUserId) {
     if (!supabase || !currentUserId) return;
@@ -16,7 +16,7 @@ export async function actionClaimPaycheck(supabase, currentUserId) {
             p_user_id: currentUserId 
         });
     } catch (error) {
-        await insertSystemMessage(supabase, playerName, `エラー: ${error.message}`);
+        writeLog(supabase, playerName, "Error", `エラー: ${error.message}`);
         if (claimButton) claimButton.disabled = false;
     }
 }
@@ -48,17 +48,16 @@ export async function actionCheckCalculations(supabase, currentUserId) {
         });
 
         if (data && data.status === 'error') {
-            await insertSystemMessage(supabase, playerName, `エラー: ${data.message}`);
+            writeLog(supabase, playerName, "Error", `エラー: ${data.message}`);
         } else {
             if (inputIncomeEl) inputIncomeEl.value = '';
             if (inputCashflowEl) inputCashflowEl.value = '';
         }
     } catch (error) {
-        await insertSystemMessage(supabase, playerName, `エラー: ${error.message}`);
+        writeLog(supabase, playerName, "Error", `エラー: ${error.message}`);
     }
 }
 
-// ★ 追加：資産・負債の処理（売却・一括返済）を実行する関数
 export async function actionOperateItem(supabase, currentUserId) {
     if (!supabase || !currentUserId) return;
     const playerName = getLocalPlayerName();
@@ -77,7 +76,6 @@ export async function actionOperateItem(supabase, currentUserId) {
     }
 
     try {
-        // 先ほど作成したSQLの関数を呼び出す
         await callRpcWithDebug(supabase, 'operate_participant_item_v2', {
             p_room_id: roomId,
             p_user_id: currentUserId,
@@ -87,11 +85,10 @@ export async function actionOperateItem(supabase, currentUserId) {
         
         await insertSystemMessage(supabase, playerName, "資産・負債の処理が完了しました。");
         
-        // 処理後はプルダウンの選択をリセットする
         itemSelect.value = "";
         operateSelect.value = "";
     } catch (error) {
-        await insertSystemMessage(supabase, playerName, `処理エラー: ${error.message}`);
+        writeLog(supabase, playerName, "Error", `処理エラー: ${error.message}`);
     }
 }
 
