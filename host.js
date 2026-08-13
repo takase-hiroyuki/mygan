@@ -1,7 +1,8 @@
 // host.js
 import { roomId, SUPABASE_URL, SUPABASE_KEY } from './common_config.js';
 import { DOM_SELECTORS } from './common_dom_selectors.js';
-import { setButtonActive, BOARD_CELL_NAMES, waitForSupabase, callRpcWithDebug, insertSystemMessage, writeLog } from './common_utils.js';
+// ★修正: toYenFormat 関数を追加インポート
+import { setButtonActive, BOARD_CELL_NAMES, waitForSupabase, callRpcWithDebug, insertSystemMessage, writeLog, toYenFormat } from './common_utils.js';
 
 let supabase = null;
 const listBody = document.getElementById(DOM_SELECTORS.HOST.PARTICIPANT_LIST);
@@ -137,7 +138,6 @@ function drawHostScreen() {
             const charityLeft = parseInt(flags.charity_turns_left || 0, 10);
             const downsizedLeft = parseInt(flags.downsized_turns_left || 0, 10);
             
-            // ★追加: 各プレイヤーの手札（drawn_card）のタイトルを取得
             const drawnCardTitle = pState.drawn_card ? `🎴 ${pState.drawn_card.title}` : 'なし';
 
             const trFlags = document.createElement('tr');
@@ -179,6 +179,120 @@ function drawHostScreen() {
             targetCell.appendChild(table);
         }
     });
+
+    // ★ 追加: ホスト用の個別の財務諸表プルダウンビューア処理
+    const playerSelect = document.getElementById('player-select');
+    if (playerSelect) {
+        const currentValue = playerSelect.value;
+        playerSelect.innerHTML = '<option value="">プレイヤーを選択</option>';
+        
+        currentParticipants.forEach(p => {
+            if (p.state && p.state.name) {
+                const option = document.createElement('option');
+                option.value = p.user_id;
+                option.textContent = p.state.name + ' の財務諸表';
+                playerSelect.appendChild(option);
+            }
+        });
+        
+        if (currentValue && currentParticipants.some(p => p.user_id === currentValue)) {
+            playerSelect.value = currentValue;
+        } else if (currentParticipants.length > 0) {
+            playerSelect.value = currentParticipants[0].user_id;
+        }
+
+        playerSelect.onchange = () => {
+            drawHostScreen();
+        };
+
+        const selectedUserId = playerSelect.value;
+        const selectedRecord = currentParticipants.find(p => p.user_id === selectedUserId);
+        
+        if (selectedRecord && selectedRecord.state) {
+            const selectedState = selectedRecord.state;
+            const selectedFinancials = selectedState.financials || {};
+            const selectedItems = selectedState.items || [];
+            const selectedName = selectedState.name || "不明";
+            
+            const elProf = document.getElementById('l-profession');
+            if (elProf) elProf.textContent = `${selectedName}の職業：${selectedState.profession || '未定'}`;
+            
+            const elCash = document.getElementById('l-cash');
+            if (elCash) elCash.textContent = `${selectedName}の所持金：${toYenFormat(selectedFinancials.cash)}`;
+
+            let assetsHTML = "<table border='1' width='100%'><tr><th>資産名</th><th>単価</th><th>数量</th><th>CF</th></tr>";
+            let liabHTML = "<table border='1' width='100%'><tr><th>負債名</th><th>負債残高</th><th>CF</th></tr>";
+
+            let totalExpenses = 0;
+            let passiveIncome = 0;
+
+            selectedItems.forEach(item => {
+                const costVal = Number(item.cost || 0);
+                const liabVal = Number(item.liability || 0);
+                const cfVal = Number(item.cashflow || 0);
+
+                if (cfVal < 0) {
+                    totalExpenses += Math.abs(cfVal);
+                } else if (cfVal > 0 && costVal > 0) {
+                    passiveIncome += cfVal;
+                }
+
+                // --- 資産表示 ---
+                if (costVal > 0 || (liabVal === 0 && cfVal > 0)) {
+                    let cfStr = toYenFormat(cfVal);
+                    if (cfStr === "0円") cfStr = "";
+                    else if (cfVal > 0) cfStr = `+${cfStr}`;
+                    
+                    let unitPrice = toYenFormat(costVal);
+                    if (unitPrice === "0円") unitPrice = "";
+
+                    const quantity = item.quantity !== undefined ? item.quantity : 1; 
+                    const quantityStr = Number(quantity).toLocaleString(); 
+                    
+                    assetsHTML += `<tr><td>${item.title}</td><td>${unitPrice}</td><td>${quantityStr}</td><td>${cfStr}</td></tr>`;
+                }
+
+                // --- 負債表示 ---
+                if (liabVal > 0 || (cfVal < 0 && costVal === 0)) {
+                    let displayName = item.title;
+                    let displayCF = cfVal;
+                    
+                    if (costVal > 0 && liabVal > 0) {
+                        displayName = item.title + "のローン";
+                        displayCF = 0; 
+                    }
+
+                    let cfStr = toYenFormat(displayCF);
+                    if (cfStr === "0円") cfStr = "";
+                    else if (displayCF > 0) cfStr = `+${cfStr}`;
+
+                    let liabStr = toYenFormat(liabVal);
+                    if (liabStr === "0円") liabStr = "";
+                    
+                    liabHTML += `<tr><td>${displayName}</td><td>${liabStr}</td><td>${cfStr}</td></tr>`;
+                }
+            });
+            
+            assetsHTML += "</table>";
+            liabHTML += "</table>";
+
+            const elProfit = document.getElementById('l-profit');
+            if (elProfit) elProfit.innerHTML = assetsHTML;
+
+            const elLoss = document.getElementById('l-loss');
+            if (elLoss) elLoss.innerHTML = liabHTML;
+
+            const btnFastTrack = document.getElementById('fast_track');
+            if (btnFastTrack) {
+                const diffToFastTrack = totalExpenses - passiveIncome;
+                if (diffToFastTrack > 0) {
+                    btnFastTrack.textContent = `ファーストトラックまで、あと${toYenFormat(diffToFastTrack)}`;
+                } else {
+                    btnFastTrack.textContent = `ファーストトラックへ移行可能！`;
+                }
+            }
+        }
+    }
 
     const extraContainer = document.getElementById(DOM_SELECTORS.HOST.EXTRA_INFO_CONTAINER);
     if (extraContainer) {
