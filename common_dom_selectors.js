@@ -145,7 +145,12 @@ export const DOM_SELECTORS = {
             CELL_PREFIX: 'rat-cell-'
         },
 
-        // 拡張情報表示用コンテナ
+        // 追加された静的要素ID
+        CURRENT_CARD_INFO: 'host-current-card-info',
+        ASSET_LIST: 'host-asset-list',
+        FINANCIAL_SUMMARY: 'host-financial-summary',
+
+        // 古い拡張情報表示用コンテナ（後方互換性のため残す）
         EXTRA_INFO_CONTAINER: 'host-extra-info-container'
     }
 };
