@@ -1,6 +1,6 @@
 // index_state.js
 import { SEL_G } from './common_dom_selectors.js'; 
-import { getLocalPlayerName, insertSystemMessage, displaySystemMessage, writeLog } from './common_utils.js'; // ★ writeLog を追加
+import { getLocalPlayerName, insertSystemMessage, displaySystemMessage, writeLog } from './common_utils.js';
 
 let cachedParticipants = [];
 let cachedRoom = null;
@@ -61,7 +61,8 @@ export function startSubscriptions(supabase, roomId, currentUserId, onRender) {
         event: 'INSERT', schema: 'public', table: 'game_logs', filter: `room_id=eq.${roomId}`
     }, (payload) => {
         const logData = payload.new;
-        if (logData && logData.target && logData.body) {
+        // ★修正: ログのタイトルが "Message" の場合のみ画面に表示するようにフィルターをかける
+        if (logData && logData.target && logData.body && logData.title === 'Message') {
             displaySystemMessage(logData.target, logData.body);
         }
     }).subscribe();
