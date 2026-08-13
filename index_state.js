@@ -62,7 +62,7 @@ export function startSubscriptions(supabase, roomId, currentUserId, onRender) {
     }, (payload) => {
         const logData = payload.new;
         if (logData && logData.target && logData.body) {
-            displaySystemMessage(logData.target, logData.body);
+            insertSystemMessage(supabase,logData.target, logData.body);
         }
     }).subscribe();
 
