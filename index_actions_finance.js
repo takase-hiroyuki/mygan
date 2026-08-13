@@ -1,7 +1,7 @@
 // index_actions_finance.js
 import { roomId } from './common_config.js';
 import { SEL_G } from './common_dom_selectors.js'; 
-import { callRpcWithDebug, displaySystemMessage, insertSystemMessage, getLocalPlayerName } from './common_utils.js';
+import { callRpcWithDebug, x_displaySystemMessage, insertSystemMessage, getLocalPlayerName } from './common_utils.js';
 
 export async function actionClaimPaycheck(supabase, currentUserId) {
     if (!supabase || !currentUserId) return;
