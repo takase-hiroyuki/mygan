@@ -1,6 +1,6 @@
 // index_state.js
 import { SEL_G } from './common_dom_selectors.js'; 
-import { getLocalPlayerName, insertSystemMessage, displaySystemMessage, writeLog } from './common_utils.js'; // ★ writeLog を追加
+import { getLocalPlayerName, insertSystemMessage, x_displaySystemMessage, writeLog } from './common_utils.js'; // ★ writeLog を追加
 
 let cachedParticipants = [];
 let cachedRoom = null;
