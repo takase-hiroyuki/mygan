@@ -168,8 +168,6 @@ export function displaySystemMessage(target, body) {
 
     // 新しいメッセージ要素を作成
     const newMsg = document.createElement('div');
-    newMsg.style.color = '#d32f2f';
-    newMsg.style.fontWeight = 'bold';
     newMsg.style.margin = '4px 0';
     newMsg.style.border = '1px solid #d32f2f';
     newMsg.style.padding = '5px';
