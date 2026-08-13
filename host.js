@@ -6,7 +6,6 @@ import { setButtonActive, BOARD_CELL_NAMES, waitForSupabase, callRpcWithDebug, i
 let supabase = null;
 const listBody = document.getElementById(DOM_SELECTORS.HOST.PARTICIPANT_LIST);
 const flagsListBody = document.getElementById(DOM_SELECTORS.HOST.FLAGS_LIST);
-
 const displayRoomStatus = document.getElementById(DOM_SELECTORS.HOST.LIFECYCLE.DISPLAY_ROOM_STATUS);
 const btnInitialShuffleStart = document.getElementById(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE);
 const btnForceGameEnd = document.getElementById(DOM_SELECTORS.HOST.LIFECYCLE.BTN_FORCE_GAME_END);
@@ -82,16 +81,16 @@ function drawHostScreen() {
     const currentTurnUserId = activeRoomRecord ? activeRoomRecord.current_turn_user_id : null;
 
     const elSmallCount = document.getElementById(DOM_SELECTORS.HOST.DECK_MONITOR.SMALL_DEAL_COUNT);
-    if (elSmallCount) elSmallCount.textContent = `${decks.small_deal ? decks.small_deal.length : 0} 枚`;
+    if (elSmallCount) elSmallCount.textContent = `${decks.small_deal ? decks.small_deal.length : 0}`;
 
     const elBigCount = document.getElementById(DOM_SELECTORS.HOST.DECK_MONITOR.BIG_DEAL_COUNT);
-    if (elBigCount) elBigCount.textContent = `${decks.big_deal ? decks.big_deal.length : 0} 枚`;
+    if (elBigCount) elBigCount.textContent = `${decks.big_deal ? decks.big_deal.length : 0}`;
 
     const elMarketCount = document.getElementById(DOM_SELECTORS.HOST.DECK_MONITOR.MARKET_COUNT);
-    if (elMarketCount) elMarketCount.textContent = `${decks.market ? decks.market.length : 0} 枚`;
+    if (elMarketCount) elMarketCount.textContent = `${decks.market ? decks.market.length : 0}`;
 
     const elDoodadCount = document.getElementById(DOM_SELECTORS.HOST.DECK_MONITOR.DOODAD_COUNT);
-    if (elDoodadCount) elDoodadCount.textContent = `${decks.doodad ? decks.doodad.length : 0} 枚`;
+    if (elDoodadCount) elDoodadCount.textContent = `${decks.doodad ? decks.doodad.length : 0}`;
 
     if (hostDiceMonitor) {
         if (!currentTurnUserId) {
@@ -108,9 +107,8 @@ function drawHostScreen() {
     if (listBody) listBody.innerHTML = '';
     if (flagsListBody) flagsListBody.innerHTML = ''; 
     
-    // 静的テーブルへの参照
-    const tbodyAssetList = document.getElementById(DOM_SELECTORS.HOST.ASSET_LIST);
-    const tbodyFinSummary = document.getElementById(DOM_SELECTORS.HOST.FINANCIAL_SUMMARY);
+    const tbodyAssetList = document.getElementById('host-asset-list');
+    const tbodyFinSummary = document.getElementById('host-financial-summary');
     if (tbodyAssetList) tbodyAssetList.innerHTML = '';
     if (tbodyFinSummary) tbodyFinSummary.innerHTML = '';
     
@@ -120,14 +118,14 @@ function drawHostScreen() {
     }
 
     // 場に出ているカードの表示更新
-    const elCardInfo = document.getElementById(DOM_SELECTORS.HOST.CURRENT_CARD_INFO);
+    const elCardInfo = document.getElementById('host-current-card-info');
     const currentCard = state.current_card;
     if (elCardInfo) {
         if (currentCard) {
-            elCardInfo.innerHTML = `<p>タイトル: ${currentCard.title}  asset_type: ${currentCard.asset_type}</p>
-            <p>cost: $${toCurrency(currentCard.cost)}  down_payment: $${toCurrency(currentCard.down_payment)}  mortgage: $${toCurrency(currentCard.mortgage)}  passive_income: $${toCurrency(currentCard.passive_income)}</p>`;
+            elCardInfo.innerHTML = `タイトル: <b>${currentCard.title}</b> &nbsp;&nbsp;&nbsp; asset_type: ${currentCard.asset_type}<br>
+            cost: $${toCurrency(currentCard.cost)} &nbsp;&nbsp;&nbsp; down_payment: $${toCurrency(currentCard.down_payment)} &nbsp;&nbsp;&nbsp; mortgage: $${toCurrency(currentCard.mortgage)} &nbsp;&nbsp;&nbsp; passive_income: $${toCurrency(currentCard.passive_income)}`;
         } else {
-            elCardInfo.innerHTML = `<p>現在、場に出ているカードはありません。</p>`;
+            elCardInfo.innerHTML = `現在、場に出ているカードはありません。`;
         }
     }
 
@@ -141,7 +139,7 @@ function drawHostScreen() {
         const isCurrentTurn = (p.user_id === currentTurnUserId);
         const displayName = (isCurrentTurn ? '★' : '') + (pState.name || '不明');
 
-        // 1. 基本参加者リスト
+        // 1. 参加者基本リスト
         const tr = document.createElement('tr');
         tr.classList.add(itemSEL.ROW_CLASS);
         tr.innerHTML = `
@@ -205,7 +203,7 @@ function drawHostScreen() {
         if (tbodyFinSummary) {
             const trFin = document.createElement('tr');
             trFin.innerHTML = `
-                <td>${pState.name || '不明'}</td>
+                <td>${displayName}</td>
                 <td>$${salary.toLocaleString()}</td>
                 <td>$${passiveIncome.toLocaleString()}</td>
                 <td>$${totalExpenses.toLocaleString()}</td>
@@ -243,7 +241,7 @@ function drawHostScreen() {
         if (tbodyAssetList) {
             const trAsset = document.createElement('tr');
             trAsset.innerHTML = `
-                <td>${pState.name || '不明'}</td>
+                <td>${displayName}</td>
                 <td>${assetStrs || 'なし'}</td>
             `;
             tbodyAssetList.appendChild(trAsset);
@@ -262,8 +260,7 @@ function drawHostScreen() {
             tdNode.setAttribute('bgcolor', '#00bcd4');
             tdNode.setAttribute('align', 'center');
             const fontNode = document.createElement('font');
-            fontNode.setAttribute('color', 'white');
-            fontNode.setAttribute('size', '2');
+            fontNode.style.color = 'white';
             fontNode.textContent = displayName;
             
             tdNode.appendChild(fontNode);
