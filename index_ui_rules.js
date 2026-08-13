@@ -269,6 +269,10 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
     }
 
     const tradeOffer = cachedRoom?.game_state?.trade_offer;
+    
+    // ★追加: 自分以外の誰かが未処理カードを持っているかチェック
+    const otherCardHolders = cachedParticipants.filter(p => p.user_id !== currentUserId && p.state && p.state.drawn_card);
+
     if (tradeOffer) {
         if (tradeOffer.to === currentUserId) {
             const fromUser = cachedParticipants.find(p => p.user_id === tradeOffer.from);
@@ -286,6 +290,12 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
             setButtonActive(SEL_G.TRADE.BTN_ACCEPT, false);
             setButtonActive(SEL_G.TRADE.BTN_REJECT, false);
         }
+    } else if (otherCardHolders.length > 0) {
+        // ★追加: 交渉がない場合、処理待ちのアラートを表示する
+        const holderNames = otherCardHolders.map(p => p.state?.name || "他のプレイヤー").join('、');
+        safeUpdate(SEL_G.TRADE.TRADE_MESSAGE, `⚠️ 処理待ち: ${holderNames} さんがカードを所持（未処理）しています。`);
+        setButtonActive(SEL_G.TRADE.BTN_ACCEPT, false);
+        setButtonActive(SEL_G.TRADE.BTN_REJECT, false);
     } else {
         safeUpdate(SEL_G.TRADE.TRADE_MESSAGE, "受け取るメッセージ (現在交渉なし)");
         setButtonActive(SEL_G.TRADE.BTN_ACCEPT, false);
