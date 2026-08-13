@@ -3,12 +3,12 @@ import { roomId } from './common_config.js';
 import { SEL_G } from './common_dom_selectors.js';
 import { callRpcWithDebug,
          insertSystemMessage,
-         getLocalPlayerName } from './common_utils.js';
+         getLocalPlayerName,
+         writeLog } from './common_utils.js';
 
 export async function actionBorrowBankLoan(supabaseClient, userId) {
     if (!supabaseClient || !userId) return;
 
-    // 通信開始前にボタンを無効化（ロック）
     const btn = document.getElementById(SEL_G.LOAN.BTN_BORROW_LOAN);
     if (btn) btn.disabled = true;
 
@@ -23,12 +23,11 @@ export async function actionBorrowBankLoan(supabaseClient, userId) {
         });
         
         if (result && result.status === 'error') {
-            await insertSystemMessage(supabaseClient, playerName, `エラー: ${result.message}`);
+            writeLog(supabaseClient, playerName, "Error", `エラー: ${result.message}`);
         }
     } catch (error) {
-        await insertSystemMessage(supabaseClient, playerName, `借入処理に失敗しました。: ${error.message}`);
+        writeLog(supabaseClient, playerName, "Error", `借入処理に失敗しました。: ${error.message}`);
     } finally {
-        // 通信完了後（成功・失敗にかかわらず）にロックを解除
         if (btn) btn.disabled = false;
     }
 }
@@ -36,7 +35,6 @@ export async function actionBorrowBankLoan(supabaseClient, userId) {
 export async function actionRepayBankLoan(supabaseClient, userId) {
     if (!supabaseClient || !userId) return;
 
-    // 通信開始前にボタンを無効化（ロック）
     const btn = document.getElementById(SEL_G.LOAN.BTN_PAYBACK_LOAN);
     if (btn) btn.disabled = true;
 
@@ -51,12 +49,11 @@ export async function actionRepayBankLoan(supabaseClient, userId) {
         });
         
         if (result && result.status === 'error') {
-            await insertSystemMessage(supabaseClient, playerName, `エラー: ${result.message}`);
+            writeLog(supabaseClient, playerName, "Error", `エラー: ${result.message}`);
         }
     } catch (error) {
-        await insertSystemMessage(supabaseClient, playerName, `返済処理に失敗しました。: ${error.message}`);
+        writeLog(supabaseClient, playerName, "Error", `返済処理に失敗しました。: ${error.message}`);
     } finally {
-        // 通信完了後（成功・失敗にかかわらず）にロックを解除
         if (btn) btn.disabled = false;
     }
 }
