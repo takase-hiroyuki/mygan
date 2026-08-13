@@ -2,6 +2,7 @@
 
 * {
     box-sizing: border-box;
+    font-size: 16px !important; /* 全ての文字サイズを16pxに強制統一 */
 }
 
 body {
@@ -10,13 +11,11 @@ body {
     padding: 10px;
     background-color: #f8fafc;
     color: #334155;
-    /* すべての基準となる文字サイズを大きく統一 */
-    font-size: 16px;
     line-height: 1.5;
 }
 
 h1 {
-    font-size: 1.5rem;
+    font-size: 24px !important;
     text-align: center;
     border-bottom: 2px solid #cbd5e1;
     padding-bottom: 10px;
@@ -30,7 +29,7 @@ fieldset, .table-responsive {
     width: 100%;
     margin-bottom: 20px;
     border: 1px solid #cbd5e1;
-    border-radius: 6px;
+    border-radius: 4px;
     background-color: #ffffff;
 }
 
@@ -38,44 +37,55 @@ fieldset {
     padding: 15px;
 }
 
+legend {
+    font-weight: bold;
+    color: #1e293b;
+    padding: 0 5px;
+}
+
 .table-responsive {
+    padding: 0; /* テーブルコンテナの隙間を消す */
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
 }
 
 table {
     width: 100%;
-    /* スマホで文字が縮まないよう、一定幅以下は横スクロールさせる */
-    min-width: 800px;
+    min-width: max-content; /* 中身に合わせて広がり、画面より大きければスクロール */
     border-collapse: collapse;
 }
 
-/* テーブル内の文字サイズも基準サイズ(16px)に揃える */
 th, td {
-    padding: 12px;
+    padding: 10px 12px;
     border: 1px solid #cbd5e1;
     text-align: left;
     vertical-align: middle;
-    font-size: 16px;
+    white-space: nowrap; /* 表の中で文字が勝手に折り返されるのを防ぐ */
 }
 
 th {
     background-color: #f1f5f9;
     font-weight: bold;
-    white-space: nowrap;
 }
 
 td[align="center"] {
     text-align: center;
 }
 
-legend {
-    background-color: #475569;
-    color: #ffffff;
-    padding: 6px 12px;
-    border-radius: 4px;
-    font-weight: bold;
-    font-size: 16px;
+/* ==============================
+   盤面モニター（すごろく）専用の調整
+============================== */
+.board-table {
+    min-width: 1200px; /* 12マスあるため、スクロール前提で広めに確保 */
+    table-layout: fixed; /* ★重要: セルの幅を中身に依存せず強制的に固定する */
+}
+
+.board-table td {
+    width: 8.33%; /* ★重要: 100% ÷ 12列 = 8.33% で完全に均等割にする */
+    white-space: normal; /* コマがはみ出ないように文字の折り返しを許可 */
+    padding: 6px 4px;
+    vertical-align: top; /* 複数のコマが入った時に上から整列させる */
+    text-align: center;
 }
 
 /* ==============================
@@ -86,8 +96,8 @@ input[type="number"], select, textarea {
     border: 1px solid #cbd5e1;
     border-radius: 4px;
     background-color: #f1f5f9;
-    font-size: 16px;
     margin: 4px 0;
+    width: auto;
     max-width: 100%;
 }
 
@@ -101,7 +111,6 @@ button {
     border: 1px solid #cbd5e1;
     border-radius: 4px;
     padding: 8px 16px;
-    font-size: 16px;
     font-weight: bold;
     cursor: pointer;
     margin: 4px 2px;
@@ -126,7 +135,7 @@ button:disabled {
 .financial-summary {
     background-color: #f1f5f9;
     padding: 12px;
-    border-radius: 6px;
+    border-radius: 4px;
     border: 1px solid #cbd5e1;
     margin-bottom: 15px;
 }
@@ -145,9 +154,8 @@ button:disabled {
     display: inline-block;
     background-color: #dc2626;
     color: #ffffff !important;
-    padding: 2px 4px;
+    padding: 2px 6px;
     margin: 2px;
     border-radius: 3px;
     font-weight: bold;
-    font-size: 14px; /* コマだけはマス目に収まるよう少し小さめ */
 }
