@@ -18,43 +18,31 @@
     <h1>mygan host</h1>
 
     <div id="section-host">
-        <table border="1">
-            <thead>
-                <tr>
-                    <th>順</th>
-                    <th>名前 (ID)</th>
-                    <th>職業</th>
-                    <th>子供</th>
-                    <th>現在地</th>
-                    <th>現金</th>
-                </tr>
-            </thead>
-            <tbody id="host-participant-list">
-            </tbody>
-        </table>
-
-        <br>
         
-        <!-- ★ 追加: 参加者の財務諸表閲覧エリア -->
+        <!-- ========================================== -->
+        <!-- ご要望の順番に並べた監視エリア (1〜5) -->
+        <!-- ========================================== -->
+
+        <!-- 1. 最新のサイコロ出目 -->
         <fieldset>
-            <legend>参加者の財務諸表プレビュー</legend>
-            <select id="player-select"></select>
-            
-            <div class="financial-summary">
-                <p><span id="l-profession">◯◯の職業：★★★</span></p>
-                <p class="highlight-cash"><span id="l-cash">◯◯の所持金：★★★</span></p>
-                <button id="fast_track" class="full-width-btn" disabled>ファーストトラックまで、あと◯◯◯円</button>
-            </div>
-            
-            <div class="table-responsive">
-                <span id="l-profit">資産 table</span>
-            </div>
-            <div class="table-responsive">
-                <span id="l-loss">負債 table</span>
+            <legend>最新のサイコロ出目（ホスト監視用）</legend>
+            <div id="host-dice-monitor">
+                まだサイコロは振られていません
             </div>
         </fieldset>
+        <br>
 
-        <table border="1" cellpadding="0" cellspaceing="0">
+        <!-- 2. 場に出ているカード情報 -->
+        <fieldset>
+            <legend>場に出ているカード</legend>
+            <div id="host-current-card-info">
+                現在、場に出ているカードはありません。
+            </div>
+        </fieldset>
+        <br>
+
+        <!-- 3. フラグ・進行状態テーブル -->
+        <table border="1" cellpadding="2" cellspacing="0">
             <thead>
                 <tr>
                     <th>名前</th>
@@ -73,9 +61,77 @@
         </table>
         <br>
 
-        <div id="host-extra-info-container"></div>
+        <!-- 4. 保有資産一覧テーブル -->
+        <table border="1" cellpadding="2" cellspacing="0" width="100%">
+            <thead>
+                <tr>
+                    <th width="20%">名前</th>
+                    <th>保有資産一覧</th>
+                </tr>
+            </thead>
+            <tbody id="host-asset-list"></tbody>
+        </table>
         <br>
 
+        <!-- 5. 財務サマリー（キャッシュフロー）テーブル -->
+        <table border="1" cellpadding="2" cellspacing="0" width="100%">
+            <thead>
+                <tr>
+                    <th>名前</th>
+                    <th>給料</th>
+                    <th>不労所得</th>
+                    <th>経費</th>
+                    <th>キャッシュフロー</th>
+                    <th>ファーストトラックまで</th>
+                </tr>
+            </thead>
+            <tbody id="host-financial-summary"></tbody>
+        </table>
+        <br>
+        
+        <!-- ========================================== -->
+        <!-- ここから下はその他の要素群 -->
+        <!-- ========================================== -->
+
+        <hr><br>
+
+        <!-- 参加者基本リスト -->
+        <table border="1" cellpadding="2" cellspacing="0">
+            <thead>
+                <tr>
+                    <th>順</th>
+                    <th>名前 (ID)</th>
+                    <th>職業</th>
+                    <th>子供</th>
+                    <th>現在地</th>
+                    <th>現金</th>
+                </tr>
+            </thead>
+            <tbody id="host-participant-list"></tbody>
+        </table>
+        <br>
+
+        <!-- 個別の財務諸表プレビューエリア -->
+        <fieldset>
+            <legend>参加者の財務諸表プレビュー</legend>
+            <select id="player-select"></select>
+            
+            <div class="financial-summary">
+                <p><span id="l-profession">◯◯の職業：★★★</span></p>
+                <p class="highlight-cash"><span id="l-cash">◯◯の所持金：★★★</span></p>
+                <button id="fast_track" class="full-width-btn" disabled>ファーストトラックまで、あと◯◯◯円</button>
+            </div>
+            
+            <div class="table-responsive">
+                <span id="l-profit">資産 table</span>
+            </div>
+            <div class="table-responsive">
+                <span id="l-loss">負債 table</span>
+            </div>
+        </fieldset>
+        <br>
+
+        <!-- 部屋とゲームの制御エリア -->
         <fieldset>
                 現在の部屋ステータス: <span id="host-room-status">waiting (準備中)</span><br>
                 <button id="btn-initial-shuffle-start">O 初期シャッフル＆ゲーム開始</button>
@@ -84,10 +140,10 @@
                 <input type="number" id="input-kick-order" min="1" placeholder="例: 4" size="4">
                 <button id="btn-kick-participant">O 退室させる</button>
         </fieldset>
-
         <br>
 
-        <table border="1" cellpadding="0" cellspaceing="0">
+        <!-- 盤面モニター -->
+        <table border="1" cellpadding="0" cellspacing="0">
             <tbody>
                 <tr>
                     <td align="center" valign="middle" data-position="0">
@@ -146,7 +202,8 @@
         </table>
         <br>
 
-        <table border="1" cellpadding="0" cellspaceing="0">
+        <!-- 山札モニター -->
+        <table border="1" cellpadding="2">
             <thead>
                 <tr>
                     <th>Small Deal</th>
@@ -170,24 +227,14 @@
                 </tr>
             </tbody>
         </table>
-
         <br>
 
-        <fieldset>
-            <legend>最新のサイコロ出目（ホスト監視用）</legend>
-            <div id="host-dice-monitor">
-                まだサイコロは振られていません
-            </div>
-        </fieldset>
-
-        <br>
-
+        <!-- 手動制御・ログ管理 -->
         <fieldset>
             <legend>手番プレイヤー手動制御</legend>
             <input type="number" id="input-next-turn-order" placeholder="入室順を入力" min="1">
             <button id="btn-set-turn">O を手番にする</button>
         </fieldset>
-
         <br>
 
         <fieldset>
@@ -197,7 +244,6 @@
             <button id="btn-copy-logs">O ログをコピー</button><br>
             <textarea id="host-log-textarea" rows="15" cols="100" readonly></textarea>
         </fieldset>
-
         <br>
 
     </div>
