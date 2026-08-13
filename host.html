@@ -10,19 +10,9 @@
 </head>
 <body>
 
-    <h1>mygan host</h1>
-
     <div id="section-host">
         
-        <!-- 1. 最新のサイコロ出目 -->
-        <fieldset>
-            <legend>最新のサイコロ出目（ホスト監視用）</legend>
-            <div id="host-dice-monitor">
-                まだサイコロは振られていません
-            </div>
-        </fieldset>
-
-        <!-- 2. 場に出ているカード情報 -->
+        <!-- 1. 場に出ているカード情報 -->
         <fieldset>
             <legend>場に出ているカード</legend>
             <div id="host-current-card-info">
@@ -30,7 +20,7 @@
             </div>
         </fieldset>
 
-        <!-- 3. フラグ・進行状態テーブル -->
+        <!-- 2. フラグ・進行状態テーブル -->
         <div class="table-responsive">
             <table cellpadding="0" cellspacing="0">
                 <thead>
@@ -51,12 +41,12 @@
             </table>
         </div>
 
-        <!-- 4. 保有資産一覧テーブル -->
+        <!-- 3. 保有資産一覧テーブル -->
         <div class="table-responsive">
             <table cellpadding="0" cellspacing="0">
                 <thead>
                     <tr>
-                        <th width="20%">名前</th>
+                        <th style="width: 20%;">名前</th>
                         <th>保有資産一覧</th>
                     </tr>
                 </thead>
@@ -64,7 +54,7 @@
             </table>
         </div>
 
-        <!-- 5. 財務サマリー（キャッシュフロー）テーブル -->
+        <!-- 4. 財務サマリー（キャッシュフロー）テーブル -->
         <div class="table-responsive">
             <table cellpadding="0" cellspacing="0">
                 <thead>
@@ -81,13 +71,7 @@
             </table>
         </div>
         
-        <!-- ========================================== -->
-        <!-- ここから下はその他の要素群 -->
-        <!-- ========================================== -->
-
-        <hr>
-
-        <!-- 参加者基本リスト -->
+        <!-- 5.参加者基本リスト -->
         <div class="table-responsive">
             <table cellpadding="0" cellspacing="0">
                 <thead>
@@ -104,7 +88,7 @@
             </table>
         </div>
 
-        <!-- 個別の財務諸表プレビューエリア -->
+        <!-- 6.個別の財務諸表プレビューエリア -->
         <fieldset>
             <legend>参加者の財務諸表プレビュー</legend>
             <select id="player-select"></select>
@@ -123,23 +107,22 @@
             </div>
         </fieldset>
 
-        <div id="host-extra-info-container"></div>
-
-        <!-- 部屋とゲームの制御エリア -->
+        <!-- 7.部屋とゲームの制御エリア -->
         <fieldset>
             <legend>ゲーム制御</legend>
-            <p>現在の部屋ステータス: <span id="host-room-status" style="font-weight: bold; color: var(--accent-color);">waiting (準備中)</span></p>
+            <p>現在の部屋ステータス: <span id="host-room-status" style="font-weight: bold; color: #2563eb;">waiting (準備中)</span></p>
             <button id="btn-initial-shuffle-start">O 初期シャッフル＆ゲーム開始</button>
             <button id="btn-force-game-end">O 全員強制退室＆ゲーム終了</button>
-            <hr style="border: none; border-top: 1px dashed var(--border-color); margin: 15px 0;">
+            <hr style="border: none; border-top: 1px dashed #cbd5e1; margin: 15px 0;">
             <label for="input-kick-order">退室者の番号: </label>
             <input type="number" id="input-kick-order" min="1" placeholder="例: 4">
-            <button id="btn-kick-participant">O 退室させる</button> ／ 
-            <input type="number" id="input-next-turn-order" placeholder="入室順を入力" min="1">
+            <button id="btn-kick-participant">O 退室させる</button><br>
+            <label for="input-next-turn-order">手番の番号: </label>
+            <input type="number" id="input-next-turn-order" placeholder="例: 1" min="1">
             <button id="btn-set-turn">O を手番にする</button>
         </fieldset>
 
-        <!-- 盤面モニター -->
+        <!-- 8.盤面モニター -->
         <div class="table-responsive">
             <table class="board-table" cellpadding="0" cellspacing="0">
                 <tbody>
@@ -199,8 +182,9 @@
                 </tbody>
             </table>
         </div>
+        <br>
 
-        <!-- 山札モニター -->
+        <!-- 9.山札モニター -->
         <div class="table-responsive">
             <table cellpadding="0" cellspacing="0">
                 <thead>
@@ -228,7 +212,7 @@
             </table>
         </div>
 
-        <!-- システムログ管理 -->
+        <!-- 10.システムログ管理 -->
         <fieldset>
             <legend>システムログ管理</legend>
             <button id="btn-fetch-current-game-logs">O 今回のゲームログのみ取得</button>
