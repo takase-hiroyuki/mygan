@@ -180,12 +180,15 @@ button:disabled {
    保有資産一覧テーブル専用の折り返し調整
 ============================== */
 table.asset-table {
-    min-width: 100%; /* 横に無限に広がるのを防ぎ、枠に収める */
+    min-width: 100% !important;
+    width: 100% !important;
+    table-layout: fixed !important; /* ★確実な折り返しのため枠を強制固定 */
 }
 
 table.asset-table th,
 table.asset-table td {
-    white-space: normal; /* テキストの折り返しを許可 */
-    word-break: break-word; /* 長い文字列でも枠の端で確実に折り返す */
-    line-height: 1.6; /* 複数行になった時の見栄えを調整 */
+    white-space: normal !important; /* 折り返しを最優先で許可 */
+    word-wrap: break-word !important; 
+    overflow-wrap: break-word !important; /* 枠の端で必ず改行させる */
+    line-height: 1.6;
 }
