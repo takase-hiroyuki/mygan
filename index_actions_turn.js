@@ -50,7 +50,7 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
     
     if (flags.has_rolled_dice || flags.is_calculating || downsizedTurnsLeft > 0) {
         if (downsizedTurnsLeft > 0) {
-            return { error: "休み期間中。そのまま手番を終了して下さい。" };
+            return { error: "休み中⇒「次の人へ」" };
         }
         return { error: "現在サイコロを振ることはできません。" };
     }
