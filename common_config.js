@@ -12,7 +12,7 @@ export const EXCHANGE_RATE = 160;
 
 // 4. デバッグ・開発用設定
 // true: 画面Messageに関数名を表示する / false: 表示しない
-// export const SHOW_FUNCTION_NAME_IN_MESSAGE = true;
-export const SHOW_FUNCTION_NAME_IN_MESSAGE = false;
+export const SHOW_FUNCTION_NAME_IN_MESSAGE = true;
+// export const SHOW_FUNCTION_NAME_IN_MESSAGE = false;
 
 console.log("【残す】config.js が読み込まれました。");
