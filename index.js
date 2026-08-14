@@ -12,7 +12,7 @@ import { toggleScreen, renderBaseUI } from './index_ui_base.js';
 import { applyUIRules } from './index_ui_rules.js';
 import { initSupabaseClient, checkExistingLogin, loginUser } from './index_auth.js';
 import { startSubscriptions } from './index_state.js'; 
-import { displayGameProgressMessage, writeLog, getLocalPlayerName } from './common_utils.js'; 
+import { writeLog, getLocalPlayerName } from './common_utils.js'; 
 import { actionRollDice, actionEndTurn, actionDrawCard, actionPass, actionProcessSelf } from './index_actions_turn.js';
 import { actionClaimPaycheck, actionCheckCalculations, actionOperateItem } from './index_actions_finance.js'; 
 import { actionBorrowBankLoan, actionRepayBankLoan } from './index_actions_loan.js';
@@ -75,7 +75,8 @@ btnLogin?.addEventListener('click', async () => {
     if (!supabase) return;
     const username = inputUsername?.value.trim();
     if (!username) { 
-        displayGameProgressMessage("システム", "名前を入力してください。", "btnLogin");
+        // 画面への表示をやめ、ログへの記録のみに変更
+        writeLog(supabase, "System", "Auth Error", "名前が入力されていません。");
         return; 
     }
 
@@ -107,7 +108,6 @@ btnClaimPaycheck?.addEventListener('click', () => {
 });
 
 btnEndTurn?.addEventListener('click', () => {
-    // 次の人へボタンの押下ログは actionEndTurn 内部で記録済みのためここでは呼び出しのみ
     actionEndTurn(supabase, currentUserId);
 });
 
