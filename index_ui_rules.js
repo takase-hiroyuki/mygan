@@ -12,6 +12,7 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
     const items = state.items || []; 
     
     let hasBankLoan = items.some(item => item.asset_type === 'BankLoan'); 
+    let cash = Number(financials.cash || 0);
 
     const turnUserId = cachedRoom ? cachedRoom.current_turn_user_id : null;
     const isMyTurn = (turnUserId === currentUserId);
@@ -37,8 +38,6 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
     const iAmCardHolder = !!state.drawn_card;
 
     const elNumProcess = document.getElementById(SEL_G.TRADE.NUM_PROCESS_SELF);
-    const elBtnProcess = document.getElementById(SEL_G.TRADE.BTN_PROCESS_SELF);
-    const elBtnPass = document.getElementById(SEL_G.TRADE.BTN_PASS_CARD);
     const elSellTarget = document.getElementById(SEL_G.TRADE.SELECT_TARGET);
     const elSellPrice = document.getElementById(SEL_G.TRADE.INPUT_PRICE);
 
@@ -152,8 +151,6 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
         if (elNumProcess) elNumProcess.hidden = true;
         if (elSellTarget) elSellTarget.disabled = true;
         if (elSellPrice) elSellPrice.disabled = true;
-        if (elBtnProcess) elBtnProcess.textContent = 'X 処理する';
-        if (elBtnPass) elBtnPass.textContent = 'X パスする';
     } else {
         updateCardDisplay("あなたの手番を待つか、サイコロを振ってください。");
         setButtonActive(SEL_G.TRADE.BTN_SELL, false);
@@ -165,12 +162,13 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
         if (elNumProcess) elNumProcess.hidden = true;
         if (elSellTarget) elSellTarget.disabled = true;
         if (elSellPrice) elSellPrice.disabled = true;
-        if (elBtnProcess) elBtnProcess.textContent = 'X 処理する';
-        if (elBtnPass) elBtnPass.textContent = 'X パスする';
     }
     
     if (!isPlaying) {
         if (diceStatusArea) diceStatusArea.textContent = "ホストがゲームを開始するまでお待ちください。";
+        setButtonActive(SEL_G.LOAN.BTN_BORROW_LOAN, false);
+        setButtonActive(SEL_G.LOAN.BTN_PAYBACK_LOAN, false);
+        setButtonActive(SEL_G.FINANCIALS.BTN_OPERATE, false);
     } else {
         const turnUserName = turnUserRecord ? turnUserRecord.state.name : "他のプレイヤー";        
 
@@ -235,10 +233,6 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
                 }
                 
                 setButtonActive(SEL_G.FINANCIALS.BTN_C_CASHFLOW, !!flags.is_calculating);
-                setButtonActive(SEL_G.LOAN.BTN_BORROW_LOAN, true);
-                setButtonActive(SEL_G.LOAN.BTN_PAYBACK_LOAN, hasBankLoan); 
-                setButtonActive(SEL_G.FINANCIALS.BTN_OPERATE, true);
-                
             }
         } else {
             if (diceStatusArea) diceStatusArea.textContent = `[${turnUserName}] がプレイ中`;
@@ -248,11 +242,16 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
                 SEL_G.CARD.BTN_SMALL_DEAL, SEL_G.CARD.BTN_BIG_DEAL,
                 SEL_G.FINANCIALS.BTN_C_CASHFLOW
             ], false);
-
-            setButtonActive(SEL_G.LOAN.BTN_BORROW_LOAN, true);
-            setButtonActive(SEL_G.LOAN.BTN_PAYBACK_LOAN, hasBankLoan); 
-            setButtonActive(SEL_G.FINANCIALS.BTN_OPERATE, true);
         }
+
+        // ゲームプレイ中であれば常に借入可能
+        setButtonActive(SEL_G.LOAN.BTN_BORROW_LOAN, true);
+        
+        // 現金が1,000ドル以上かつ銀行ローンがある場合のみ返済可能
+        setButtonActive(SEL_G.LOAN.BTN_PAYBACK_LOAN, hasBankLoan && cash >= 1000); 
+        
+        // その他の資産売却・負債返済メニュー
+        setButtonActive(SEL_G.FINANCIALS.BTN_OPERATE, true);
     }
 
     const tradeOffer = cachedRoom?.game_state?.trade_offer;
