@@ -107,10 +107,13 @@ btnRollDice?.addEventListener('click', async () => {
     if (result && result.error) {
         sendGameProgressMessage(supabase, roomId, playerName, result.error, "actionRollDice");
     } else if (result && result.success) {
-        sendGameProgressMessage(supabase, roomId, playerName, `${result.diceVal}の目が出ました<br>${result.posStr}${result.cellName} に移動しました`, "actionRollDice");
+        let msg = `${result.diceVal}の目が出ました<br>${result.posStr}${result.cellName} に移動しました`;
         if (result.isOpportunity) {
-            sendGameProgressMessage(supabase, roomId, playerName, `${playerName} は、普通の商売、または大きな商売、のどちらかをひいてください`, "actionRollDice");
+            msg += `<br>${playerName} は、普通の商売、または大きな商売、のどちらかをひいてください`;
+        } else if (result.isDoodad) {
+            msg += `<br>カードの内容は即座に処理しなければなりません`;
         }
+        sendGameProgressMessage(supabase, roomId, playerName, msg, "actionRollDice");
     }
 });
 
@@ -121,10 +124,13 @@ btnRollDice2?.addEventListener('click', async () => {
     if (result && result.error) {
         sendGameProgressMessage(supabase, roomId, playerName, result.error, "actionRollDice");
     } else if (result && result.success) {
-        sendGameProgressMessage(supabase, roomId, playerName, `${result.diceVal}の目が出ました<br>${result.posStr}${result.cellName} に移動しました`, "actionRollDice");
+        let msg = `${result.diceVal}の目が出ました<br>${result.posStr}${result.cellName} に移動しました`;
         if (result.isOpportunity) {
-            sendGameProgressMessage(supabase, roomId, playerName, `${playerName} は、普通の商売、または大きな商売、のどちらかをひいてください`, "actionRollDice");
+            msg += `<br>${playerName} は、普通の商売、または大きな商売、のどちらかをひいてください`;
+        } else if (result.isDoodad) {
+            msg += `<br>カードの内容は即座に処理しなければなりません`;
         }
+        sendGameProgressMessage(supabase, roomId, playerName, msg, "actionRollDice");
     }
 });
 
