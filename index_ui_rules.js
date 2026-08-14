@@ -11,7 +11,6 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
     const flags = state.flags || {}; 
     const items = state.items || []; 
     
-    // ★修正: 常に最新の items から BankLoan の有無を判定する
     let hasBankLoan = items.some(item => item.asset_type === 'BankLoan'); 
 
     const turnUserId = cachedRoom ? cachedRoom.current_turn_user_id : null;
@@ -25,7 +24,6 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
         if (el) el.textContent = text;
     };
 
-    // HTMLとして出力するため、innerHTMLを更新する内部関数を用意
     const updateCardDisplay = (html) => {
         const el = document.getElementById(SEL_G.TRADE.THIS_CARD);
         if (el) el.innerHTML = html;
@@ -150,7 +148,8 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
 
     } else if (turnUserFlags.has_rolled_dice && CELLS_OPPORTUNITY.includes(parseInt(turnUserState.position, 10)) && !turnUserFlags.is_card_drawn) {
         if (isMyTurn) {
-            updateCardDisplay("普通の商売、または大きな商売、のどちらかをひいてください");
+            const myName = turnUserState.name || 'あなた';
+            updateCardDisplay(`${myName}は、普通の商売、または大きな商売、のどちらかをひいてください`);
             setButtonActive(SEL_G.CARD.BTN_SMALL_DEAL, true);
             setButtonActive(SEL_G.CARD.BTN_BIG_DEAL, true);
         } else {
@@ -270,7 +269,6 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
 
     const tradeOffer = cachedRoom?.game_state?.trade_offer;
     
-    // ★追加: 自分以外の誰かが未処理カードを持っているかチェック
     const otherCardHolders = cachedParticipants.filter(p => p.user_id !== currentUserId && p.state && p.state.drawn_card);
 
     if (tradeOffer) {
@@ -291,7 +289,6 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
             setButtonActive(SEL_G.TRADE.BTN_REJECT, false);
         }
     } else if (otherCardHolders.length > 0) {
-        // ★追加: 交渉がない場合、処理待ちのアラートを表示する
         const holderNames = otherCardHolders.map(p => p.state?.name || "他のプレイヤー").join('、');
         safeUpdate(SEL_G.TRADE.TRADE_MESSAGE, `⚠️ 処理待ち: ${holderNames} さんがカードを所持（未処理）しています。`);
         setButtonActive(SEL_G.TRADE.BTN_ACCEPT, false);
