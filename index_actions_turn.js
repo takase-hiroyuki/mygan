@@ -6,7 +6,7 @@ import { callRpcWithDebug,
          CELLS_OPPORTUNITY,
          CELLS_DOODAD,
          CELLS_MARKET,
-         BOARD_CELL_NAMES, // 追加
+         BOARD_CELL_NAMES,
          sendGameProgressMessage,
          getLocalPlayerName,
          writeLog } from './common_utils.js';
@@ -77,7 +77,6 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
             const posStr = String(newPos).padStart(2, '0');
             const cellName = BOARD_CELL_NAMES[newPos] || "";
             
-            // サイコロの出目と移動先を通知
             sendGameProgressMessage(supabase, roomId, playerName, `${diceVal}の目が出ました<br>${posStr}${cellName} に移動しました`, "actionRollDice");
             
             setTimeout(async () => {
@@ -113,17 +112,23 @@ export async function actionProcessSelf(supabase, currentUserId, qty = 1) {
             return;
         }
 
+        const cardTitle = state.drawn_card ? state.drawn_card.title : "カード";
+
         if (state.drawn_card && state.drawn_card.asset_type === 'other') {
             await callRpcWithDebug(supabase, 'execute_special_event_v2', {
                 p_room_id: roomId,
                 p_user_id: currentUserId
             });
+            sendGameProgressMessage(supabase, roomId, playerName, `「${cardTitle}」を適用しました。`, "actionProcessSelf");
         } else {
             await callRpcWithDebug(supabase, 'execute_drawn_card_v2', {
                 p_room_id: roomId,
                 p_user_id: currentUserId,
                 p_input_quantity: qty
             });
+            // 数量も表示する
+            const qtyStr = Number(qty).toLocaleString();
+            sendGameProgressMessage(supabase, roomId, playerName, `「${cardTitle}」を ${qtyStr} 単位購入（または処理）しました。`, "actionProcessSelf");
         }
     } catch (error) {
         writeLog(supabase, playerName, "Error", `エラー: ${error.message}`);
