@@ -6,7 +6,8 @@ import { callRpcWithDebug,
          CELLS_MARKET,
          BOARD_CELL_NAMES,
          getLocalPlayerName,
-         writeLog } from './common_utils.js';
+         writeLog,
+         sendGameProgressMessage } from './common_utils.js';
 
 async function getCurrentPlayerState(supabase, userId) {
     const { data, error } = await supabase
@@ -23,6 +24,7 @@ async function getCurrentPlayerState(supabase, userId) {
 
 export async function actionDrawCard(supabase, currentUserId, deckType) {
     if (!supabase || !currentUserId) return false;
+    const playerName = getLocalPlayerName();
     
     try {
         await callRpcWithDebug(supabase, 'draw_card_v2', {
@@ -30,10 +32,13 @@ export async function actionDrawCard(supabase, currentUserId, deckType) {
             p_user_id: currentUserId,
             p_deck_type: deckType
         });
+        
+        const deckName = deckType === 'small_deal' ? '普通の商売' : deckType === 'big_deal' ? '大きな商売' : deckType === 'market' ? '市場' : '娯楽';
+        sendGameProgressMessage(supabase, roomId, playerName, `${playerName} は、${deckName} のカードをひきました`, "actionDrawCard");
         return true;
     } catch (error) {
-        const playerName = getLocalPlayerName();
         writeLog(supabase, playerName, "Error", `カード取得エラー: ${error.message}`);
+        sendGameProgressMessage(supabase, roomId, playerName, error.message, "actionDrawCard");
         return false;
     }
 }
@@ -42,17 +47,19 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
     if (!supabase || !currentUserId) return { error: "無効なリクエスト" };
 
     const state = await getCurrentPlayerState(supabase, currentUserId);
-    if (!state) return { error: "状態が取得できません" };
+    const playerName = state?.name || getLocalPlayerName();
+    if (!state) {
+        sendGameProgressMessage(supabase, roomId, playerName, "状態が取得できません", "actionRollDice");
+        return { error: "状態が取得できません" };
+    }
     
-    const playerName = state.name || getLocalPlayerName();
     const flags = state.flags || {};
     const downsizedTurnsLeft = parseInt(flags.downsized_turns_left || 0, 10);
     
     if (flags.has_rolled_dice || flags.is_calculating || downsizedTurnsLeft > 0) {
-        if (downsizedTurnsLeft > 0) {
-            return { error: "休み中⇒「次の人へ」" };
-        }
-        return { error: "現在サイコロを振ることはできません。" };
+        const errStr = downsizedTurnsLeft > 0 ? "休み中⇒「次の人へ」" : "現在サイコロを振ることはできません。";
+        sendGameProgressMessage(supabase, roomId, playerName, errStr, "actionRollDice");
+        return { error: errStr };
     }
 
     try {
@@ -81,11 +88,21 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
                 }
             }, 500);
 
+            let msg = `${diceVal}の目が出て、${posStr}${cellName} に移動しました。`;
+            if (isOpportunity) {
+                msg += `${playerName} は「普通の商売」「大きな商売」をひいてください`;
+            } else if (isDoodad) {
+                msg += `カードをただちに処理して下さい。`;
+            }
+            sendGameProgressMessage(supabase, roomId, playerName, msg, "actionRollDice");
+
             return { success: true, diceVal, posStr, cellName, isOpportunity };
         }
+        sendGameProgressMessage(supabase, roomId, playerName, "移動後の状態が取得できませんでした。", "actionRollDice");
         return { error: "移動後の状態が取得できませんでした。" };
     } catch (error) {
         writeLog(supabase, playerName, "Error", `エラー: ${error.message}`);
+        sendGameProgressMessage(supabase, roomId, playerName, error.message, "actionRollDice");
         return { error: error.message };
     }
 }
@@ -94,9 +111,12 @@ export async function actionProcessSelf(supabase, currentUserId, qty = 1) {
     if (!supabase || !currentUserId) return { error: "無効なリクエスト" };
 
     const state = await getCurrentPlayerState(supabase, currentUserId);
-    if (!state) return { error: "状態が取得できません" };
+    const playerName = state?.name || getLocalPlayerName();
+    if (!state) {
+        sendGameProgressMessage(supabase, roomId, playerName, "状態が取得できません", "actionProcessSelf");
+        return { error: "状態が取得できません" };
+    }
 
-    const playerName = state.name || getLocalPlayerName();
     const isCharity = [3, 16].includes(parseInt(state.position, 10));
 
     try {
@@ -105,6 +125,7 @@ export async function actionProcessSelf(supabase, currentUserId, qty = 1) {
                 p_room_id: roomId,
                 p_user_id: currentUserId
             });
+            sendGameProgressMessage(supabase, roomId, playerName, "寄付しました。サイコロを2個振れます。", "actionProcessSelf");
             return { success: true, type: 'charity' };
         }
 
@@ -115,6 +136,7 @@ export async function actionProcessSelf(supabase, currentUserId, qty = 1) {
                 p_room_id: roomId,
                 p_user_id: currentUserId
             });
+            sendGameProgressMessage(supabase, roomId, playerName, `「${cardTitle}」を適用しました。`, "actionProcessSelf");
             return { success: true, type: 'other', cardTitle };
         } else {
             await callRpcWithDebug(supabase, 'execute_drawn_card_v2', {
@@ -122,10 +144,13 @@ export async function actionProcessSelf(supabase, currentUserId, qty = 1) {
                 p_user_id: currentUserId,
                 p_input_quantity: qty
             });
+            const qtyStr = Number(qty).toLocaleString();
+            sendGameProgressMessage(supabase, roomId, playerName, `「${cardTitle}」を ${qtyStr} 個、処理しました。`, "actionProcessSelf");
             return { success: true, type: 'normal', cardTitle, qty };
         }
     } catch (error) {
         writeLog(supabase, playerName, "Error", `エラー: ${error.message}`);
+        sendGameProgressMessage(supabase, roomId, playerName, error.message, "actionProcessSelf");
         return { error: error.message };
     }
 }
@@ -139,9 +164,11 @@ export async function actionPass(supabase, currentUserId) {
             p_room_id: roomId,
             p_user_id: currentUserId
         });
+        sendGameProgressMessage(supabase, roomId, playerName, `${playerName} は、パスしました。`, "actionPass");
         return true;
     } catch (error) {
         writeLog(supabase, playerName, "Error", `エラー: ${error.message}`);
+        sendGameProgressMessage(supabase, roomId, playerName, error.message, "actionPass");
         return false;
     }
 }
@@ -150,9 +177,9 @@ export async function actionEndTurn(supabase, currentUserId) {
     if (!supabase || !currentUserId) return false;
 
     const state = await getCurrentPlayerState(supabase, currentUserId);
+    const playerName = state?.name || getLocalPlayerName();
     if (!state) return false;
     
-    const playerName = state.name || getLocalPlayerName();
     const financials = state.financials || {};
     const cash = parseInt(financials.cash || 0, 10);
 
@@ -169,6 +196,7 @@ export async function actionEndTurn(supabase, currentUserId) {
             return true;
         } catch (error) {
             writeLog(supabase, playerName, "Error", `エラー: ${error.message}`);
+            sendGameProgressMessage(supabase, roomId, playerName, error.message, "actionEndTurn");
             return false;
         }
     }
@@ -178,9 +206,11 @@ export async function actionEndTurn(supabase, currentUserId) {
             p_room_id: roomId, 
             p_user_id: currentUserId 
         });
+        // EndTurn成功時は fetchAndRender が手番変更メッセージを出すためここは省略
         return true;
     } catch (error) {
         writeLog(supabase, playerName, "Error", `エラー: ${error.message}`);
+        sendGameProgressMessage(supabase, roomId, playerName, error.message, "actionEndTurn");
         return false;
     }
 }
