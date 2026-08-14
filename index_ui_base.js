@@ -1,6 +1,6 @@
 // index_ui_base.js
 import { SEL_G } from './common_dom_selectors.js';
-import { BOARD_CELL_NAMES, setMultipleButtonsActive, toYenFormat } from './common_utils.js';
+import { BOARD_CELL_NAMES, toYenFormat } from './common_utils.js';
 
 const sectionLogin = document.getElementById(SEL_G.LOGIN.SECTION);
 const sectionGuest = document.getElementById(SEL_G.STATUS.SECTION);
@@ -23,9 +23,7 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
         if (el) el.textContent = text;
     };
 
-    // ★修正: 誰かの手札を無作為に探すのをやめ、「自分の手札」を最優先とし、無ければ「部屋の場札」を見る
     const activeCard = state.drawn_card || cachedRoom?.game_state?.current_card || null;
-    
     const currentTurnUserId = cachedRoom?.current_turn_user_id;
     const isTurnUser = currentTurnUserId === currentUserId;
 
@@ -132,7 +130,6 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
                 passiveIncome += cfVal;
             }
 
-            // --- 資産の表示と売却判定 ---
             if (costVal > 0 || (liabVal === 0 && cfVal > 0)) {
                 let cfStr = toYenFormat(cfVal);
                 if (cfStr === "0円") cfStr = "";
@@ -173,7 +170,6 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
                 }
             }
 
-            // --- 負債の表示と返済判定 ---
             if (liabVal > 0 || (cfVal < 0 && costVal === 0)) {
                 let displayName = item.title;
                 let displayCF = cfVal;
@@ -263,18 +259,6 @@ export function renderBaseUI(currentUserId, cachedParticipants, cachedRoom, onRe
         const cellName = BOARD_CELL_NAMES[posNum] || "";
         guestDiceResult.textContent = `現在地：${posStr}${cellName}`;
     }
-}
-
-export function disableAllActionButtons() {
-    const { CONTROLS, CARD, LOAN, FINANCIALS, TRADE } = SEL_G; 
-    const actionButtonIds = [
-        CONTROLS.BTN_DICE1, CONTROLS.BTN_DICE_2, CONTROLS.BTN_PAYCHECK, CONTROLS.BTN_END_TURN,
-        CARD.BTN_SMALL_DEAL, CARD.BTN_BIG_DEAL,
-        LOAN.BTN_PAYBACK_LOAN,　// LOAN.BTN_BORROW_LOAN,  
-        FINANCIALS.BTN_C_CASHFLOW, FINANCIALS.BTN_OPERATE,
-        TRADE.BTN_SELL, TRADE.BTN_ACCEPT, TRADE.BTN_REJECT, TRADE.BTN_PROCESS_SELF
-    ];
-    setMultipleButtonsActive(actionButtonIds.filter(Boolean), false);
 }
 
 console.log("【残す】index_ui_base.js が読み込まれました。");
