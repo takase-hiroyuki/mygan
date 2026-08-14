@@ -224,14 +224,7 @@ btnProcessSelf?.addEventListener('click', async () => {
     const qty = numInput && !numInput.hidden ? parseInt(numInput.value, 10) || 1 : 1;
     const result = await actionProcessSelf(supabase, currentUserId, qty);
     if (result && result.success) {
-        if (result.type === 'charity') {
-            sendGameProgressMessage(supabase, roomId, playerName, "寄付を行いました。以降のターンでサイコロを2個振る権利を獲得しました。", "actionProcessSelf");
-        } else if (result.type === 'other') {
-            sendGameProgressMessage(supabase, roomId, playerName, `「${result.cardTitle}」を適用しました。`, "actionProcessSelf");
-        } else {
-            const qtyStr = Number(result.qty).toLocaleString();
-            sendGameProgressMessage(supabase, roomId, playerName, `「${result.cardTitle}」を ${qtyStr} 単位購入（または処理）しました。`, "actionProcessSelf");
-        }
+        sendGameProgressMessage(supabase, roomId, playerName, `${playerName} は、処理した`, "actionProcessSelf");
     } else if (result && result.error) {
         sendGameProgressMessage(supabase, roomId, playerName, result.error, "actionProcessSelf");
     }
@@ -240,7 +233,10 @@ btnProcessSelf?.addEventListener('click', async () => {
 btnPassCard?.addEventListener('click', async () => {
     const playerName = getLocalPlayerName();
     writeLog(supabase, playerName, "Action", "「パスする」ボタンが押下されました");
-    await actionPass(supabase, currentUserId);
+    const success = await actionPass(supabase, currentUserId);
+    if (success) {
+        sendGameProgressMessage(supabase, roomId, playerName, `${playerName} は、パスした`, "actionPassCard");
+    }
 });
 
 btnTradeAccept?.addEventListener('click', async () => {
