@@ -3,18 +3,13 @@ UIの制御において、複数の場所でボタンのアクティブ・非ア
 そのため、本システムでは 「ボタンの操作は直接画面を変更せず、データベース（state）を更新するだけにとどめ、画面の描画は常に最新のデータベースを読み込んで『一箇所』で決定する」 という設計（データ駆動アーキテクチャ）を採用しています。「次の人へ」ボタンの有効・無効を決定する唯一の判定場所は、index_ui.js の renderGuestUI 関数内になります。そこに、ご提示いただいた条件をすべて集約した以下のロジックを配置します。ただし、通信中フラグのためだけに画面全体を描画する関数（renderGuestUI）を呼び直すと、入力欄のフォーカスが外れる、画面がちらつくなどの副作用が発生する。そのため、「通信直前のボタン無効化と、完了後の有効化」に限っては、例外として直接DOMを操作することが実用的な標準手法として広く採用します。
 
 具体的には以下の3つのケースに分類されます。
-
 1. ゲーム進行（ターンや位置）の崩壊
 「サイコロを振る」の二重実行： 1回目の移動先マス（例: 商売や寄付）のイベントをスキップし、2回目の出目のマスへ強制的に移動・上書きされる。
-
 「次の人へ」の二重実行： 自分のターンを終了した直後に、次の順番のプレイヤーのターンまで強制的にスキップ（終了）させてしまう。
-
 2. 強制支出による予期せぬ「破産」
 「無駄遣いマス」「子供のマス」での支払いの二重実行： 支出が二重に引き落とされる。銀行借入と異なり「返金」アクションは存在しないため、この二重引き落としによって所持金がマイナスに転じた場合、システムによって意図しない「破産（ゲームオーバー、強制退場）」が発動する。
-
 3. 不可逆な取引の二重実行
 株や不動産の「購入する」の二重実行： 「1,000株買う」リクエストが2回処理され、2,000株分の現金を失う。ゲームのルール上、資産は「誰かが売却カードを引く」などの市場イベントが発生しない限り自発的に売却（現金化）できないため、取り返しがつかない。
-
 フロントエンドにおける「ボタンを一時的に無効化するDOM操作」は、RPC内部における厳密な状態チェック（フラグ管理）の漏れがあった場合でも、ユーザー起因による上記の「不可逆な致命的進行」を最前線で物理的に遮断する役割を担っています。
 */
 
@@ -182,13 +177,19 @@ btnPaybackLoan?.addEventListener('click', async () => {
 btnSmallDeal?.addEventListener('click', async () => {
     const playerName = getLocalPlayerName();
     writeLog(supabase, playerName, "Action", "「普通の商売」ボタンが押下されました");
-    await actionDrawCard(supabase, currentUserId, 'small_deal');
+    const success = await actionDrawCard(supabase, currentUserId, 'small_deal');
+    if (success) {
+        sendGameProgressMessage(supabase, roomId, playerName, `${playerName} は、普通の商売 のカードをひきました`, "actionDrawCard");
+    }
 });
 
 btnBigDeal?.addEventListener('click', async () => {
     const playerName = getLocalPlayerName();
     writeLog(supabase, playerName, "Action", "「大きい商売」ボタンが押下されました");
-    await actionDrawCard(supabase, currentUserId, 'big_deal');
+    const success = await actionDrawCard(supabase, currentUserId, 'big_deal');
+    if (success) {
+        sendGameProgressMessage(supabase, roomId, playerName, `${playerName} は、大きな商売 のカードをひきました`, "actionDrawCard");
+    }
 });
 
 btnOperate?.addEventListener('click', async () => {
@@ -224,7 +225,14 @@ btnProcessSelf?.addEventListener('click', async () => {
     const qty = numInput && !numInput.hidden ? parseInt(numInput.value, 10) || 1 : 1;
     const result = await actionProcessSelf(supabase, currentUserId, qty);
     if (result && result.success) {
-        sendGameProgressMessage(supabase, roomId, playerName, `${playerName} は、処理した`, "actionProcessSelf");
+        if (result.type === 'charity') {
+            sendGameProgressMessage(supabase, roomId, playerName, "寄付を行いました。以降のターンでサイコロを2個振る権利を獲得しました。", "actionProcessSelf");
+        } else if (result.type === 'other') {
+            sendGameProgressMessage(supabase, roomId, playerName, `「${result.cardTitle}」を適用しました。`, "actionProcessSelf");
+        } else {
+            const qtyStr = Number(result.qty).toLocaleString();
+            sendGameProgressMessage(supabase, roomId, playerName, `「${result.cardTitle}」を ${qtyStr} 単位購入（または処理）しました。`, "actionProcessSelf");
+        }
     } else if (result && result.error) {
         sendGameProgressMessage(supabase, roomId, playerName, result.error, "actionProcessSelf");
     }
