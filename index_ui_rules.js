@@ -12,7 +12,20 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
     const items = state.items || []; 
     
     let hasBankLoan = items.some(item => item.asset_type === 'BankLoan'); 
-    let cash = Number(financials.cash || 0);
+    
+    // --- デバッグコード追加開始 ---
+    let rawCash = financials.cash;
+    let cash = parseInt(rawCash, 10);
+    if (isNaN(cash)) cash = 0;
+    
+    if (cachedRoom?.game_state?.status === 'playing' && currentUserId === cachedRoom?.current_turn_user_id) {
+        console.log(`[Debug UI Rules] User: ${state.name}`);
+        console.log(`[Debug UI Rules] rawCash (DB値): ${rawCash} (型: ${typeof rawCash})`);
+        console.log(`[Debug UI Rules] パース後 cash: ${cash}`);
+        console.log(`[Debug UI Rules] cash >= 1000 判定結果: ${cash >= 1000}`);
+        console.log(`[Debug UI Rules] hasBankLoan: ${hasBankLoan}`);
+    }
+    // --- デバッグコード追加終了 ---
 
     const turnUserId = cachedRoom ? cachedRoom.current_turn_user_id : null;
     const isMyTurn = (turnUserId === currentUserId);
@@ -247,7 +260,7 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
         // ゲームプレイ中であれば常に借入可能
         setButtonActive(SEL_G.LOAN.BTN_BORROW_LOAN, true);
         
-        // 現金が1,000ドル以上かつ銀行ローンがある場合のみ返済可能
+        // ドル基準のcashが1000ドル以上、かつ銀行ローンがある場合のみ返済可能とする
         setButtonActive(SEL_G.LOAN.BTN_PAYBACK_LOAN, hasBankLoan && cash >= 1000); 
         
         // その他の資産売却・負債返済メニュー
