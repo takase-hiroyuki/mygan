@@ -1,7 +1,7 @@
 // host.js
 import { roomId, SUPABASE_URL, SUPABASE_KEY } from './common_config.js';
 import { DOM_SELECTORS } from './common_dom_selectors.js';
-import { setButtonActive, BOARD_CELL_NAMES, waitForSupabase, callRpcWithDebug, insertSystemMessage, writeLog, toYenFormat } from './common_utils.js';
+import { setButtonActive, BOARD_CELL_NAMES, waitForSupabase, callRpcWithDebug, sendGameProgressMessage, writeLog, toYenFormat } from './common_utils.js';
 
 let supabase = null;
 const listBody = document.getElementById(DOM_SELECTORS.HOST.PARTICIPANT_LIST);
@@ -117,7 +117,6 @@ function drawHostScreen() {
         if (cell) cell.innerHTML = '';
     }
 
-    // 場に出ているカードの表示更新
     const elCardInfo = document.getElementById('host-current-card-info');
     const currentCard = state.current_card;
     if (elCardInfo) {
@@ -139,7 +138,6 @@ function drawHostScreen() {
         const isCurrentTurn = (p.user_id === currentTurnUserId);
         const displayName = (isCurrentTurn ? '★' : '') + (pState.name || '不明');
 
-        // 1. 参加者基本リスト
         const tr = document.createElement('tr');
         tr.classList.add(itemSEL.ROW_CLASS);
         tr.innerHTML = `
@@ -152,7 +150,6 @@ function drawHostScreen() {
         `;
         if (listBody) listBody.appendChild(tr);
 
-        // 2. フラグ一覧
         if (flagsListBody) {
             const charityLeft = parseInt(flags.charity_turns_left || 0, 10);
             const downsizedLeft = parseInt(flags.downsized_turns_left || 0, 10);
@@ -174,7 +171,6 @@ function drawHostScreen() {
             flagsListBody.appendChild(trFlags);
         }
 
-        // 3. 財務計算（サマリー用）
         let salary = 0;
         let passiveIncome = 0;
         let totalExpenses = 0;
@@ -199,7 +195,6 @@ function drawHostScreen() {
         const ftDiff = totalExpenses - passiveIncome;
         const ftText = ftDiff > 0 ? `あと $${ftDiff.toLocaleString()}` : "移行可能！";
         
-        // 財務サマリー（全員一覧）追加
         if (tbodyFinSummary) {
             const trFin = document.createElement('tr');
             trFin.innerHTML = `
@@ -213,7 +208,6 @@ function drawHostScreen() {
             tbodyFinSummary.appendChild(trFin);
         }
 
-        // 4. 保有資産一覧用
         const assets = items.filter(item => Number(item.cost || 0) > 0 || (item.asset_type !== 'Salary' && item.asset_type !== 'ChildExpense' && item.asset_type !== 'InstantDebt' && item.asset_type !== 'BankLoan'));
         
         const assetStrs = assets.map(item => {
@@ -247,7 +241,6 @@ function drawHostScreen() {
             tbodyAssetList.appendChild(trAsset);
         }
 
-        // 5. 盤面の更新
         const targetCell = document.getElementById(`${boardSEL.CELL_PREFIX}${position}`);
         if (targetCell) {
             const table = document.createElement('table');
@@ -271,9 +264,6 @@ function drawHostScreen() {
         }
     });
 
-    // ===============================================
-    // プルダウンによる個別財務諸表プレビューの処理
-    // ===============================================
     const playerSelect = document.getElementById('player-select');
     if (playerSelect) {
         const currentValue = playerSelect.value;
@@ -330,7 +320,6 @@ function drawHostScreen() {
                     passiveIncome += cfVal;
                 }
 
-                // --- 資産表示 ---
                 if (costVal > 0 || (liabVal === 0 && cfVal > 0)) {
                     let cfStr = toYenFormat(cfVal);
                     if (cfStr === "0円") cfStr = "";
@@ -345,7 +334,6 @@ function drawHostScreen() {
                     assetsHTML += `<tr><td>${item.title}</td><td>${unitPrice}</td><td>${quantityStr}</td><td>${cfStr}</td></tr>`;
                 }
 
-                // --- 負債表示 ---
                 if (liabVal > 0 || (cfVal < 0 && costVal === 0)) {
                     let displayName = item.title;
                     let displayCF = cfVal;
@@ -437,7 +425,7 @@ btnInitialShuffleStart?.addEventListener('click', async () => {
         writeLog(supabase, "Host", "Action", "ゲーム開始処理が正常に完了しました");
     } catch (error) {
         writeLog(supabase, "Host", "Error", `ゲーム開始処理エラー: ${error.message}`);
-        await insertSystemMessage(supabase, "ホスト", `ゲーム開始失敗: ${error.message}`);
+        sendGameProgressMessage(supabase, roomId, "ホスト", `ゲーム開始失敗: ${error.message}`, "btnInitialShuffleStart");
         setButtonActive(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE, true);
     }
 });
@@ -449,7 +437,7 @@ btnKickParticipant?.addEventListener('click', async () => {
 
     const orderIdx = parseInt(orderInput, 10) - 1;
     if (isNaN(orderIdx) || orderIdx < 0 || orderIdx >= currentParticipants.length) {
-        await insertSystemMessage(supabase, "ホスト", "有効な退室者の番号（入室順）を入力してください。");
+        sendGameProgressMessage(supabase, roomId, "ホスト", "有効な退室者の番号（入室順）を入力してください。", "btnKickParticipant");
         return;
     }
 
@@ -464,7 +452,7 @@ btnKickParticipant?.addEventListener('click', async () => {
         await syncAndFetchRoom();
         writeLog(supabase, "Host", "Action", `プレイヤー ${targetUser.user_id} の退室処理が完了しました`);
     } catch (error) {
-        await insertSystemMessage(supabase, "ホスト", `退室処理失敗: ${error.message}`);
+        sendGameProgressMessage(supabase, roomId, "ホスト", `退室処理失敗: ${error.message}`, "btnKickParticipant");
     }
 });
 
@@ -475,7 +463,7 @@ btnSetTurn?.addEventListener('click', async () => {
 
     const orderIdx = parseInt(orderInput, 10) - 1;
     if (isNaN(orderIdx) || orderIdx < 0 || orderIdx >= currentParticipants.length) {
-        await insertSystemMessage(supabase, "ホスト", "有効なプレイヤーの番号（入室順）を入力してください。");
+        sendGameProgressMessage(supabase, roomId, "ホスト", "有効なプレイヤーの番号（入室順）を入力してください。", "btnSetTurn");
         return;
     }
 
@@ -490,7 +478,7 @@ btnSetTurn?.addEventListener('click', async () => {
         await syncAndFetchRoom();
         writeLog(supabase, "Host", "Action", `プレイヤー ${targetUser.user_id} への手番変更が完了しました`);
     } catch (error) {
-        await insertSystemMessage(supabase, "ホスト", `手番変更失敗: ${error.message}`);
+        sendGameProgressMessage(supabase, roomId, "ホスト", `手番変更失敗: ${error.message}`, "btnSetTurn");
     }
 });
 
@@ -510,13 +498,13 @@ btnForceGameEnd?.addEventListener('click', async () => {
             .eq('id', roomId);
             
         if (updateError) {
-            await insertSystemMessage(supabase, "ホスト", `部屋の状態リセットに失敗しました: ${updateError.message}`);
+            sendGameProgressMessage(supabase, roomId, "ホスト", `部屋の状態リセットに失敗しました: ${updateError.message}`, "btnForceGameEnd");
         } else {
             writeLog(supabase, "Host", "Action", "ゲーム終了と部屋のリセットが完了しました");
             window.location.reload();
         }
     } else {
-        await insertSystemMessage(supabase, "ホスト", `参加者の退室処理に失敗しました: ${deleteError.message}`);
+        sendGameProgressMessage(supabase, roomId, "ホスト", `参加者の退室処理に失敗しました: ${deleteError.message}`, "btnForceGameEnd");
     }
 });
 
