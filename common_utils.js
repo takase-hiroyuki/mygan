@@ -165,8 +165,7 @@ export function displayGameProgressMessage(target, body, funcName = "") {
         newMsg.innerHTML = body;
     }
 
-    // msgContainer.insertBefore(newMsg, msgContainer.firstChild);
-    msgContainer.insertAfter(newMsg, msgContainer.firstChild);
+    msgContainer.insertBefore(newMsg, msgContainer.firstChild);
 }
 
 export function resetMessageDisplayState() {
