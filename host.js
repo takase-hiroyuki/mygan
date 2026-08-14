@@ -208,7 +208,11 @@ function drawHostScreen() {
             tbodyFinSummary.appendChild(trFin);
         }
 
-        const assets = items.filter(item => Number(item.cost || 0) > 0 || (item.asset_type !== 'Salary' && item.asset_type !== 'ChildExpense' && item.asset_type !== 'InstantDebt' && item.asset_type !== 'BankLoan'));
+        const assets = items.filter(item => {
+            // 表示不要なタイプ（税金、その他支出を追加）を除外
+            const excludeTypes = ['Tax', 'OtherExp', 'Salary', 'ChildExpense', 'InstantDebt', 'BankLoan'];
+            return !excludeTypes.includes(item.asset_type);
+        });
         
         const assetStrs = assets.map(item => {
             let isHit = false;
