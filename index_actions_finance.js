@@ -13,7 +13,7 @@ export async function actionClaimPaycheck(supabase, currentUserId) {
             p_user_id: currentUserId 
         });
         
-        sendGameProgressMessage(supabase, roomId, playerName, "入金請求しました。", "actionClaimPaycheck");
+        sendGameProgressMessage(supabase, roomId, playerName, '${playerName}は、入金請求しました。', "actionClaimPaycheck");
         return true;
     } catch (error) {
         writeLog(supabase, playerName, "Error", `エラー: ${error.message}`);
