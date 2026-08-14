@@ -130,11 +130,15 @@ export function getLocalPlayerName() {
 export function sendGameProgressMessage(supabaseClient, currentRoomId, targetName, message, funcName = "") {
     if (!supabaseClient) return;
     
+    // 他のプレイヤーへ配信
     supabaseClient.channel(`room_broadcast_${currentRoomId}`).send({
         type: 'broadcast',
         event: 'progress_update',
         payload: { target: targetName, body: message, funcName: funcName }
     });
+
+    // 送信した本人自身の画面にも即座に表示する
+    displayGameProgressMessage(targetName, message, funcName);
 
     const logMessage = funcName ? `[${funcName}] ${message}` : message;
     writeLog(supabaseClient, targetName, "Message", logMessage);
@@ -161,7 +165,8 @@ export function displayGameProgressMessage(target, body, funcName = "") {
         newMsg.innerHTML = body;
     }
 
-    msgContainer.insertBefore(newMsg, msgContainer.firstChild);
+    // msgContainer.insertBefore(newMsg, msgContainer.firstChild);
+    msgContainer.insertAfter(newMsg, msgContainer.firstChild);
 }
 
 export function resetMessageDisplayState() {
@@ -197,4 +202,4 @@ export function toYenFormat(dollarValue) {
     return isNegative ? `▲${result}` : result;
 }
 
-console.log("【残す】common_utils.js が読み込まれました。");
+console.log("【残す】common_utils.js が読み込まれました。[cite: 1]");
