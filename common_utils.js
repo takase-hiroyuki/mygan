@@ -141,14 +141,16 @@ export function sendGameProgressMessage(supabaseClient, currentRoomId, targetNam
 }
 
 export function displayGameProgressMessage(target, body, funcName = "") {
-    const el = document.getElementById(SEL_G.TRADE.THIS_CARD);
+    // 描画先を上書きされない message-body へ変更
+    const el = document.getElementById(SEL_G.MESSAGE.BODY);
     if (!el) return;
 
     let msgContainer = document.getElementById('game-progress-container');
     if (!msgContainer) {
         msgContainer = document.createElement('div');
         msgContainer.id = 'game-progress-container';
-        el.insertBefore(msgContainer, el.firstChild);
+        // el (message-body) の子要素として追加
+        el.appendChild(msgContainer);
     }
 
     const newMsg = document.createElement('div');
