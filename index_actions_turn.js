@@ -6,7 +6,7 @@ import { callRpcWithDebug,
          CELLS_OPPORTUNITY,
          CELLS_DOODAD,
          CELLS_MARKET,
-         insertSystemMessage,
+         sendGameProgressMessage,
          getLocalPlayerName,
          writeLog } from './common_utils.js';
 
@@ -57,7 +57,7 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
     
     if (flags.has_rolled_dice || flags.is_calculating || downsizedTurnsLeft > 0) {
         if (downsizedTurnsLeft > 0) {
-            await insertSystemMessage(supabase, playerName, "休み期間中。そのまま手番を終了して下さい。");
+            sendGameProgressMessage(supabase, roomId, playerName, "休み期間中。そのまま手番を終了して下さい。", "actionRollDice");
         }
         return;
     }
@@ -102,7 +102,7 @@ export async function actionProcessSelf(supabase, currentUserId, qty = 1) {
                 p_room_id: roomId,
                 p_user_id: currentUserId
             });
-            await insertSystemMessage(supabase, playerName, "寄付を行いました。以降のターンでサイコロを2個振る権利を獲得しました。");
+            sendGameProgressMessage(supabase, roomId, playerName, "寄付を行いました。以降のターンでサイコロを2個振る権利を獲得しました。", "actionProcessSelf");
             return;
         }
 
@@ -148,6 +148,9 @@ export async function actionEndTurn(supabase, currentUserId) {
     const cash = parseInt(financials.cash || 0, 10);
 
     disableAllActionButtons();
+
+    // ログには記録するが、画面のMessageには表示しない
+    writeLog(supabase, playerName, "Action", "「次の人へ」ボタンが押下されました");
 
     if (cash < 0) {
         try {
