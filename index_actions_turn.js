@@ -79,6 +79,11 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
             
             sendGameProgressMessage(supabase, roomId, playerName, `${diceVal}の目が出ました<br>${posStr}${cellName} に移動しました`, "actionRollDice");
             
+            // 商売マスに止まった場合の指示メッセージを追加
+            if (CELLS_OPPORTUNITY.includes(newPos)) {
+                sendGameProgressMessage(supabase, roomId, playerName, `${playerName} は、普通の商売、または大きな商売、のどちらかをひいてください`, "actionRollDice");
+            }
+
             setTimeout(async () => {
                 if (CELLS_MARKET.includes(newPos)) {
                     await actionDrawCard(supabase, currentUserId, 'market');
@@ -126,7 +131,6 @@ export async function actionProcessSelf(supabase, currentUserId, qty = 1) {
                 p_user_id: currentUserId,
                 p_input_quantity: qty
             });
-            // 数量も表示する
             const qtyStr = Number(qty).toLocaleString();
             sendGameProgressMessage(supabase, roomId, playerName, `「${cardTitle}」を ${qtyStr} 単位購入（または処理）しました。`, "actionProcessSelf");
         }
