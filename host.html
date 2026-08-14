@@ -12,42 +12,30 @@
 
     <div id="section-host">
         
-        <!-- 1. 場に出ているカード情報 -->
-        <fieldset>
-            <legend>場に出ているカード</legend>
-            <div id="host-current-card-info">
-                現在、場に出ているカードはありません。
-            </div>
-        </fieldset>
-
         <!-- 2. フラグ・進行状態テーブル -->
         <div class="table-responsive">
             <table border="1" cellpadding="0" cellspacing="0">
                 <thead>
                     <tr>
-                        <th>名前</th>
-                        <th>手番</th>
-                        <th>給料</th>
-                        <th>カード</th>
-                        <th>の処理</th>
-                        <th>要計算</th>
-                        <th>寄付残</th>
-                        <th>休み残</th>
-                        <th>▲CF</th>
+                        <th>名前</th><th>手番</th><th>給料</th><th>カード</th><th>の処理</th><th>要計算</th><th>寄付残</th><th>休み残</th><th>▲CF</th>
                     </tr>
                 </thead>
                 <tbody id="host-flags-list"></tbody>
             </table>
         </div>
+        <br>
+
+            <div id="host-current-card-info">
+                現在、場に出ているカードはありません。
+            </div>
+        <br>
 
         <!-- 3. 保有資産一覧テーブル -->
         <div class="table-responsive">
-            <table cellpadding="0" cellspacing="0">
+            <table border="1" cellpadding="0" cellspacing="0">
                 <thead>
                     <tr>
-                        <th style="width: 20%;">★つきの名前</th>
-                        <th style="width: 30%;">最後のカード</th>
-                        <th>資産一覧</th>
+                        <th style="width: 20%;">名前</th><th style="width: 30%;">最後のカード</th><th>資産一覧</th>
                     </tr>
                 </thead>
                 <tbody id="host-asset-list"></tbody>
@@ -56,7 +44,7 @@
 
         <!-- 4. 財務サマリー（キャッシュフロー）テーブル -->
         <div class="table-responsive">
-            <table cellpadding="0" cellspacing="0">
+            <table border="1" cellpadding="0" cellspacing="0">
                 <thead>
                     <tr>
                         <th>名前</th>
@@ -73,7 +61,7 @@
         
         <!-- 5.参加者基本リスト -->
         <div class="table-responsive">
-            <table cellpadding="0" cellspacing="0">
+            <table border="1" cellpadding="0" cellspacing="0">
                 <thead>
                     <tr>
                         <th>順</th>
@@ -124,7 +112,7 @@
 
         <!-- 8.盤面モニター -->
         <div class="table-responsive">
-            <table class="board-table" cellpadding="0" cellspacing="0">
+            <table class="board-table" border="1" cellpadding="0" cellspacing="0">
                 <tbody>
                     <tr>
                         <td align="center" valign="middle" data-position="0">
