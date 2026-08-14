@@ -149,11 +149,11 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
     } else if (turnUserFlags.has_rolled_dice && CELLS_OPPORTUNITY.includes(parseInt(turnUserState.position, 10)) && !turnUserFlags.is_card_drawn) {
         if (isMyTurn) {
             const myName = turnUserState.name || 'あなた';
-            updateCardDisplay(`${myName}は、普通の商売、または大きな商売、のどちらかをひいてください`);
+            updateCardDisplay(`${myName}は、商売カードをひいてください`);
             setButtonActive(SEL_G.CARD.BTN_SMALL_DEAL, true);
             setButtonActive(SEL_G.CARD.BTN_BIG_DEAL, true);
         } else {
-            updateCardDisplay(`${turnUserState.name || '他のプレイヤー'} が商売カードを選択中です...`);
+            updateCardDisplay(`${turnUserState.name || '他の人'} が商売カードを選択中です`);
             setButtonActive(SEL_G.CARD.BTN_SMALL_DEAL, false);
             setButtonActive(SEL_G.CARD.BTN_BIG_DEAL, false);
         }
