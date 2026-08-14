@@ -12,7 +12,7 @@ import { toggleScreen, renderBaseUI } from './index_ui_base.js';
 import { applyUIRules } from './index_ui_rules.js';
 import { initSupabaseClient, checkExistingLogin, loginUser } from './index_auth.js';
 import { startSubscriptions } from './index_state.js'; 
-import { insertSystemMessage, writeLog } from './common_utils.js'; // ★ writeLog を追加インポート
+import { displayGameProgressMessage, writeLog } from './common_utils.js'; 
 import { actionRollDice, actionEndTurn, actionDrawCard, actionPass, actionProcessSelf } from './index_actions_turn.js';
 import { actionClaimPaycheck, actionCheckCalculations, actionOperateItem } from './index_actions_finance.js'; 
 import { actionBorrowBankLoan, actionRepayBankLoan } from './index_actions_loan.js';
@@ -20,7 +20,6 @@ import { actionProposeTrade, actionAcceptTrade, actionRejectTrade } from './inde
 
 let supabase = null;
 let currentUserId = null;
-// ★追加: ユーザー名をログ出力時に取得するために最新の参加者リストを保持する変数
 let cachedParticipantsList = []; 
 
 const inputUsername = document.getElementById(SEL_G.LOGIN.INPUT_USERNAME);
@@ -44,7 +43,6 @@ const btnTradeAccept = document.getElementById(SEL_G.TRADE.BTN_ACCEPT);
 const btnTradeReject = document.getElementById(SEL_G.TRADE.BTN_REJECT);
 
 function updateUI(userId, participants, room) {
-    // 参加者リストをキャッシュしておく（ログ出力などで利用するため）
     cachedParticipantsList = participants;
     
     renderBaseUI(userId, participants, room, () => {
@@ -77,7 +75,8 @@ btnLogin?.addEventListener('click', async () => {
     if (!supabase) return;
     const username = inputUsername?.value.trim();
     if (!username) { 
-        await insertSystemMessage(supabase, "システム", "名前を入力してください。");
+        // 未ログイン時のため直接画面に描画する
+        displayGameProgressMessage("システム", "名前を入力してください。", "btnLogin");
         return; 
     }
 
@@ -137,11 +136,9 @@ btnSellCard?.addEventListener('click', () => {
     actionProposeTrade(supabase, currentUserId);
 });
 
-// ★修正: ファーストトラック移行ボタンのリスナーで、実行者の名前をログに出力する
 btnFastTrack?.addEventListener('click', () => {
     const record = cachedParticipantsList.find(p => p.user_id === currentUserId);
     const userName = record?.state?.name || currentUserId || "不明なユーザー";
-    
     writeLog(supabase, userName, "UI", "ファーストトラック移行ボタンが押下されました。(現在はダミーリスナー)");
 });
 
@@ -163,7 +160,6 @@ btnTradeReject?.addEventListener('click', () => {
     actionRejectTrade(supabase, currentUserId);
 });
 
-// デバッグ機能
 async function debugSupabaseConnection(supabaseClient) {
     writeLog(supabaseClient, "System", "Network", "接続テストを開始します。");
     try {
