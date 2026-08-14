@@ -1,194 +1,597 @@
-/* host.css */
+// host.js
+import { roomId, SUPABASE_URL, SUPABASE_KEY } from './common_config.js';
+import { DOM_SELECTORS } from './common_dom_selectors.js';
+import { setButtonActive, BOARD_CELL_NAMES, waitForSupabase, callRpcWithDebug, sendGameProgressMessage, writeLog, toYenFormat } from './common_utils.js';
 
-* {
-    box-sizing: border-box;
-    font-size: 16px !important; /* 全ての文字サイズを16pxに強制統一 */
+let supabase = null;
+const listBody = document.getElementById(DOM_SELECTORS.HOST.PARTICIPANT_LIST);
+const flagsListBody = document.getElementById(DOM_SELECTORS.HOST.FLAGS_LIST);
+const displayRoomStatus = document.getElementById(DOM_SELECTORS.HOST.LIFECYCLE.DISPLAY_ROOM_STATUS);
+const btnInitialShuffleStart = document.getElementById(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE);
+const btnForceGameEnd = document.getElementById(DOM_SELECTORS.HOST.LIFECYCLE.BTN_FORCE_GAME_END);
+const hostDiceMonitor = document.getElementById(DOM_SELECTORS.HOST.DICE_MONITOR);
+const inputNextTurnOrder = document.getElementById(DOM_SELECTORS.HOST.TURN_CONTROL.INPUT_NEXT_ORDER);
+const btnSetTurn = document.getElementById(DOM_SELECTORS.HOST.TURN_CONTROL.BTN_SET_TURN);
+const inputKickOrder = document.getElementById(DOM_SELECTORS.HOST.KICK_CONTROL.INPUT_KICK_ORDER);
+const btnKickParticipant = document.getElementById(DOM_SELECTORS.HOST.KICK_CONTROL.BTN_KICK_PARTICIPANT);
+
+const btnFetchLogs = document.getElementById('btn-fetch-logs');
+const btnFetchCurrentGameLogs = document.getElementById('btn-fetch-current-game-logs'); 
+const btnCopyLogs = document.getElementById('btn-copy-logs');
+const hostLogTextarea = document.getElementById('host-log-textarea');
+
+let currentParticipants = [];
+let activeRoomRecord = null;
+
+function toCurrency(value) {
+    return Number(value || 0).toLocaleString();
 }
 
-body {
-    font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
-    margin: 0;
-    padding: 10px;
-    background-color: #f8fafc;
-    color: #334155;
-    line-height: 1.5;
+(async function initHost() {
+    const supabaseGlobal = await waitForSupabase();
+    supabase = supabaseGlobal.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    writeLog(supabase, "Host", "System", `initHost 監視開始 部屋番号: ${roomId}`);
+
+    await syncAndFetchRoom();
+
+    supabase.channel('public:host_participants').on('postgres_changes', { event: '*', schema: 'public', table: 'participants' }, async () => {
+        const { data } = await supabase.from('participants').select('*').eq('room_id', roomId).order('id', { ascending: true });
+        if (data) {
+            currentParticipants = data;
+            drawHostScreen();
+        }
+    }).subscribe();
+
+    supabase.channel('public:host_rooms').on('postgres_changes', { event: '*', schema: 'public', table: 'rooms', filter: `id=eq.${roomId}` }, () => {
+        syncAndFetchRoom();
+    }).subscribe();
+})();
+
+async function syncAndFetchRoom() {
+    if (!supabase) return;
+    writeLog(supabase, "Host", "System", "syncAndFetchRoom 実行");
+
+    const [resPart, resRoom] = await Promise.all([
+        supabase.from('participants').select('*').eq('room_id', roomId).order('id', { ascending: true }),
+        supabase.from('rooms').select('*').eq('id', roomId).maybeSingle()
+    ]);
+
+    if (resPart.data) {
+        currentParticipants = resPart.data;
+    }
+
+    if (resRoom.data) {
+        activeRoomRecord = resRoom.data;
+        const state = activeRoomRecord.game_state || {};
+        const isPlaying = state.status === 'playing';
+
+        if (displayRoomStatus) displayRoomStatus.textContent = isPlaying ? 'playing (ゲーム進行中)' : 'waiting (準備中)';
+        
+        if (btnInitialShuffleStart) {
+            setButtonActive(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE, !isPlaying);
+        } 
+    }
+    drawHostScreen();
 }
 
-h1 {
-    font-size: 24px !important;
-    text-align: center;
-    border-bottom: 2px solid #cbd5e1;
-    padding-bottom: 10px;
-    margin-bottom: 20px;
+function drawHostScreen() {
+    const state = activeRoomRecord?.game_state || {};
+    const decks = state.decks || {};
+    const currentTurnUserId = activeRoomRecord ? activeRoomRecord.current_turn_user_id : null;
+
+    const elSmallCount = document.getElementById(DOM_SELECTORS.HOST.DECK_MONITOR.SMALL_DEAL_COUNT);
+    if (elSmallCount) elSmallCount.textContent = `${decks.small_deal ? decks.small_deal.length : 0}`;
+
+    const elBigCount = document.getElementById(DOM_SELECTORS.HOST.DECK_MONITOR.BIG_DEAL_COUNT);
+    if (elBigCount) elBigCount.textContent = `${decks.big_deal ? decks.big_deal.length : 0}`;
+
+    const elMarketCount = document.getElementById(DOM_SELECTORS.HOST.DECK_MONITOR.MARKET_COUNT);
+    if (elMarketCount) elMarketCount.textContent = `${decks.market ? decks.market.length : 0}`;
+
+    const elDoodadCount = document.getElementById(DOM_SELECTORS.HOST.DECK_MONITOR.DOODAD_COUNT);
+    if (elDoodadCount) elDoodadCount.textContent = `${decks.doodad ? decks.doodad.length : 0}`;
+
+    if (hostDiceMonitor) {
+        if (!currentTurnUserId) {
+            hostDiceMonitor.textContent = "手番が設定されていません";
+        } else {
+            const player = currentParticipants.find(p => p.user_id === currentTurnUserId);
+            hostDiceMonitor.textContent = `次は ${player?.state?.name || currentTurnUserId} の番です`;
+        }
+    }
+
+    const itemSEL = DOM_SELECTORS.HOST.PARTICIPANT_ITEM;
+    const boardSEL = DOM_SELECTORS.HOST.BOARD;
+    
+    if (listBody) listBody.innerHTML = '';
+    if (flagsListBody) flagsListBody.innerHTML = ''; 
+    
+    const tbodyAssetList = document.getElementById('host-asset-list');
+    const tbodyFinSummary = document.getElementById('host-financial-summary');
+    if (tbodyAssetList) tbodyAssetList.innerHTML = '';
+    if (tbodyFinSummary) tbodyFinSummary.innerHTML = '';
+    
+    for (let i = 0; i < 24; i++) {
+        const cell = document.getElementById(`${boardSEL.CELL_PREFIX}${i}`);
+        if (cell) cell.innerHTML = '';
+    }
+
+    const elCardInfo = document.getElementById('host-current-card-info');
+    const currentCard = state.current_card;
+    if (elCardInfo) {
+        if (currentCard) {
+            elCardInfo.innerHTML = `タイトル: <b>${currentCard.title}</b> &nbsp;&nbsp;&nbsp; asset_type: ${currentCard.asset_type}<br>
+            cost: $${toCurrency(currentCard.cost)} &nbsp;&nbsp;&nbsp; down_payment: $${toCurrency(currentCard.down_payment)} &nbsp;&nbsp;&nbsp; mortgage: $${toCurrency(currentCard.mortgage)} &nbsp;&nbsp;&nbsp; passive_income: $${toCurrency(currentCard.passive_income)}`;
+        } else {
+            elCardInfo.innerHTML = `現在、場に出ているカードはありません。`;
+        }
+    }
+
+    currentParticipants.forEach((p, idx) => {
+        const pState = p.state || {};
+        const financials = pState.financials || {};
+        const position = pState.position ?? 0;
+        const flags = pState.flags || {}; 
+        const items = pState.items || [];
+
+        const isCurrentTurn = (p.user_id === currentTurnUserId);
+        const displayName = (isCurrentTurn ? '★' : '') + (pState.name || '不明');
+
+        const tr = document.createElement('tr');
+        tr.classList.add(itemSEL.ROW_CLASS);
+        tr.innerHTML = `
+            <td>${idx + 1}</td>
+            <td>${displayName} (${p.user_id})</td>
+            <td class="${itemSEL.PROFESSION_CLASS}">${pState.profession || '未定'}</td>
+            <td>${pState.children_count || 0}</td>
+            <td>${String(position).padStart(2, '0')}${BOARD_CELL_NAMES[position] || ""}</td>
+            <td>$${(financials.cash || 0).toLocaleString()}</td>
+        `;
+        if (listBody) listBody.appendChild(tr);
+
+        const drawnCardTitle = pState.drawn_card ? `🎴 ${pState.drawn_card.title}` : 'なし';
+
+        if (flagsListBody) {
+            const charityLeft = parseInt(flags.charity_turns_left || 0, 10);
+            const downsizedLeft = parseInt(flags.downsized_turns_left || 0, 10);
+
+            const trFlags = document.createElement('tr');
+            trFlags.innerHTML = `
+                <td>${displayName}</td>
+                <td>${!!flags.has_rolled_dice}</td>
+                <td>${flags.pending_paydays || 0}</td>
+                <td>${!!flags.is_card_drawn}</td>
+                <td>${!!flags.is_action_completed}</td>
+                <td>${!!flags.is_calculating}</td>
+                <td>${charityLeft}</td>
+                <td>${downsizedLeft}</td>
+                <td>${!!flags.is_negative_cash_flow}</td>
+            `;
+            flagsListBody.appendChild(trFlags);
+        }
+
+        let salary = 0;
+        let passiveIncome = 0;
+        let totalExpenses = 0;
+        
+        items.forEach(item => {
+            const costVal = Number(item.cost || 0);
+            const liabVal = Number(item.liability || 0);
+            const cfVal = Number(item.cashflow || 0);
+            
+            if (cfVal < 0) {
+                totalExpenses += Math.abs(cfVal);
+            } else if (cfVal > 0) {
+                if (costVal > 0 || liabVal > 0) {
+                    passiveIncome += cfVal;
+                } else {
+                    salary += cfVal;
+                }
+            }
+        });
+        
+        const cashflow = salary + passiveIncome - totalExpenses;
+        const ftDiff = totalExpenses - passiveIncome;
+        const ftText = ftDiff > 0 ? `あと $${ftDiff.toLocaleString()}` : "移行可能！";
+        
+        if (tbodyFinSummary) {
+            const trFin = document.createElement('tr');
+            trFin.innerHTML = `
+                <td>${displayName}</td>
+                <td>$${salary.toLocaleString()}</td>
+                <td>$${passiveIncome.toLocaleString()}</td>
+                <td>$${totalExpenses.toLocaleString()}</td>
+                <td>$${cashflow.toLocaleString()}</td>
+                <td>${ftText}</td>
+            `;
+            tbodyFinSummary.appendChild(trFin);
+        }
+
+        const assets = items.filter(item => Number(item.cost || 0) > 0 || (item.asset_type !== 'Salary' && item.asset_type !== 'ChildExpense' && item.asset_type !== 'InstantDebt' && item.asset_type !== 'BankLoan'));
+        
+        const assetStrs = assets.map(item => {
+            let isHit = false;
+            if (currentCard) {
+                if (currentCard.asset_type !== 'other') {
+                    isHit = (item.asset_type === currentCard.asset_type);
+                } else if (currentCard.action_rule) {
+                    if (currentCard.action_rule.target_symbol && item.asset_type === currentCard.action_rule.target_symbol) {
+                        isHit = true;
+                    }
+                    if (Array.isArray(currentCard.action_rule.target_asset) && currentCard.action_rule.target_asset.includes(item.asset_type)) {
+                        isHit = true;
+                    }
+                }
+            }
+            
+            const baseText = `[${item.asset_type}] ${item.title}`;
+            if (isHit) {
+                return `★${baseText}`;
+            }
+            return baseText;
+        }).join(' ');
+        
+        if (tbodyAssetList) {
+            const trAsset = document.createElement('tr');
+            trAsset.innerHTML = `
+                <td>${displayName}</td>
+                <td>${drawnCardTitle}</td>
+                <td>${assetStrs || 'なし'}</td>
+            `;
+            tbodyAssetList.appendChild(trAsset);
+        }
+
+        const targetCell = document.getElementById(`${boardSEL.CELL_PREFIX}${position}`);
+        if (targetCell) {
+            const table = document.createElement('table');
+            table.setAttribute('border', '0');
+            table.setAttribute('cellspacing', '0');
+            table.setAttribute('cellpadding', '2');
+            table.setAttribute('width', '100%');
+            const trNode = document.createElement('tr');
+            const tdNode = document.createElement('td');
+            tdNode.setAttribute('bgcolor', '#00bcd4');
+            tdNode.setAttribute('align', 'center');
+            const fontNode = document.createElement('font');
+            fontNode.setAttribute('color', 'white');
+            fontNode.textContent = displayName;
+            
+            tdNode.appendChild(fontNode);
+            trNode.appendChild(tdNode);
+            table.appendChild(trNode);
+            targetCell.appendChild(targetCell.firstChild ? document.createElement('br') : document.createDocumentFragment());
+            targetCell.appendChild(table);
+        }
+    });
+
+    const playerSelect = document.getElementById('player-select');
+    if (playerSelect) {
+        const currentValue = playerSelect.value;
+        playerSelect.innerHTML = '<option value="">プレイヤーを選択</option>';
+        
+        currentParticipants.forEach(p => {
+            if (p.state && p.state.name) {
+                const option = document.createElement('option');
+                option.value = p.user_id;
+                option.textContent = p.state.name + ' の財務諸表';
+                playerSelect.appendChild(option);
+            }
+        });
+        
+        if (currentValue && currentParticipants.some(p => p.user_id === currentValue)) {
+            playerSelect.value = currentValue;
+        } else if (currentParticipants.length > 0) {
+            playerSelect.value = currentParticipants[0].user_id;
+        }
+
+        playerSelect.onchange = () => {
+            drawHostScreen();
+        };
+
+        const selectedUserId = playerSelect.value;
+        const selectedRecord = currentParticipants.find(p => p.user_id === selectedUserId);
+        
+        if (selectedRecord && selectedRecord.state) {
+            const selectedState = selectedRecord.state;
+            const selectedFinancials = selectedState.financials || {};
+            const selectedItems = selectedState.items || [];
+            const selectedName = selectedState.name || "不明";
+            
+            const elProf = document.getElementById('l-profession');
+            if (elProf) elProf.textContent = `${selectedName}の職業：${selectedState.profession || '未定'}`;
+            
+            const elCash = document.getElementById('l-cash');
+            if (elCash) elCash.textContent = `${selectedName}の所持金：${toYenFormat(selectedFinancials.cash)}`;
+
+            let assetsHTML = "<table border='1' width='100%'><tr><th>資産名</th><th>単価</th><th>数量</th><th>CF</th></tr>";
+            let liabHTML = "<table border='1' width='100%'><tr><th>負債名</th><th>負債残高</th><th>CF</th></tr>";
+
+            let totalExpenses = 0;
+            let passiveIncome = 0;
+
+            selectedItems.forEach(item => {
+                const costVal = Number(item.cost || 0);
+                const liabVal = Number(item.liability || 0);
+                const cfVal = Number(item.cashflow || 0);
+
+                if (cfVal < 0) {
+                    totalExpenses += Math.abs(cfVal);
+                } else if (cfVal > 0 && costVal > 0) {
+                    passiveIncome += cfVal;
+                }
+
+                if (costVal > 0 || (liabVal === 0 && cfVal > 0)) {
+                    let cfStr = toYenFormat(cfVal);
+                    if (cfStr === "0円") cfStr = "";
+                    else if (cfVal > 0) cfStr = `+${cfStr}`;
+                    
+                    let unitPrice = toYenFormat(costVal);
+                    if (unitPrice === "0円") unitPrice = "";
+
+                    const quantity = item.quantity !== undefined ? item.quantity : 1; 
+                    const quantityStr = Number(quantity).toLocaleString(); 
+                    
+                    assetsHTML += `<tr><td>${item.title}</td><td>${unitPrice}</td><td>${quantityStr}</td><td>${cfStr}</td></tr>`;
+                }
+
+                if (liabVal > 0 || (cfVal < 0 && costVal === 0)) {
+                    let displayName = item.title;
+                    let displayCF = cfVal;
+                    
+                    if (costVal > 0 && liabVal > 0) {
+                        displayName = item.title + "のローン";
+                        displayCF = 0; 
+                    }
+
+                    let cfStr = toYenFormat(displayCF);
+                    if (cfStr === "0円") cfStr = "";
+                    else if (displayCF > 0) cfStr = `+${cfStr}`;
+
+                    let liabStr = toYenFormat(liabVal);
+                    if (liabStr === "0円") liabStr = "";
+                    
+                    liabHTML += `<tr><td>${displayName}</td><td>${liabStr}</td><td>${cfStr}</td></tr>`;
+                }
+            });
+            
+            assetsHTML += "</table>";
+            liabHTML += "</table>";
+
+            const elProfit = document.getElementById('l-profit');
+            if (elProfit) elProfit.innerHTML = assetsHTML;
+
+            const elLoss = document.getElementById('l-loss');
+            if (elLoss) elLoss.innerHTML = liabHTML;
+
+            const btnFastTrack = document.getElementById('fast_track');
+            if (btnFastTrack) {
+                const diffToFastTrack = totalExpenses - passiveIncome;
+                if (diffToFastTrack > 0) {
+                    btnFastTrack.textContent = `ファーストトラックまで、あと${toYenFormat(diffToFastTrack)}`;
+                } else {
+                    btnFastTrack.textContent = `ファーストトラックへ移行可能！`;
+                }
+            }
+        }
+    }
 }
 
-/* ==============================
-   レイアウトの幅を100%に完全統一
-============================== */
-fieldset, .table-responsive {
-    width: 100%;
-    margin-bottom: 20px;
-    border: 1px solid #cbd5e1;
-    border-radius: 4px;
-    background-color: #ffffff;
+function shuffleArray(array) {
+    const newArray = [...array];
+    for (let i = newArray.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+    }
+    return newArray;
 }
 
-fieldset {
-    padding: 15px;
-}
+btnInitialShuffleStart?.addEventListener('click', async () => {
+    if (!supabase) return;
+    writeLog(supabase, "Host", "Action", "「初期シャッフル＆ゲーム開始」ボタンが押下されました");
+    setButtonActive(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE, false);
 
-legend {
-    font-weight: bold;
-    color: #1e293b;
-    padding: 0 5px;
-}
+    try {
+        await callRpcWithDebug(supabase, 'start_game_with_professions_v2', { p_room_id: roomId });
+        
+        const { data: allCards, error: cardsError } = await supabase.from('cards').select('*');
+        if (cardsError) {
+            writeLog(supabase, "Host", "Error", `カードデータの取得失敗: ${JSON.stringify(cardsError)}`);
+            throw new Error(`カードデータの取得に失敗しました: ${cardsError.message}`);
+        }
 
-.table-responsive {
-    padding: 0; /* テーブルコンテナの隙間を消す */
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-}
+        const decks = {
+            small_deal: shuffleArray(allCards.filter(c => c.deck_type === 'small_deal')),
+            big_deal: shuffleArray(allCards.filter(c => c.deck_type === 'big_deal')),
+            market: shuffleArray(allCards.filter(c => c.deck_type === 'market')),
+            doodad: shuffleArray(allCards.filter(c => c.deck_type === 'doodad'))
+        };
+        
+        const { data: roomData, error: roomError } = await supabase.from('rooms').select('game_state').eq('id', roomId).single();
+        if (roomError) {
+            writeLog(supabase, "Host", "Error", `部屋の取得失敗: ${JSON.stringify(roomError)}`);
+            throw new Error(`部屋情報の取得に失敗しました: ${roomError.message}`);
+        }
 
-table {
-    width: 100%;
-    min-width: max-content; /* 中身に合わせて広がり、画面より大きければスクロール */
-    border-collapse: collapse;
-}
+        const currentState = roomData?.game_state || {};
+        currentState.decks = decks;
+        
+        const { error: updateError } = await supabase.from('rooms').update({ game_state: currentState }).eq('id', roomId);
+        if (updateError) {
+            writeLog(supabase, "Host", "Error", `デッキの保存失敗: ${JSON.stringify(updateError)}`);
+            throw new Error(`デッキの保存に失敗しました: ${updateError.message}`);
+        }
 
-th, td {
-    padding: 10px 12px;
-    border: 1px solid #cbd5e1;
-    text-align: left;
-    vertical-align: middle;
-    white-space: nowrap; /* 表の中で文字が勝手に折り返されるのを防ぐ */
-}
+        await syncAndFetchRoom();
+        writeLog(supabase, "Host", "Action", "ゲーム開始処理が正常に完了しました");
+    } catch (error) {
+        writeLog(supabase, "Host", "Error", `ゲーム開始処理エラー: ${error.message}`);
+        sendGameProgressMessage(supabase, roomId, "ホスト", `ゲーム開始失敗: ${error.message}`, "btnInitialShuffleStart");
+        setButtonActive(DOM_SELECTORS.HOST.LIFECYCLE.BTN_INITIAL_SHUFFLE, true);
+    }
+});
 
-th {
-    background-color: #f1f5f9;
-    font-weight: bold;
-}
+btnKickParticipant?.addEventListener('click', async () => {
+    if (!supabase) return;
+    const orderInput = inputKickOrder.value.trim();
+    writeLog(supabase, "Host", "Action", `「退室させる」ボタンが押下されました (入力順: ${orderInput})`);
 
-td[align="center"] {
-    text-align: center;
-}
+    const orderIdx = parseInt(orderInput, 10) - 1;
+    if (isNaN(orderIdx) || orderIdx < 0 || orderIdx >= currentParticipants.length) {
+        sendGameProgressMessage(supabase, roomId, "ホスト", "有効な退室者の番号（入室順）を入力してください。", "btnKickParticipant");
+        return;
+    }
 
-/* ==============================
-   盤面モニター（すごろく）専用の調整
-============================== */
-.board-table {
-    min-width: 1200px; /* 12マスあるため、スクロール前提で広めに確保 */
-    width: 100%;
-    table-layout: fixed; /* ★重要: セルの幅を中身に依存せず強制的に固定する */
-}
+    const targetUser = currentParticipants[orderIdx];
 
-.board-table td {
-    width: 8.33%; /* ★重要: 100% ÷ 12列 = 8.33% で完全に均等割にする */
-    white-space: normal; /* コマがはみ出ないように文字の折り返しを許可 */
-    padding: 6px 4px;
-    vertical-align: top; /* 複数のコマが入った時に上から整列させる */
-    text-align: center;
-    overflow: hidden; /* マス目からの中身のはみ出しを防止 */
-}
+    try {
+        await callRpcWithDebug(supabase, 'kick_participant', { 
+            p_room_id: roomId, 
+            p_target_user_id: targetUser.user_id 
+        });
+        inputKickOrder.value = '';
+        await syncAndFetchRoom();
+        writeLog(supabase, "Host", "Action", `プレイヤー ${targetUser.user_id} の退室処理が完了しました`);
+    } catch (error) {
+        sendGameProgressMessage(supabase, roomId, "ホスト", `退室処理失敗: ${error.message}`, "btnKickParticipant");
+    }
+});
 
-/* ★追加: JSで生成される「プレイヤーのコマ（ネストされたテーブル）」が横に伸びるのを防ぐ */
-.player-occupants table {
-    min-width: 0 !important; /* max-contentの広がる力を完全に打ち消す */
-    width: 100% !important; /* マス目の幅に合わせる */
-    table-layout: fixed; /* コマ自体の幅も固定 */
-    margin-top: 4px;
-    border: none;
-}
+btnSetTurn?.addEventListener('click', async () => {
+    if (!supabase) return;
+    const orderInput = inputNextTurnOrder.value.trim();
+    writeLog(supabase, "Host", "Action", `「を手番にする」ボタンが押下されました (入力順: ${orderInput})`);
 
-.player-occupants table td {
-    padding: 4px;
-    border: none; /* コマ内部の不要な枠線を消す */
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis; /* 名前やIDが長すぎる場合は自動的に「...」にする */
-}
+    const orderIdx = parseInt(orderInput, 10) - 1;
+    if (isNaN(orderIdx) || orderIdx < 0 || orderIdx >= currentParticipants.length) {
+        sendGameProgressMessage(supabase, roomId, "ホスト", "有効なプレイヤーの番号（入室順）を入力してください。", "btnSetTurn");
+        return;
+    }
 
-/* ==============================
-   フォーム・ボタン類
-============================== */
-input[type="number"], select, textarea {
-    padding: 8px;
-    border: 1px solid #cbd5e1;
-    border-radius: 4px;
-    background-color: #f1f5f9;
-    margin: 4px 0;
-    width: auto;
-    max-width: 100%;
-}
+    const targetUser = currentParticipants[orderIdx];
 
-textarea {
-    width: 100%;
-    resize: vertical;
-}
+    try {
+        await callRpcWithDebug(supabase, 'force_set_turn', { 
+            p_room_id: roomId, 
+            p_target_user_id: targetUser.user_id 
+        });
+        inputNextTurnOrder.value = '';
+        await syncAndFetchRoom();
+        writeLog(supabase, "Host", "Action", `プレイヤー ${targetUser.user_id} への手番変更が完了しました`);
+    } catch (error) {
+        sendGameProgressMessage(supabase, roomId, "ホスト", `手番変更失敗: ${error.message}`, "btnSetTurn");
+    }
+});
 
-button {
-    background-color: #ffffff;
-    border: 1px solid #cbd5e1;
-    border-radius: 4px;
-    padding: 8px 16px;
-    font-weight: bold;
-    cursor: pointer;
-    margin: 4px 2px;
-    touch-action: manipulation;
-}
+btnForceGameEnd?.addEventListener('click', async () => {
+    if (!supabase) return;
+    writeLog(supabase, "Host", "Action", "「全員強制退室＆ゲーム終了」ボタンが押下されました");
+    
+    const { error: deleteError } = await supabase.from('participants').delete().eq('room_id', roomId);
+        
+    if (!deleteError) {
+        const { error: updateError } = await supabase
+            .from('rooms')
+            .update({ 
+                current_turn_user_id: null, 
+                game_state: { status: "waiting" } 
+            })
+            .eq('id', roomId);
+            
+        if (updateError) {
+            sendGameProgressMessage(supabase, roomId, "ホスト", `部屋の状態リセットに失敗しました: ${updateError.message}`, "btnForceGameEnd");
+        } else {
+            writeLog(supabase, "Host", "Action", "ゲーム終了と部屋のリセットが完了しました");
+            window.location.reload();
+        }
+    } else {
+        sendGameProgressMessage(supabase, roomId, "ホスト", `参加者の退室処理に失敗しました: ${deleteError.message}`, "btnForceGameEnd");
+    }
+});
 
-button:hover:not(:disabled) {
-    background-color: #e2e8f0;
-}
+btnFetchCurrentGameLogs?.addEventListener('click', async () => {
+    if (!supabase) return;
+    writeLog(supabase, "Host", "Action", "「今回のゲームログを取得」ボタンが押下されました");
+    if (hostLogTextarea) hostLogTextarea.value = "取得中...";
+    setButtonActive('btn-fetch-current-game-logs', false);
+    
+    try {
+        const { data: startLogData, error: startLogError } = await supabase
+            .from('game_logs')
+            .select('sequence_num')
+            .eq('room_id', roomId)
+            .eq('target', 'Host')
+            .eq('title', 'Action')
+            .eq('body', 'ゲーム開始処理が正常に完了しました')
+            .order('sequence_num', { ascending: false })
+            .limit(1);
 
-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
+        if (startLogError) throw startLogError;
 
-.full-width-btn {
-    width: 100%;
-    display: block;
-    margin-top: 8px;
-}
+        let query = supabase
+            .from('game_logs')
+            .select('*')
+            .eq('room_id', roomId)
+            .order('sequence_num', { ascending: false })
+            .limit(3000);
 
-.financial-summary {
-    background-color: #f1f5f9;
-    padding: 12px;
-    border-radius: 4px;
-    border: 1px solid #cbd5e1;
-    margin-bottom: 15px;
-}
+        if (startLogData && startLogData.length > 0) {
+            query = query.gte('sequence_num', startLogData[0].sequence_num);
+        }
 
-.financial-summary p {
-    margin: 4px 0;
-}
+        const { data, error } = await query;
+        if (error) throw error;
 
-.highlight-cash {
-    color: #059669;
-    font-weight: bold;
-}
+        if (data && hostLogTextarea) {
+            hostLogTextarea.value = data.reverse().map(log => 
+    `[${new Date(log.created_at).toLocaleString()}] Target: ${log.target} | Title: ${log.title}\n${log.body}`
+).join('\n----------------------------------------\n');
+        }
+    } catch (err) {
+        if (hostLogTextarea) hostLogTextarea.value = `エラー: ${err.message}`;
+        writeLog(supabase, "Host", "Error", `現在のゲームログの取得に失敗しました: ${err.message}`);
+    }
+    
+    setButtonActive('btn-fetch-current-game-logs', true);
+});
 
-/* 盤面モニターのコマの文字設定 */
-.player-occupants font {
-    display: inline-block;
-    color: #ffffff !important;
-    font-weight: bold;
-    width: 100%; /* セル幅いっぱいにする */
-}
+btnFetchLogs?.addEventListener('click', async () => {
+    if (!supabase) return;
+    writeLog(supabase, "Host", "Action", "「直近1000件を取得」ボタンが押下されました");
+    if (hostLogTextarea) hostLogTextarea.value = "取得中...";
+    setButtonActive('btn-fetch-logs', false);
+    
+    const { data, error } = await supabase
+        .from('game_logs')
+        .select('*')
+        .eq('room_id', roomId)
+        .order('sequence_num', { ascending: false })
+        .limit(1000);
+        
+    if (error) {
+        if (hostLogTextarea) hostLogTextarea.value = `エラー: ${error.message}`;
+    } else if (data && hostLogTextarea) {
+        hostLogTextarea.value = data.reverse().map(log => 
+            `[${new Date(log.created_at).toLocaleString()}] Target: ${log.target} | Title: ${log.title}\n${log.body}`
+        ).join('\n----------------------------------------\n');
+    }
+    
+    setButtonActive('btn-fetch-logs', true);
+});
 
-/* ==============================
-   保有資産一覧テーブル専用の折り返し調整
-============================== */
-table.asset-table {
-    min-width: 100% !important;
-    width: 100% !important;
-    table-layout: fixed !important; /* ★確実な折り返しのため枠を強制固定 */
-}
+btnCopyLogs?.addEventListener('click', () => {
+    if (hostLogTextarea && hostLogTextarea.value) {
+        writeLog(supabase, "Host", "Action", "「ログをコピー」ボタンが押下されました");
+        navigator.clipboard.writeText(hostLogTextarea.value)
+            .then(() => {
+                const originalText = btnCopyLogs.innerText;
+                btnCopyLogs.innerText = "O コピーしました！";
+                setTimeout(() => { btnCopyLogs.innerText = originalText; }, 2000);
+            })
+            .catch(err => {
+                writeLog(supabase, "Host", "Error", `クリップボードへのコピーに失敗しました: ${err}`);
+            });
+    }
+});
 
-table.asset-table th,
-table.asset-table td {
-    white-space: normal !important; /* 折り返しを最優先で許可 */
-    word-wrap: break-word !important; 
-    overflow-wrap: break-word !important; /* 枠の端で必ず改行させる */
-    line-height: 1.6;
-}
+console.log("【残す】host.js が読み込まれました。");
