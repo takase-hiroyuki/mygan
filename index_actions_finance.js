@@ -1,7 +1,7 @@
 // index_actions_finance.js
 import { roomId } from './common_config.js';
 import { SEL_G } from './common_dom_selectors.js'; 
-import { callRpcWithDebug, displaySystemMessage, insertSystemMessage, getLocalPlayerName, writeLog } from './common_utils.js';
+import { callRpcWithDebug, sendGameProgressMessage, getLocalPlayerName, writeLog } from './common_utils.js';
 
 export async function actionClaimPaycheck(supabase, currentUserId) {
     if (!supabase || !currentUserId) return;
@@ -32,7 +32,7 @@ export async function actionCheckCalculations(supabase, currentUserId) {
     const rawCashflow = inputCashflowEl ? inputCashflowEl.value.replace(/,/g, '').trim() : "";
 
     if (!/^-?\d+$/.test(rawIncome) || !/^-?\d+$/.test(rawCashflow)) {
-        await insertSystemMessage(supabase, playerName, "総収入とキャッシュフローに【半角数字】を入力してください。");
+        sendGameProgressMessage(supabase, roomId, playerName, "総収入とキャッシュフローに【半角数字】を入力してください。", "actionCheckCalculations");
         return;
     }
 
@@ -71,7 +71,7 @@ export async function actionOperateItem(supabase, currentUserId) {
     const operation = operateSelect.value;
 
     if (isNaN(itemId) || !operation) {
-        await insertSystemMessage(supabase, playerName, "対象のアイテムと処理内容の両方を選択してください。");
+        sendGameProgressMessage(supabase, roomId, playerName, "対象のアイテムと処理内容の両方を選択してください。", "actionOperateItem");
         return;
     }
 
@@ -83,7 +83,7 @@ export async function actionOperateItem(supabase, currentUserId) {
             p_operation: operation
         });
         
-        await insertSystemMessage(supabase, playerName, "資産・負債の処理が完了しました。");
+        sendGameProgressMessage(supabase, roomId, playerName, "資産・負債の処理が完了しました。", "actionOperateItem");
         
         itemSelect.value = "";
         operateSelect.value = "";
