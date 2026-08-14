@@ -71,7 +71,7 @@ export async function loginUser(supabase, username) {
 
     if (roomCheck.game_state?.status !== 'waiting') {
         writeLog(supabase, "System", "Auth Warning", `入室拒否: 部屋のステータスが '${roomCheck.game_state.status}' です。`);
-        sendGameProgressMessage(supabase, roomId, username, "ゲームが既に開始されているか終了しているため、入室できません。", "loginUser");
+        sendGameProgressMessage(supabase, roomId, username, "入室できません。", "loginUser");
         return null;
     }
 
@@ -98,7 +98,7 @@ export async function loginUser(supabase, username) {
         return null;
     }
         
-    const logBody = `${username} が入室しました。ホストがゲームを開始するまでお待ちください。`;
+    const logBody = `${username} が入室しました。ゲーム開始をお待ち下さい。`;
     sendGameProgressMessage(supabase, roomId, username, logBody, "loginUser");
     writeLog(supabase, "System", "Auth", "入室ログの書き込みリクエストを送信しました。");
         
