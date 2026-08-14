@@ -33,7 +33,7 @@
             <table border="1" cellpadding="0" cellspacing="0">
                 <thead>
                     <tr>
-                        <th style="width: 20%;">名前</th><th style="width: 30%;">最後のカード</th><th>資産一覧</th>
+                        <th>名前</th><th>最後のカード</th><th>資産一覧</th>
                     </tr>
                 </thead>
                 <tbody id="host-asset-list"></tbody>
@@ -96,10 +96,10 @@
         <!-- 7.部屋とゲームの制御エリア -->
         <fieldset>
             <legend>ゲーム制御</legend>
-            <p>現在の部屋ステータス: <span id="host-room-status" style="font-weight: bold; color: #2563eb;">waiting (準備中)</span></p>
+            <p>現在の部屋ステータス: <span id="host-room-status">waiting (準備中)</span></p>
             <button id="btn-initial-shuffle-start">O 初期シャッフル＆ゲーム開始</button>
             <button id="btn-force-game-end">O 全員強制退室＆ゲーム終了</button>
-            <hr style="border: none; border-top: 1px dashed #cbd5e1; margin: 15px 0;">
+            <hr>
             <label for="input-kick-order">退室者の番号: </label>
             <input type="number" id="input-kick-order" min="1" placeholder="例: 4">
             <button id="btn-kick-participant">O 退室させる</button><br>
@@ -175,18 +175,18 @@
             <table cellpadding="0" cellspacing="0">
                 <thead>
                     <tr>
-                        <th style="text-align: center;">Small Deal</th>
-                        <th style="text-align: center;">Big Deal</th>
-                        <th style="text-align: center;">Market</th>
-                        <th style="text-align: center;">Doodad</th>
+                        <th>Small Deal</th>
+                        <th>Big Deal</th>
+                        <th>Market</th>
+                        <th>Doodad</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td align="center"><span id="deck-count-small-deal" style="font-weight: bold;">0</span> 枚</td>
-                        <td align="center"><span id="deck-count-big-deal" style="font-weight: bold;">0</span> 枚</td>
-                        <td align="center"><span id="deck-count-market" style="font-weight: bold;">0</span> 枚</td>
-                        <td align="center"><span id="deck-count-doodad" style="font-weight: bold;">0</span> 枚</td>
+                        <td align="center"><span id="deck-count-small-deal">0</span> 枚</td>
+                        <td align="center"><span id="deck-count-big-deal">0</span> 枚</td>
+                        <td align="center"><span id="deck-count-market">0</span> 枚</td>
+                        <td align="center"><span id="deck-count-doodad">0</span> 枚</td>
                     </tr>
                     <tr>
                         <td align="center"><button id="btn-reshuffle-small-deal" class="full-width-btn">O シャッフル</button></td>
