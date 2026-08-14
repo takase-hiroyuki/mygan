@@ -165,7 +165,7 @@ btnBorrowLoan?.addEventListener('click', async () => {
     writeLog(supabase, playerName, "Action", "「銀行借入」ボタンが押下されました");
     const result = await actionBorrowBankLoan(supabase, currentUserId);
     if (result && result.success) {
-        sendGameProgressMessage(supabase, roomId, playerName, "${playerName} は、銀行借入を行いました。", "actionBorrowBankLoan");
+        sendGameProgressMessage(supabase, roomId, playerName, `${playerName} は、銀行借入を行いました。`, "actionBorrowBankLoan");
     } else if (result && result.error) {
         sendGameProgressMessage(supabase, roomId, playerName, result.error, "actionBorrowBankLoan");
     }
@@ -176,7 +176,7 @@ btnPaybackLoan?.addEventListener('click', async () => {
     writeLog(supabase, playerName, "Action", "「銀行返済」ボタンが押下されました");
     const result = await actionRepayBankLoan(supabase, currentUserId);
     if (result && result.success) {
-        sendGameProgressMessage(supabase, roomId, playerName, "${playerName} は、銀行ローンを返済しました。", "actionRepayBankLoan");
+        sendGameProgressMessage(supabase, roomId, playerName, `${playerName} は、銀行ローンを返済しました。`, "actionRepayBankLoan");
     } else if (result && result.error) {
         sendGameProgressMessage(supabase, roomId, playerName, result.error, "actionRepayBankLoan");
     }
