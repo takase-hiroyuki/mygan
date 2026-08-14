@@ -107,7 +107,8 @@ btnRollDice?.addEventListener('click', async () => {
     if (result && result.error) {
         sendGameProgressMessage(supabase, roomId, playerName, result.error, "actionRollDice");
     } else if (result && result.success) {
-        let msg = `${result.diceVal}の目が出ました<br>${result.posStr}${result.cellName} に移動しました`;
+        // メッセージを1行に連結
+        let msg = `${result.diceVal}の目が出て、${result.posStr}${result.cellName} に移動しました`;
         if (result.isOpportunity) {
             msg += `<br>${playerName} は、普通の商売、または大きな商売、のどちらかをひいてください`;
         } else if (result.isDoodad) {
@@ -124,7 +125,8 @@ btnRollDice2?.addEventListener('click', async () => {
     if (result && result.error) {
         sendGameProgressMessage(supabase, roomId, playerName, result.error, "actionRollDice");
     } else if (result && result.success) {
-        let msg = `${result.diceVal}の目が出ました<br>${result.posStr}${result.cellName} に移動しました`;
+        // メッセージを1行に連結
+        let msg = `${result.diceVal}の目が出て、${result.posStr}${result.cellName} に移動しました`;
         if (result.isOpportunity) {
             msg += `<br>${playerName} は、普通の商売、または大きな商売、のどちらかをひいてください`;
         } else if (result.isDoodad) {
@@ -212,9 +214,16 @@ btnOperate?.addEventListener('click', async () => {
 btnSellCard?.addEventListener('click', async () => {
     const playerName = getLocalPlayerName();
     writeLog(supabase, playerName, "Action", "「交渉持掛」ボタンが押下されました");
+
+    // 対象のプレイヤー名を取得する処理
+    const elTarget = document.getElementById(SEL_G.TRADE.SELECT_TARGET);
+    const targetUserId = elTarget ? elTarget.value : null;
+    const targetUser = cachedParticipantsList.find(p => p.user_id === targetUserId);
+    const targetName = targetUser?.state?.name || "他のプレイヤー";
+
     const result = await actionProposeTrade(supabase, currentUserId);
     if (result && result.success) {
-        sendGameProgressMessage(supabase, roomId, playerName, "交渉を持ちかけました。相手の返答を待っています。", "actionProposeTrade");
+        sendGameProgressMessage(supabase, roomId, playerName, `${targetName}と交渉中。返答待ちです`, "actionProposeTrade");
     } else if (result && result.error) {
         sendGameProgressMessage(supabase, roomId, playerName, result.error, "actionProposeTrade");
     }
