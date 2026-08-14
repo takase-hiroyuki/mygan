@@ -12,7 +12,7 @@ import { toggleScreen, renderBaseUI } from './index_ui_base.js';
 import { applyUIRules } from './index_ui_rules.js';
 import { initSupabaseClient, checkExistingLogin, loginUser } from './index_auth.js';
 import { startSubscriptions } from './index_state.js'; 
-import { displayGameProgressMessage, writeLog } from './common_utils.js'; 
+import { displayGameProgressMessage, writeLog, getLocalPlayerName } from './common_utils.js'; 
 import { actionRollDice, actionEndTurn, actionDrawCard, actionPass, actionProcessSelf } from './index_actions_turn.js';
 import { actionClaimPaycheck, actionCheckCalculations, actionOperateItem } from './index_actions_finance.js'; 
 import { actionBorrowBankLoan, actionRepayBankLoan } from './index_actions_loan.js';
@@ -71,11 +71,10 @@ function updateUI(userId, participants, room) {
 
 // イベントリスナーの登録
 btnLogin?.addEventListener('click', async () => {
-    writeLog(supabase, "System", "UI", "「ログイン」ボタンが押下されました");
+    writeLog(supabase, "System", "Action", "「入室する」ボタンが押下されました");
     if (!supabase) return;
     const username = inputUsername?.value.trim();
     if (!username) { 
-        // 未ログイン時のため直接画面に描画する
         displayGameProgressMessage("システム", "名前を入力してください。", "btnLogin");
         return; 
     }
@@ -93,70 +92,83 @@ btnLogin?.addEventListener('click', async () => {
 });
 
 btnRollDice?.addEventListener('click', () => {
+    writeLog(supabase, getLocalPlayerName(), "Action", "「サイコロ１個」ボタンが押下されました");
     actionRollDice(supabase, currentUserId, 1);
 });
 
 btnRollDice2?.addEventListener('click', () => {
+    writeLog(supabase, getLocalPlayerName(), "Action", "「サイコロ２個」ボタンが押下されました");
     actionRollDice(supabase, currentUserId, 2);
 });
 
 btnClaimPaycheck?.addEventListener('click', () => {
+    writeLog(supabase, getLocalPlayerName(), "Action", "「入金請求」ボタンが押下されました");
     actionClaimPaycheck(supabase, currentUserId);
 });
 
 btnEndTurn?.addEventListener('click', () => {
+    // 次の人へボタンの押下ログは actionEndTurn 内部で記録済みのためここでは呼び出しのみ
     actionEndTurn(supabase, currentUserId);
 });
 
 btnCheckCalculations?.addEventListener('click', () => {
+    writeLog(supabase, getLocalPlayerName(), "Action", "「計算」ボタンが押下されました");
     actionCheckCalculations(supabase, currentUserId);
 });
 
 btnBorrowLoan?.addEventListener('click', () => {
+    writeLog(supabase, getLocalPlayerName(), "Action", "「銀行借入」ボタンが押下されました");
     actionBorrowBankLoan(supabase, currentUserId);
 });
 
 btnPaybackLoan?.addEventListener('click', () => {
+    writeLog(supabase, getLocalPlayerName(), "Action", "「銀行返済」ボタンが押下されました");
     actionRepayBankLoan(supabase, currentUserId);
 });
 
 btnSmallDeal?.addEventListener('click', () => {
+    writeLog(supabase, getLocalPlayerName(), "Action", "「普通の商売」ボタンが押下されました");
     actionDrawCard(supabase, currentUserId, 'small_deal');
 });
 
 btnBigDeal?.addEventListener('click', () => {
+    writeLog(supabase, getLocalPlayerName(), "Action", "「大きい商売」ボタンが押下されました");
     actionDrawCard(supabase, currentUserId, 'big_deal');
 });
 
 btnOperate?.addEventListener('click', () => {
+    writeLog(supabase, getLocalPlayerName(), "Action", "「実際に処理する(資産負債)」ボタンが押下されました");
     actionOperateItem(supabase, currentUserId);
 });
 
 btnSellCard?.addEventListener('click', () => {
+    writeLog(supabase, getLocalPlayerName(), "Action", "「交渉持掛」ボタンが押下されました");
     actionProposeTrade(supabase, currentUserId);
 });
 
 btnFastTrack?.addEventListener('click', () => {
-    const record = cachedParticipantsList.find(p => p.user_id === currentUserId);
-    const userName = record?.state?.name || currentUserId || "不明なユーザー";
-    writeLog(supabase, userName, "UI", "ファーストトラック移行ボタンが押下されました。(現在はダミーリスナー)");
+    writeLog(supabase, getLocalPlayerName(), "Action", "「ファーストトラック」ボタンが押下されました");
 });
 
 btnProcessSelf?.addEventListener('click', () => {
+    writeLog(supabase, getLocalPlayerName(), "Action", "「購入する・支払う」ボタンが押下されました");
     const numInput = document.getElementById(SEL_G.TRADE.NUM_PROCESS_SELF);
     const qty = numInput && !numInput.hidden ? parseInt(numInput.value, 10) || 1 : 1;
     actionProcessSelf(supabase, currentUserId, qty);
 });
 
 btnPassCard?.addEventListener('click', async () => {
+    writeLog(supabase, getLocalPlayerName(), "Action", "「パスする」ボタンが押下されました");
     await actionPass(supabase, currentUserId);
 });
 
 btnTradeAccept?.addEventListener('click', () => {
+    writeLog(supabase, getLocalPlayerName(), "Action", "「承諾」ボタンが押下されました");
     actionAcceptTrade(supabase, currentUserId);
 });
 
 btnTradeReject?.addEventListener('click', () => {
+    writeLog(supabase, getLocalPlayerName(), "Action", "「拒否」ボタンが押下されました");
     actionRejectTrade(supabase, currentUserId);
 });
 
