@@ -203,7 +203,7 @@ btnOperate?.addEventListener('click', async () => {
     writeLog(supabase, playerName, "Action", "「実際に処理する(資産負債)」ボタンが押下されました");
     const result = await actionOperateItem(supabase, currentUserId);
     if (result && result.success) {
-        sendGameProgressMessage(supabase, roomId, playerName, "資産・負債の処理が完了しました。", "actionOperateItem");
+        sendGameProgressMessage(supabase, roomId, playerName, `「${result.itemText}」の処理が完了しました。`, "actionOperateItem");
     } else if (result && result.error) {
         sendGameProgressMessage(supabase, roomId, playerName, result.error, "actionOperateItem");
     }
