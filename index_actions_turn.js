@@ -1,13 +1,10 @@
 // index_actions_turn.js
 import { roomId } from './common_config.js';
-import { SEL_G } from './common_dom_selectors.js'; 
-import { disableAllActionButtons } from './index_ui_base.js';
 import { callRpcWithDebug,
          CELLS_OPPORTUNITY,
          CELLS_DOODAD,
          CELLS_MARKET,
          BOARD_CELL_NAMES,
-         sendGameProgressMessage,
          getLocalPlayerName,
          writeLog } from './common_utils.js';
 
@@ -25,32 +22,27 @@ async function getCurrentPlayerState(supabase, userId) {
 }
 
 export async function actionDrawCard(supabase, currentUserId, deckType) {
-    if (!supabase || !currentUserId) return;
+    if (!supabase || !currentUserId) return false;
     
-    const btnSmall = document.getElementById(SEL_G.CARD.BTN_SMALL_DEAL);
-    const btnBig = document.getElementById(SEL_G.CARD.BTN_BIG_DEAL);
-    if (btnSmall) btnSmall.disabled = true;
-    if (btnBig) btnBig.disabled = true;
-
     try {
         await callRpcWithDebug(supabase, 'draw_card_v2', {
             p_room_id: roomId,
             p_user_id: currentUserId,
             p_deck_type: deckType
         });
+        return true;
     } catch (error) {
         const playerName = getLocalPlayerName();
         writeLog(supabase, playerName, "Error", `カード取得エラー: ${error.message}`);
-        if (btnSmall) btnSmall.disabled = false;
-        if (btnBig) btnBig.disabled = false;
+        return false;
     }
 }
 
 export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
-    if (!supabase || !currentUserId) return;
+    if (!supabase || !currentUserId) return { error: "無効なリクエスト" };
 
     const state = await getCurrentPlayerState(supabase, currentUserId);
-    if (!state) return;
+    if (!state) return { error: "状態が取得できません" };
     
     const playerName = state.name || getLocalPlayerName();
     const flags = state.flags || {};
@@ -58,13 +50,13 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
     
     if (flags.has_rolled_dice || flags.is_calculating || downsizedTurnsLeft > 0) {
         if (downsizedTurnsLeft > 0) {
-            sendGameProgressMessage(supabase, roomId, playerName, "休み期間中。そのまま手番を終了して下さい。", "actionRollDice");
+            return { error: "休み期間中。そのまま手番を終了して下さい。" };
         }
-        return;
+        return { error: "現在サイコロを振ることはできません。" };
     }
 
     try {
-        const moveResult = await callRpcWithDebug(supabase, 'roll_dice_and_move_v2', { 
+        await callRpcWithDebug(supabase, 'roll_dice_and_move_v2', { 
             p_room_id: roomId, 
             p_user_id: currentUserId,
             p_dice_count: diceCount
@@ -77,32 +69,32 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
             const posStr = String(newPos).padStart(2, '0');
             const cellName = BOARD_CELL_NAMES[newPos] || "";
             
-            sendGameProgressMessage(supabase, roomId, playerName, `${diceVal}の目が出ました<br>${posStr}${cellName} に移動しました`, "actionRollDice");
-            
-            // 商売マスに止まった場合の指示メッセージを追加
-            if (CELLS_OPPORTUNITY.includes(newPos)) {
-                sendGameProgressMessage(supabase, roomId, playerName, `${playerName} は、普通の商売、または大きな商売、のどちらかをひいてください`, "actionRollDice");
-            }
+            const isOpportunity = CELLS_OPPORTUNITY.includes(newPos);
+            const isMarket = CELLS_MARKET.includes(newPos);
+            const isDoodad = CELLS_DOODAD.includes(newPos);
 
             setTimeout(async () => {
-                if (CELLS_MARKET.includes(newPos)) {
+                if (isMarket) {
                     await actionDrawCard(supabase, currentUserId, 'market');
-                } else if (CELLS_DOODAD.includes(newPos)) {
+                } else if (isDoodad) {
                     await actionDrawCard(supabase, currentUserId, 'doodad');
                 }
             }, 500);
+
+            return { success: true, diceVal, posStr, cellName, isOpportunity };
         }
-        
+        return { error: "移動後の状態が取得できませんでした。" };
     } catch (error) {
         writeLog(supabase, playerName, "Error", `エラー: ${error.message}`);
+        return { error: error.message };
     }
 }
 
 export async function actionProcessSelf(supabase, currentUserId, qty = 1) {
-    if (!supabase || !currentUserId) return;
+    if (!supabase || !currentUserId) return { error: "無効なリクエスト" };
 
     const state = await getCurrentPlayerState(supabase, currentUserId);
-    if (!state) return;
+    if (!state) return { error: "状態が取得できません" };
 
     const playerName = state.name || getLocalPlayerName();
     const isCharity = [3, 16].includes(parseInt(state.position, 10));
@@ -113,8 +105,7 @@ export async function actionProcessSelf(supabase, currentUserId, qty = 1) {
                 p_room_id: roomId,
                 p_user_id: currentUserId
             });
-            sendGameProgressMessage(supabase, roomId, playerName, "寄付を行いました。以降のターンでサイコロを2個振る権利を獲得しました。", "actionProcessSelf");
-            return;
+            return { success: true, type: 'charity' };
         }
 
         const cardTitle = state.drawn_card ? state.drawn_card.title : "カード";
@@ -124,23 +115,23 @@ export async function actionProcessSelf(supabase, currentUserId, qty = 1) {
                 p_room_id: roomId,
                 p_user_id: currentUserId
             });
-            sendGameProgressMessage(supabase, roomId, playerName, `「${cardTitle}」を適用しました。`, "actionProcessSelf");
+            return { success: true, type: 'other', cardTitle };
         } else {
             await callRpcWithDebug(supabase, 'execute_drawn_card_v2', {
                 p_room_id: roomId,
                 p_user_id: currentUserId,
                 p_input_quantity: qty
             });
-            const qtyStr = Number(qty).toLocaleString();
-            sendGameProgressMessage(supabase, roomId, playerName, `「${cardTitle}」を ${qtyStr} 単位購入（または処理）しました。`, "actionProcessSelf");
+            return { success: true, type: 'normal', cardTitle, qty };
         }
     } catch (error) {
         writeLog(supabase, playerName, "Error", `エラー: ${error.message}`);
+        return { error: error.message };
     }
 }
 
 export async function actionPass(supabase, currentUserId) {
-    if (!supabase || !currentUserId) return;
+    if (!supabase || !currentUserId) return false;
     
     const playerName = getLocalPlayerName();
     try {
@@ -148,24 +139,22 @@ export async function actionPass(supabase, currentUserId) {
             p_room_id: roomId,
             p_user_id: currentUserId
         });
+        return true;
     } catch (error) {
         writeLog(supabase, playerName, "Error", `エラー: ${error.message}`);
+        return false;
     }
 }
 
 export async function actionEndTurn(supabase, currentUserId) {
-    if (!supabase || !currentUserId) return;
+    if (!supabase || !currentUserId) return false;
 
     const state = await getCurrentPlayerState(supabase, currentUserId);
-    if (!state) return;
+    if (!state) return false;
     
     const playerName = state.name || getLocalPlayerName();
     const financials = state.financials || {};
     const cash = parseInt(financials.cash || 0, 10);
-
-    disableAllActionButtons();
-
-    writeLog(supabase, playerName, "Action", "「次の人へ」ボタンが押下されました");
 
     if (cash < 0) {
         try {
@@ -177,10 +166,10 @@ export async function actionEndTurn(supabase, currentUserId) {
             localStorage.removeItem('cashflow_user_id');
             localStorage.removeItem('cashflow_user_name');
             window.location.reload();
-            return;
+            return true;
         } catch (error) {
             writeLog(supabase, playerName, "Error", `エラー: ${error.message}`);
-            return;
+            return false;
         }
     }
 
@@ -189,8 +178,10 @@ export async function actionEndTurn(supabase, currentUserId) {
             p_room_id: roomId, 
             p_user_id: currentUserId 
         });
+        return true;
     } catch (error) {
         writeLog(supabase, playerName, "Error", `エラー: ${error.message}`);
+        return false;
     }
 }
 
