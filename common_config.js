@@ -10,4 +10,7 @@ export const roomId = "room01"; // ゲーム（部屋）は1つに固定
 // 3. 為替レート設定（1ドルあたりの円）
 export const EXCHANGE_RATE = 160;
 
+// 4. デバッグ・開発用設定
+export const SHOW_FUNCTION_NAME_IN_MESSAGE = true; // true: 画面Messageに関数名を表示する / false: 表示しない
+
 console.log("【残す】config.js が読み込まれました。");
