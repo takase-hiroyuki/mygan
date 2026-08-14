@@ -71,6 +71,9 @@ export async function actionOperateItem(supabase, currentUserId) {
         return { error: "対象のアイテムと処理内容の両方を選択してください。" };
     }
 
+    // 選択された項目のテキスト（【売却】〇〇 など）を取得
+    const itemText = itemSelect.options[itemSelect.selectedIndex].text;
+
     try {
         await callRpcWithDebug(supabase, 'operate_participant_item_v2', {
             p_room_id: roomId,
@@ -78,7 +81,7 @@ export async function actionOperateItem(supabase, currentUserId) {
             p_item_id: itemId,
             p_operation: operation
         });
-        return { success: true };
+        return { success: true, itemText };
     } catch (error) {
         writeLog(supabase, playerName, "Error", `処理エラー: ${error.message}`);
         return { error: error.message };
