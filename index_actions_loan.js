@@ -2,7 +2,7 @@
 import { roomId } from './common_config.js';
 import { SEL_G } from './common_dom_selectors.js';
 import { callRpcWithDebug,
-         insertSystemMessage,
+         sendGameProgressMessage,
          getLocalPlayerName,
          writeLog } from './common_utils.js';
 
@@ -24,6 +24,8 @@ export async function actionBorrowBankLoan(supabaseClient, userId) {
         
         if (result && result.status === 'error') {
             writeLog(supabaseClient, playerName, "Error", `エラー: ${result.message}`);
+        } else {
+            sendGameProgressMessage(supabaseClient, roomId, playerName, "1000ドルの銀行借入を行いました。", "actionBorrowBankLoan");
         }
     } catch (error) {
         writeLog(supabaseClient, playerName, "Error", `借入処理に失敗しました。: ${error.message}`);
@@ -50,6 +52,8 @@ export async function actionRepayBankLoan(supabaseClient, userId) {
         
         if (result && result.status === 'error') {
             writeLog(supabaseClient, playerName, "Error", `エラー: ${result.message}`);
+        } else {
+            sendGameProgressMessage(supabaseClient, roomId, playerName, "1000ドルの銀行ローンを返済しました。", "actionRepayBankLoan");
         }
     } catch (error) {
         writeLog(supabaseClient, playerName, "Error", `返済処理に失敗しました。: ${error.message}`);
