@@ -6,6 +6,7 @@ import { callRpcWithDebug,
          CELLS_OPPORTUNITY,
          CELLS_DOODAD,
          CELLS_MARKET,
+         BOARD_CELL_NAMES, // 追加
          sendGameProgressMessage,
          getLocalPlayerName,
          writeLog } from './common_utils.js';
@@ -72,6 +73,12 @@ export async function actionRollDice(supabase, currentUserId, diceCount = 1) {
         const postMoveState = await getCurrentPlayerState(supabase, currentUserId);
         if (postMoveState && postMoveState.position !== undefined) {
             const newPos = parseInt(postMoveState.position, 10);
+            const diceVal = postMoveState.last_dice;
+            const posStr = String(newPos).padStart(2, '0');
+            const cellName = BOARD_CELL_NAMES[newPos] || "";
+            
+            // サイコロの出目と移動先を通知
+            sendGameProgressMessage(supabase, roomId, playerName, `${diceVal}の目が出ました<br>${posStr}${cellName} に移動しました`, "actionRollDice");
             
             setTimeout(async () => {
                 if (CELLS_MARKET.includes(newPos)) {
@@ -149,7 +156,6 @@ export async function actionEndTurn(supabase, currentUserId) {
 
     disableAllActionButtons();
 
-    // ログには記録するが、画面のMessageには表示しない
     writeLog(supabase, playerName, "Action", "「次の人へ」ボタンが押下されました");
 
     if (cash < 0) {
