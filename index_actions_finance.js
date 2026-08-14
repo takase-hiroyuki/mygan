@@ -15,6 +15,7 @@ export async function actionClaimPaycheck(supabase, currentUserId) {
             p_room_id: roomId, 
             p_user_id: currentUserId 
         });
+        sendGameProgressMessage(supabase, roomId, playerName, "入金請求しました。", "actionClaimPaycheck");
     } catch (error) {
         writeLog(supabase, playerName, "Error", `エラー: ${error.message}`);
         if (claimButton) claimButton.disabled = false;
