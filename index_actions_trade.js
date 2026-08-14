@@ -1,7 +1,7 @@
 // index_actions_trade.js
 import { roomId } from './common_config.js';
 import { SEL_G } from './common_dom_selectors.js';
-import { callRpcWithDebug, insertSystemMessage, getLocalPlayerName, writeLog } from './common_utils.js';
+import { callRpcWithDebug, sendGameProgressMessage, getLocalPlayerName, writeLog } from './common_utils.js';
 
 export async function actionProposeTrade(supabase, currentUserId) {
     if (!supabase || !currentUserId) return;
@@ -20,17 +20,17 @@ export async function actionProposeTrade(supabase, currentUserId) {
     console.log("[DEBUG] actionProposeTrade 開始:", { targetUserId, priceYen });
 
     if (!targetUserId) {
-        await insertSystemMessage(supabase, playerName, "交渉相手を選択してください。");
+        sendGameProgressMessage(supabase, roomId, playerName, "交渉相手を選択してください。", "actionProposeTrade");
         return;
     }
 
     if (isNaN(priceYen) || priceYen < 0) {
-        await insertSystemMessage(supabase, playerName, "有効な金額を入力してください。");
+        sendGameProgressMessage(supabase, roomId, playerName, "有効な金額を入力してください。", "actionProposeTrade");
         return;
     }
 
     if (priceYen < 160) {
-        await insertSystemMessage(supabase, playerName, "160円以上の金額を入力してください。");
+        sendGameProgressMessage(supabase, roomId, playerName, "160円以上の金額を入力してください。", "actionProposeTrade");
         return;
     }
 
@@ -45,7 +45,7 @@ export async function actionProposeTrade(supabase, currentUserId) {
             p_buyer_id: targetUserId,
             p_price: priceUsd
         });
-        await insertSystemMessage(supabase, playerName, "交渉を持ちかけました。相手の返答を待っています。");
+        sendGameProgressMessage(supabase, roomId, playerName, "交渉を持ちかけました。相手の返答を待っています。", "actionProposeTrade");
         console.log("[DEBUG] 交渉データの送信完了");
     } catch (error) {
         console.error("[DEBUG] 交渉エラー:", error);
@@ -69,7 +69,7 @@ export async function actionAcceptTrade(supabase, currentUserId) {
             p_room_id: roomId,
             p_buyer_id: currentUserId
         });
-        await insertSystemMessage(supabase, playerName, "交渉を承諾し、代金を支払いました。カードの権利を取得しました。");
+        sendGameProgressMessage(supabase, roomId, playerName, "交渉を承諾し、代金を支払いました。カードの権利を取得しました。", "actionAcceptTrade");
     } catch (error) {
         writeLog(supabase, playerName, "Error", `承諾エラー: ${error.message}`);
     } finally {
@@ -91,7 +91,7 @@ export async function actionRejectTrade(supabase, currentUserId) {
         await callRpcWithDebug(supabase, 'clear_trade_v2', {
             p_room_id: roomId
         });
-        await insertSystemMessage(supabase, playerName, "交渉を拒否しました。");
+        sendGameProgressMessage(supabase, roomId, playerName, "交渉を拒否しました。", "actionRejectTrade");
     } catch (error) {
         writeLog(supabase, playerName, "Error", `拒否エラー: ${error.message}`);
     } finally {
@@ -112,7 +112,7 @@ export async function actionProcessSelf(supabase, currentUserId) {
     if (elNumProcess && !elNumProcess.hidden && elNumProcess.value) {
         quantity = parseInt(elNumProcess.value, 10);
         if (isNaN(quantity) || quantity <= 0) {
-            await insertSystemMessage(supabase, playerName, "有効な数量を入力してください。");
+            sendGameProgressMessage(supabase, roomId, playerName, "有効な数量を入力してください。", "actionProcessSelf");
             return;
         }
     }
@@ -125,7 +125,7 @@ export async function actionProcessSelf(supabase, currentUserId) {
             p_user_id: currentUserId,
             p_input_quantity: quantity
         });
-        await insertSystemMessage(supabase, playerName, "カードを処理しました。");
+        sendGameProgressMessage(supabase, roomId, playerName, "カードを処理しました。", "actionProcessSelf");
         
         if (elNumProcess) elNumProcess.value = '';
     } catch (error) {
