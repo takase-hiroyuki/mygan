@@ -1,16 +1,9 @@
 // index_actions_loan.js
 import { roomId } from './common_config.js';
-import { SEL_G } from './common_dom_selectors.js';
-import { callRpcWithDebug,
-         sendGameProgressMessage,
-         getLocalPlayerName,
-         writeLog } from './common_utils.js';
+import { callRpcWithDebug, getLocalPlayerName, writeLog } from './common_utils.js';
 
 export async function actionBorrowBankLoan(supabaseClient, userId) {
-    if (!supabaseClient || !userId) return;
-
-    const btn = document.getElementById(SEL_G.LOAN.BTN_BORROW_LOAN);
-    if (btn) btn.disabled = true;
+    if (!supabaseClient || !userId) return { error: "無効なリクエスト" };
 
     const amount = 1000;
     const playerName = getLocalPlayerName();
@@ -24,21 +17,18 @@ export async function actionBorrowBankLoan(supabaseClient, userId) {
         
         if (result && result.status === 'error') {
             writeLog(supabaseClient, playerName, "Error", `エラー: ${result.message}`);
+            return { error: result.message };
         } else {
-            sendGameProgressMessage(supabaseClient, roomId, playerName, "1000ドルの銀行借入を行いました。", "actionBorrowBankLoan");
+            return { success: true };
         }
     } catch (error) {
         writeLog(supabaseClient, playerName, "Error", `借入処理に失敗しました。: ${error.message}`);
-    } finally {
-        if (btn) btn.disabled = false;
+        return { error: error.message };
     }
 }
 
 export async function actionRepayBankLoan(supabaseClient, userId) {
-    if (!supabaseClient || !userId) return;
-
-    const btn = document.getElementById(SEL_G.LOAN.BTN_PAYBACK_LOAN);
-    if (btn) btn.disabled = true;
+    if (!supabaseClient || !userId) return { error: "無効なリクエスト" };
 
     const amount = 1000;
     const playerName = getLocalPlayerName();
@@ -52,13 +42,13 @@ export async function actionRepayBankLoan(supabaseClient, userId) {
         
         if (result && result.status === 'error') {
             writeLog(supabaseClient, playerName, "Error", `エラー: ${result.message}`);
+            return { error: result.message };
         } else {
-            sendGameProgressMessage(supabaseClient, roomId, playerName, "1000ドルの銀行ローンを返済しました。", "actionRepayBankLoan");
+            return { success: true };
         }
     } catch (error) {
         writeLog(supabaseClient, playerName, "Error", `返済処理に失敗しました。: ${error.message}`);
-    } finally {
-        if (btn) btn.disabled = false;
+        return { error: error.message };
     }
 }
 
