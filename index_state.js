@@ -1,10 +1,11 @@
 // index_state.js
 import { SEL_G } from './common_dom_selectors.js'; 
-import { getLocalPlayerName, displayGameProgressMessage, writeLog, sendGameProgressMessage } from './common_utils.js';
+import { getLocalPlayerName, displayGameProgressMessage, resetMessageDisplayState, writeLog, sendGameProgressMessage } from './common_utils.js';
 
 let cachedParticipants = [];
 let cachedRoom = null;
 let _onRenderCallback = null; 
+let previousTurnUserId = null;
 
 export function startSubscriptions(supabase, roomId, currentUserId, onRender) {
     if (!supabase) return;
@@ -19,8 +20,7 @@ export function startSubscriptions(supabase, roomId, currentUserId, onRender) {
                 const playerName = getLocalPlayerName();
                 writeLog(supabase, "System", "State Warning", "自身のアカウントが部屋から削除されました。強制ログアウトします。");
                 
-                // 退室時は全ユーザーへ通知
-                sendGameProgressMessage(supabase, roomId, "システム", `${playerName} が部屋から削除されました。`);
+                sendGameProgressMessage(supabase, roomId, "システム", `${playerName} が部屋から削除されました。`, "startSubscriptions");
                 
                 localStorage.removeItem('user_id');
                 localStorage.removeItem('player_name');
@@ -54,11 +54,10 @@ export function startSubscriptions(supabase, roomId, currentUserId, onRender) {
         fetchAndRender(supabase, roomId, currentUserId);
     }).subscribe();
 
-    // Broadcast機能によるリアルタイムメッセージの受信（データベースを介さない）
     supabase.channel(`room_broadcast_${roomId}`)
         .on('broadcast', { event: 'progress_update' }, (payload) => {
             if (payload.payload && payload.payload.target && payload.payload.body) {
-                displayGameProgressMessage(payload.payload.target, payload.payload.body);
+                displayGameProgressMessage(payload.payload.target, payload.payload.body, payload.payload.funcName);
             }
         })
         .subscribe();
@@ -77,18 +76,29 @@ export async function fetchAndRender(supabase, roomId, currentUserId) {
     if (resPart.error) {
         writeLog(supabase, "System", "State Error", `参加者データのフェッチに失敗しました: ${JSON.stringify(resPart.error)}`);
         const playerName = getLocalPlayerName();
-        sendGameProgressMessage(supabase, roomId, playerName, "参加者データの同期に失敗しました。");
+        sendGameProgressMessage(supabase, roomId, playerName, "参加者データの同期に失敗しました。", "fetchAndRender");
         return;
     }
     if (resRoom.error) {
         writeLog(supabase, "System", "State Error", `部屋データのフェッチに失敗しました: ${JSON.stringify(resRoom.error)}`);
         const playerName = getLocalPlayerName();
-        sendGameProgressMessage(supabase, roomId, playerName, "部屋データの同期に失敗しました。");
+        sendGameProgressMessage(supabase, roomId, playerName, "部屋データの同期に失敗しました。", "fetchAndRender");
         return;
     }
     
     if (resPart.data) cachedParticipants = resPart.data;
-    if (resRoom.data) cachedRoom = resRoom.data;
+    if (resRoom.data) {
+        cachedRoom = resRoom.data;
+
+        const newTurnUserId = cachedRoom.current_turn_user_id;
+        if (newTurnUserId && newTurnUserId !== previousTurnUserId) {
+            resetMessageDisplayState();
+            const turnUser = cachedParticipants.find(p => p.user_id === newTurnUserId);
+            const turnUserName = turnUser?.state?.name || "プレイヤー";
+            displayGameProgressMessage("システム", `${turnUserName} の番になりました。`, "fetchAndRender");
+            previousTurnUserId = newTurnUserId;
+        }
+    }
     
     if (_onRenderCallback) {
         _onRenderCallback(currentUserId, cachedParticipants, cachedRoom);
