@@ -62,18 +62,18 @@ function updateUI(userId, participants, room) {
 
 (async function init() {
     supabase = await initSupabaseClient();
-    writeLog(supabase, "System", "Init", "アプリケーションの初期化を開始します...");
+    writeLog(supabase, "System", "Init", "アプリケーションの初期化");
     
     await debugSupabaseConnection(supabase);
 
     currentUserId = await checkExistingLogin(supabase, SEL_G);
 
     if (currentUserId) {
-        writeLog(supabase, "System", "Init", `既存のログインセッションを検出しました: user_id=${currentUserId}`);
+        writeLog(supabase, "System", "Init", `既存のログインセッションを検出: user_id=${currentUserId}`);
         toggleScreen(true);
         startSubscriptions(supabase, roomId, currentUserId, updateUI);
     } else {
-        writeLog(supabase, "System", "Init", "ログインセッションは見つかりませんでした。ログイン画面を表示します。");
+        writeLog(supabase, "System", "Init", "既存のログインセッション無し。ログイン画面を表示");
         toggleScreen(false);
     }
 })();
@@ -108,11 +108,11 @@ btnRollDice?.addEventListener('click', async () => {
         sendGameProgressMessage(supabase, roomId, playerName, result.error, "actionRollDice");
     } else if (result && result.success) {
         // メッセージを1行に連結
-        let msg = `${result.diceVal}の目が出て、${result.posStr}${result.cellName} に移動しました`;
+        let msg = `${result.diceVal}の目が出て、${result.posStr}${result.cellName} に移動しました。`;
         if (result.isOpportunity) {
-            msg += `<br>${playerName} は、普通の商売、または大きな商売、のどちらかをひいてください`;
+            msg += `${playerName} は「普通の商売」「大きな商売」をひいてください`;
         } else if (result.isDoodad) {
-            msg += `<br>カードの内容は即座に処理しなければなりません`;
+            msg += `カードをただちに処理して下さい。`;
         }
         sendGameProgressMessage(supabase, roomId, playerName, msg, "actionRollDice");
     }
@@ -120,7 +120,7 @@ btnRollDice?.addEventListener('click', async () => {
 
 btnRollDice2?.addEventListener('click', async () => {
     const playerName = getLocalPlayerName();
-    writeLog(supabase, playerName, "Action", "「サイコロ２個」ボタンが押下されました");
+    writeLog(supabase, playerName, "Action", "「サイコロ２個」振りました。");
     const result = await actionRollDice(supabase, currentUserId, 2);
     if (result && result.error) {
         sendGameProgressMessage(supabase, roomId, playerName, result.error, "actionRollDice");
@@ -165,7 +165,7 @@ btnBorrowLoan?.addEventListener('click', async () => {
     writeLog(supabase, playerName, "Action", "「銀行借入」ボタンが押下されました");
     const result = await actionBorrowBankLoan(supabase, currentUserId);
     if (result && result.success) {
-        sendGameProgressMessage(supabase, roomId, playerName, "1000ドルの銀行借入を行いました。", "actionBorrowBankLoan");
+        sendGameProgressMessage(supabase, roomId, playerName, "銀行借入を行いました。", "actionBorrowBankLoan");
     } else if (result && result.error) {
         sendGameProgressMessage(supabase, roomId, playerName, result.error, "actionBorrowBankLoan");
     }
@@ -176,7 +176,7 @@ btnPaybackLoan?.addEventListener('click', async () => {
     writeLog(supabase, playerName, "Action", "「銀行返済」ボタンが押下されました");
     const result = await actionRepayBankLoan(supabase, currentUserId);
     if (result && result.success) {
-        sendGameProgressMessage(supabase, roomId, playerName, "1000ドルの銀行ローンを返済しました。", "actionRepayBankLoan");
+        sendGameProgressMessage(supabase, roomId, playerName, "銀行ローンを返済しました。", "actionRepayBankLoan");
     } else if (result && result.error) {
         sendGameProgressMessage(supabase, roomId, playerName, result.error, "actionRepayBankLoan");
     }
@@ -241,12 +241,12 @@ btnProcessSelf?.addEventListener('click', async () => {
     const result = await actionProcessSelf(supabase, currentUserId, qty);
     if (result && result.success) {
         if (result.type === 'charity') {
-            sendGameProgressMessage(supabase, roomId, playerName, "寄付を行いました。以降のターンでサイコロを2個振る権利を獲得しました。", "actionProcessSelf");
+            sendGameProgressMessage(supabase, roomId, playerName, "寄付しました。サイコロを2個振れます。", "actionProcessSelf");
         } else if (result.type === 'other') {
             sendGameProgressMessage(supabase, roomId, playerName, `「${result.cardTitle}」を適用しました。`, "actionProcessSelf");
         } else {
             const qtyStr = Number(result.qty).toLocaleString();
-            sendGameProgressMessage(supabase, roomId, playerName, `「${result.cardTitle}」を ${qtyStr} 単位購入（または処理）しました。`, "actionProcessSelf");
+            sendGameProgressMessage(supabase, roomId, playerName, `「${result.cardTitle}」を ${qtyStr} 個、処理しました。`, "actionProcessSelf");
         }
     } else if (result && result.error) {
         sendGameProgressMessage(supabase, roomId, playerName, result.error, "actionProcessSelf");
@@ -258,7 +258,7 @@ btnPassCard?.addEventListener('click', async () => {
     writeLog(supabase, playerName, "Action", "「パスする」ボタンが押下されました");
     const success = await actionPass(supabase, currentUserId);
     if (success) {
-        sendGameProgressMessage(supabase, roomId, playerName, `${playerName} は、パスした`, "actionPassCard");
+        sendGameProgressMessage(supabase, roomId, playerName, `${playerName} は、パスしました。`, "actionPassCard");
     }
 });
 
@@ -267,7 +267,7 @@ btnTradeAccept?.addEventListener('click', async () => {
     writeLog(supabase, playerName, "Action", "「承諾」ボタンが押下されました");
     const result = await actionAcceptTrade(supabase, currentUserId);
     if (result && result.success) {
-        sendGameProgressMessage(supabase, roomId, playerName, "交渉を承諾し、代金を支払いました。カードの権利を取得しました。", "actionAcceptTrade");
+        sendGameProgressMessage(supabase, roomId, playerName, "交渉成立。代金を支払い、カードを獲得しました。", "actionAcceptTrade");
     } else if (result && result.error) {
         sendGameProgressMessage(supabase, roomId, playerName, result.error, "actionAcceptTrade");
     }
