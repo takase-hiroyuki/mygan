@@ -141,7 +141,6 @@ export function sendGameProgressMessage(supabaseClient, currentRoomId, targetNam
 }
 
 export function displayGameProgressMessage(target, body, funcName = "") {
-    // 描画先を上書きされない message-body へ変更
     const el = document.getElementById(SEL_G.MESSAGE.BODY);
     if (!el) return;
 
@@ -149,19 +148,19 @@ export function displayGameProgressMessage(target, body, funcName = "") {
     if (!msgContainer) {
         msgContainer = document.createElement('div');
         msgContainer.id = 'game-progress-container';
-        // el (message-body) の子要素として追加
         el.appendChild(msgContainer);
     }
 
     const newMsg = document.createElement('div');
     newMsg.className = 'game-progress-message';
     
-    let displayBody = body;
-    if (SHOW_FUNCTION_NAME_IN_MESSAGE && funcName) {
-        displayBody = `[Func: ${funcName}] ${body}`;
+    if (SHOW_FUNCTION_NAME_IN_MESSAGE) {
+        let displayFuncName = funcName ? `[Func: ${funcName}] ` : "";
+        newMsg.innerHTML = `【${new Date().toLocaleTimeString()} 通知: ${target}】${displayFuncName}${body}`;
+    } else {
+        newMsg.innerHTML = body;
     }
 
-    newMsg.innerHTML = `【${new Date().toLocaleTimeString()} 通知: ${target}】${displayBody}`;
     msgContainer.insertBefore(newMsg, msgContainer.firstChild);
 }
 
