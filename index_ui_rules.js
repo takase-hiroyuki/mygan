@@ -78,29 +78,19 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
         let canPass = false;
         let canProcess = false;
 
-        if (elBtnProcess && elBtnPass) {
-            if (activeCard.deck_type === 'doodad') {
-                elBtnProcess.textContent = 'O 支払う';
-                elBtnPass.textContent = 'X パスする'; 
+        if (activeCard.deck_type === 'doodad') {
+            canProcess = true;
+            canPass = false; 
+        } else if (activeCard.deck_type === 'market') {
+            canProcess = false; 
+            canPass = true;
+        } else {
+            if (activeCard.asset_type === 'other') {
                 canProcess = true;
                 canPass = false; 
-            } else if (activeCard.deck_type === 'market') {
-                elBtnProcess.textContent = 'O 実行する'; 
-                elBtnPass.textContent = 'O パスする';
-                canProcess = false; 
-                canPass = true;
             } else {
-                if (activeCard.asset_type === 'other') {
-                    elBtnProcess.textContent = 'O 適用する';
-                    elBtnPass.textContent = 'O パスする';
-                    canProcess = true;
-                    canPass = false; 
-                } else {
-                    elBtnProcess.textContent = 'O 購入する';
-                    elBtnPass.textContent = 'O パスする';
-                    canProcess = true;
-                    canPass = true; 
-                }
+                canProcess = true;
+                canPass = true; 
             }
         }
         
@@ -132,8 +122,6 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
             
             setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, true);
             setButtonActive(SEL_G.TRADE.BTN_PASS_CARD, true);
-            if (elBtnProcess) elBtnProcess.textContent = 'O 寄付する';
-            if (elBtnPass) elBtnPass.textContent = 'O パスする';
         } else {
             updateCardDisplay(`${turnUserState.name || '他のプレイヤー'} が寄付を検討中です...`);
             setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, false);
@@ -164,7 +152,7 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
         if (elNumProcess) elNumProcess.hidden = true;
         if (elSellTarget) elSellTarget.disabled = true;
         if (elSellPrice) elSellPrice.disabled = true;
-        if (elBtnProcess) elBtnProcess.textContent = 'X 購入する・支払う';
+        if (elBtnProcess) elBtnProcess.textContent = 'X 処理する';
         if (elBtnPass) elBtnPass.textContent = 'X パスする';
     } else {
         updateCardDisplay("あなたの手番を待つか、サイコロを振ってください。");
@@ -177,7 +165,7 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
         if (elNumProcess) elNumProcess.hidden = true;
         if (elSellTarget) elSellTarget.disabled = true;
         if (elSellPrice) elSellPrice.disabled = true;
-        if (elBtnProcess) elBtnProcess.textContent = 'X 購入する・支払う';
+        if (elBtnProcess) elBtnProcess.textContent = 'X 処理する';
         if (elBtnPass) elBtnPass.textContent = 'X パスする';
     }
     
