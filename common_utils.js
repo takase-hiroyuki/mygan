@@ -127,12 +127,6 @@ export function getLocalPlayerName() {
     return (nameEl && nameEl.textContent !== '未定') ? nameEl.textContent : 'プレイヤー';
 }
 
-export async function insertSystemMessage(supabase, targetName, message, funcName = "") {
-    const logMessage = funcName ? `[${funcName}] ${message}` : message;
-    writeLog(supabase, targetName, "Message", logMessage);
-    return { data: null, error: null };
-}
-
 export function sendGameProgressMessage(supabaseClient, currentRoomId, targetName, message, funcName = "") {
     if (!supabaseClient) return;
     
