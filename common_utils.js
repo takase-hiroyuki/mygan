@@ -1,6 +1,6 @@
 // common_utils.js
 
-import { roomId, EXCHANGE_RATE } from './common_config.js';
+import { roomId, EXCHANGE_RATE, SHOW_FUNCTION_NAME_IN_MESSAGE } from './common_config.js';
 import { SEL_G } from './common_dom_selectors.js';
 
 let localSeqCounter = 0;
@@ -127,23 +127,26 @@ export function getLocalPlayerName() {
     return (nameEl && nameEl.textContent !== '未定') ? nameEl.textContent : 'プレイヤー';
 }
 
-// 接続中の全プレイヤーへ直接メッセージを送信し、同時にログへ記録する関数
-export function sendGameProgressMessage(supabaseClient, currentRoomId, targetName, message) {
+export async function insertSystemMessage(supabase, targetName, message, funcName = "") {
+    const logMessage = funcName ? `[${funcName}] ${message}` : message;
+    writeLog(supabase, targetName, "Message", logMessage);
+    return { data: null, error: null };
+}
+
+export function sendGameProgressMessage(supabaseClient, currentRoomId, targetName, message, funcName = "") {
     if (!supabaseClient) return;
     
-    // 画面表示用：Broadcast機能で直接送信
     supabaseClient.channel(`room_broadcast_${currentRoomId}`).send({
         type: 'broadcast',
         event: 'progress_update',
-        payload: { target: targetName, body: message }
+        payload: { target: targetName, body: message, funcName: funcName }
     });
 
-    // 記録用：game_logs テーブルへ保存
-    writeLog(supabaseClient, targetName, "Message", message);
+    const logMessage = funcName ? `[${funcName}] ${message}` : message;
+    writeLog(supabaseClient, targetName, "Message", logMessage);
 }
 
-// 受信したメッセージを画面に描画する関数
-export function displayGameProgressMessage(target, body) {
+export function displayGameProgressMessage(target, body, funcName = "") {
     const el = document.getElementById(SEL_G.TRADE.THIS_CARD);
     if (!el) return;
 
@@ -156,8 +159,13 @@ export function displayGameProgressMessage(target, body) {
 
     const newMsg = document.createElement('div');
     newMsg.className = 'game-progress-message';
-    newMsg.innerHTML = `【${new Date().toLocaleTimeString()} 通知: ${target}】${body}`;
+    
+    let displayBody = body;
+    if (SHOW_FUNCTION_NAME_IN_MESSAGE && funcName) {
+        displayBody = `[Func: ${funcName}] ${body}`;
+    }
 
+    newMsg.innerHTML = `【${new Date().toLocaleTimeString()} 通知: ${target}】${displayBody}`;
     msgContainer.insertBefore(newMsg, msgContainer.firstChild);
 }
 
