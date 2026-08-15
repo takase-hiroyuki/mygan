@@ -3,18 +3,10 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>mygan index2</title>
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="./index2.css">
-    <style>
-        .active-red-button {
-            background-color: #fed7d7 !important;
-            border-color: #feb2b2 !important;
-            color: #9b2c2c !important;
-            font-weight: bold;
-        }
-    </style>
 </head>
 <body>
     <div id="section-login">
@@ -22,145 +14,160 @@
         <input type="text" id="input-username" placeholder="あなたの名前を入力">
         <button id="btn-login">入室する</button>
     </div>
-    
-    <span id="message-body"></span>
-    
+
+    <div class="toast-message-container">
+        <span id="message-body"></span>
+    </div>
+
     <div id="section-guest" hidden>
-        <div class="status-panel">
-            <span id="hit" style="color: #d32f2f; font-weight: bold; font-size: 1.2em;"></span>
-            <p><strong>名前:</strong> <span id="g-name">未定</span> / <strong>職業:</strong> <span id="g-profession"></span></p>
-            <p><strong>子供:</strong> <span id="g-child-count">0</span> 人 / <strong>養育費:</strong> <span id="g-child-expense">0</span></p>
-            <p class="highlight-cash"><strong>現金:</strong> <span id="current-cash">0</span></p>
-            <p><strong>現在地:</strong> <span id="dice-result">現在地</span> / <strong>手番:</strong> <span id="dice-user">手番</span></p>
-        </div>
-
-        <div class="control-panel">
-            <button id="btn-dice1" disabled>X サイコロ１個</button>
-            <button id="btn-dice2" disabled>X サイコロ２個</button>
-            <button id="btn-paycheck" disabled>X 入金請求</button>
-            <button id="btn-end-turn" disabled>X 次の人へ</button>
-        </div>
         
-        <div class="control-panel">
-            <button id="btn-small-deal" disabled>X 普通の商売</button>
-            <button id="btn-big-deal" disabled>X 大きい商売</button>
-            <button id="btn-borrow-loan" disabled>X 銀行借入</button>
-            <button id="btn-payback-loan" disabled>X 銀行返済</button>
-        </div>
+        <!-- ▼ 左カラム：ステータス・操作・盤面 ▼ -->
+        <div class="panel-left">
+            <div class="status-panel glass-panel">
+                <span id="hit" style="color: #ef4444; font-weight: bold; font-size: 1.2em;"></span>
+                <p><strong>名前:</strong> <span id="g-name">未定</span> / <strong>職業:</strong> <span id="g-profession"></span></p>
+                <p><strong>子供:</strong> <span id="g-child-count">0</span> 人 / <strong>養育費:</strong> <span id="g-child-expense">0</span></p>
+                <p class="highlight-cash"><strong>現金:</strong> <span id="current-cash">0</span></p>
+                <p><strong>現在地:</strong> <span id="dice-result">現在地</span> / <strong>手番:</strong> <span id="dice-user">手番</span></p>
+            </div>
 
-        <div class="table-responsive">
-            <table class="board-table" border="1" cellspacing="0" cellpadding="2">
-                <tbody>
-                    <tr>
-                        <td>00<br>入金<br><span id="cell-0" class="occupants"></span></td>
-                        <td>01<br>娯楽<br><span id="cell-1" class="occupants"></span></td>
-                        <td>02<br>商売<br><span id="cell-2" class="occupants"></span></td>
-                        <td>03<br>寄付<br><span id="cell-3" class="occupants"></span></td>
-                    </tr>
-                    <tr>
-                        <td>04<br>商売<br><span id="cell-4" class="occupants"></span></td>
-                        <td>05<br>入金<br><span id="cell-5" class="occupants"></span></td>
-                        <td>06<br>商売<br><span id="cell-6" class="occupants"></span></td>
-                        <td>07<br>娯楽<br><span id="cell-7" class="occupants"></span></td>
-                    </tr>
-                    <tr>
-                        <td>08<br>商売<br><span id="cell-8" class="occupants"></span></td>
-                        <td>09<br>子供<br><span id="cell-9" class="occupants"></span></td>
-                        <td>10<br>商売<br><span id="cell-10" class="occupants"></span></td>
-                        <td>11<br>入金<br><span id="cell-11" class="occupants"></span></td>
-                    </tr>
-                    <tr>
-                        <td>12<br>市場<br><span id="cell-12" class="occupants"></span></td>
-                        <td>13<br>商売<br><span id="cell-13" class="occupants"></span></td>
-                        <td>14<br>娯楽<br><span id="cell-14" class="occupants"></span></td>
-                        <td>15<br>商売<br><span id="cell-15" class="occupants"></span></td>
-                    </tr>
-                    <tr>
-                        <td>16<br>寄付<br><span id="cell-16" class="occupants"></span></td>
-                        <td>17<br>商売<br><span id="cell-17" class="occupants"></span></td>
-                        <td>18<br>入金<br><span id="cell-18" class="occupants"></span></td>
-                        <td>19<br>商売<br><span id="cell-19" class="occupants"></span></td>
-                    </tr>
-                    <tr>
-                        <td>20<br>解雇<br><span id="cell-20" class="occupants"></span></td>
-                        <td>21<br>商売<br><span id="cell-21" class="occupants"></span></td>
-                        <td>22<br>市場<br><span id="cell-22" class="occupants"></span></td>
-                        <td>23<br>商売<br><span id="cell-23" class="occupants"></span></td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="control-panel">
+                <button id="btn-dice1" disabled>X サイコロ１個</button>
+                <button id="btn-dice2" disabled>X サイコロ２個</button>
+                <button id="btn-paycheck" disabled>X 入金請求</button>
+                <button id="btn-end-turn" disabled>X 次の人へ</button>
+            </div>
+
+            <div class="control-panel">
+                <button id="btn-small-deal" disabled>X 普通の商売</button>
+                <button id="btn-big-deal" disabled>X 大きい商売</button>
+                <button id="btn-borrow-loan" disabled>X 銀行借入</button>
+                <button id="btn-payback-loan" disabled>X 銀行返済</button>
+            </div>
+
+            <div class="table-responsive board-container">
+                <table class="board-table" cellspacing="0" cellpadding="2">
+                    <tbody>
+                        <tr>
+                            <td><span class="cell-num">00</span><br><span class="cell-name">入金</span><br><span id="cell-0" class="occupants"></span></td>
+                            <td><span class="cell-num">01</span><br><span class="cell-name">娯楽</span><br><span id="cell-1" class="occupants"></span></td>
+                            <td><span class="cell-num">02</span><br><span class="cell-name">商売</span><br><span id="cell-2" class="occupants"></span></td>
+                            <td><span class="cell-num">03</span><br><span class="cell-name">寄付</span><br><span id="cell-3" class="occupants"></span></td>
+                        </tr>
+                        <tr>
+                            <td><span class="cell-num">04</span><br><span class="cell-name">商売</span><br><span id="cell-4" class="occupants"></span></td>
+                            <td><span class="cell-num">05</span><br><span class="cell-name">入金</span><br><span id="cell-5" class="occupants"></span></td>
+                            <td><span class="cell-num">06</span><br><span class="cell-name">商売</span><br><span id="cell-6" class="occupants"></span></td>
+                            <td><span class="cell-num">07</span><br><span class="cell-name">娯楽</span><br><span id="cell-7" class="occupants"></span></td>
+                        </tr>
+                        <tr>
+                            <td><span class="cell-num">08</span><br><span class="cell-name">商売</span><br><span id="cell-8" class="occupants"></span></td>
+                            <td><span class="cell-num">09</span><br><span class="cell-name">子供</span><br><span id="cell-9" class="occupants"></span></td>
+                            <td><span class="cell-num">10</span><br><span class="cell-name">商売</span><br><span id="cell-10" class="occupants"></span></td>
+                            <td><span class="cell-num">11</span><br><span class="cell-name">入金</span><br><span id="cell-11" class="occupants"></span></td>
+                        </tr>
+                        <tr>
+                            <td><span class="cell-num">12</span><br><span class="cell-name">市場</span><br><span id="cell-12" class="occupants"></span></td>
+                            <td><span class="cell-num">13</span><br><span class="cell-name">商売</span><br><span id="cell-13" class="occupants"></span></td>
+                            <td><span class="cell-num">14</span><br><span class="cell-name">娯楽</span><br><span id="cell-14" class="occupants"></span></td>
+                            <td><span class="cell-num">15</span><br><span class="cell-name">商売</span><br><span id="cell-15" class="occupants"></span></td>
+                        </tr>
+                        <tr>
+                            <td><span class="cell-num">16</span><br><span class="cell-name">寄付</span><br><span id="cell-16" class="occupants"></span></td>
+                            <td><span class="cell-num">17</span><br><span class="cell-name">商売</span><br><span id="cell-17" class="occupants"></span></td>
+                            <td><span class="cell-num">18</span><br><span class="cell-name">入金</span><br><span id="cell-18" class="occupants"></span></td>
+                            <td><span class="cell-num">19</span><br><span class="cell-name">商売</span><br><span id="cell-19" class="occupants"></span></td>
+                        </tr>
+                        <tr>
+                            <td><span class="cell-num">20</span><br><span class="cell-name">解雇</span><br><span id="cell-20" class="occupants"></span></td>
+                            <td><span class="cell-num">21</span><br><span class="cell-name">商売</span><br><span id="cell-21" class="occupants"></span></td>
+                            <td><span class="cell-num">22</span><br><span class="cell-name">市場</span><br><span id="cell-22" class="occupants"></span></td>
+                            <td><span class="cell-num">23</span><br><span class="cell-name">商売</span><br><span id="cell-23" class="occupants"></span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
+        <!-- ▲ 左カラムここまで ▲ -->
+
+        <!-- ▼ 右カラム：カード・財務諸表 ▼ -->
+        <div class="panel-right">
+            
+            <!-- カード取引エリア -->
+            <div id="msg-area" class="app-card">
+                <div class="card-message">
+                    <span id="main-msg">あなたの手番を待つか、サイコロを振ってください。</span>
+                </div>
+                <hr class="card-divider">
+                
+                <!-- 自分用アクションエリア -->
+                <div class="action-group">
+                    <input type="number" id="num-process-self" placeholder="任意">
+                    <button id="btn-process-self">処理する</button>
+                    <button id="btn-pass-card">パスする</button>
+                </div>
+
+                <!-- 交渉・売買エリア -->
+                <div class="action-group trade-section glass-inner">
+                    <label>権利を売る:</label>
+                    <select id="sell-target">
+                        <option value="">だれに</option>
+                    </select>
+                    <input type="number" id="sell-price" placeholder="金額(円)">
+                    <button id="btn-sell-card">交渉持掛</button>
+                </div>
+
+                <!-- メッセージ応答エリア -->
+                <div class="action-group response-section glass-inner">
+                    <span id="trade-message" class="info-text">受信M (交渉無)</span> 
+                    <button id="btn-trade-accept">承諾</button>
+                    <button id="btn-trade-reject">拒否</button>
+                </div>
+            </div>
+
+            <!-- 財務諸表エリア -->
+            <div class="financial-statement app-card">
+                <select id="player-select" class="modern-select"></select>
+
+                <div class="financial-summary glass-inner">
+                    <p><span id="l-profession">◯◯の職業：★★★</span></p>
+                    <p class="highlight-cash"><span id="l-cash">◯◯の所持金：★★★</span></p>
+                    <button id="fast_track" class="full-width-btn">ファーストトラックまで、あと◯◯◯円</button>
+                </div>
+
+                <div class="table-responsive">
+                    <span id="l-profit">資産 table</span>
+                </div>
+                <div class="table-responsive">
+                    <span id="l-loss">負債 table</span>
+                </div>
+
+                <div class="cashflow-calc glass-inner">
+                    <span id="ncashflow" class="cf-badge">CF： xxx</span>
+                    <input type="number" id="icashflow" placeholder="CF金額を入力">
+                    <button id="bcashflow">計算する</button>
+                </div>
+
+                <div class="asset-operation glass-inner accent-yellow">
+                    <select id="profit_loss">
+                        <option value="">対象の資産・負債を選択</option>
+                    </select>
+                    <select id="pl-operate">
+                        <option value="">処理の内容を選択</option>
+                        <option value="sell">資産を売却 (現金増)</option>
+                        <option value="payoff">負債を返済 (現金減)</option>
+                    </select>
+                    <button id="b-operate" class="full-width-btn">X 実際に処理する</button>
+                </div>
+            </div>
+
+        </div>
+        <!-- ▲ 右カラムここまで ▲ -->
         
-        <!-- 修正されたカード取引エリア -->
-        <div id="msg-area">
-            <div class="card-message">
-                <span id="main-msg">あなたの手番を待つか、サイコロを振ってください。</span>
-            </div>
-            <hr>
-            <!-- 自分用アクションエリア -->
-            <div class="action-group">
-                <input type="number" id="num-process-self" placeholder="任意">
-                <button id="btn-process-self">処理する</button>
-                <button id="btn-pass-card">パスする</button>
-            </div>
-            
-            <!-- 交渉・売買エリア -->
-            <div class="action-group trade-section">
-                <label>権利を売る:</label>
-                <select id="sell-target">
-                    <option value="">だれに</option>
-                </select>
-                <input type="number" id="sell-price" placeholder="金額(円)">
-                <button id="btn-sell-card">交渉持掛</button>
-            </div>
-            
-            <!-- メッセージ応答エリア -->
-            <div class="action-group response-section">
-                <span id="trade-message">受信M (交渉無)</span> 
-                <button id="btn-trade-accept">承諾</button>
-                <button id="btn-trade-reject">拒否</button>
-            </div>
-        </div>
-
-        <div class="financial-statement">
-            <select id="player-select"></select>
-            
-            <div class="financial-summary">
-                <p><span id="l-profession">◯◯の職業：★★★</span></p>
-                <p class="highlight-cash"><span id="l-cash">◯◯の所持金：★★★</span></p>
-                <button id="fast_track" class="full-width-btn">ファーストトラックまで、あと◯◯◯円</button>
-            </div>
-            
-            <div class="table-responsive">
-                <span id="l-profit">資産 table</span>
-            </div>
-            <div class="table-responsive">
-                <span id="l-loss">負債 table</span>
-            </div>
-            
-            <div class="cashflow-calc">
-                <span id="ncashflow">CF： xxx</span>
-                <input type="number" id="icashflow" placeholder="CF金額">
-                <button id="bcashflow">計算</button>
-            </div>
-            
-            <div class="asset-operation">
-                <select id="profit_loss">
-                    <option value="">対象の資産・負債を選択</option>
-                </select>
-                <select id="pl-operate">
-                    <option value="">処理の内容を選択</option>
-                    <option value="sell">資産を売却 (現金増)</option>
-                    <option value="payoff">負債を返済 (現金減)</option>
-                </select>
-                <button id="b-operate" class="full-width-btn">X 実際に処理する</button>
-            </div>
-        </div>
-
     </div>
 
     <script>
-        // index.jsを変更せず、DOMの変化を監視してボタンの先頭文字が 'O' または '◯' の場合に赤色クラスを付与するオブザーバー
+        // ボタンの先頭文字が 'O' または '◯' の場合に、iOS風の美しい赤色(アクティブ)クラスを付与
         const observer = new MutationObserver(() => {
             document.querySelectorAll('button').forEach(btn => {
                 const text = btn.textContent.trim();
