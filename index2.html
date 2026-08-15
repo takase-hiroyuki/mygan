@@ -109,6 +109,15 @@
         </div>
 
         <div class="col-right">
+
+            <!-- ▼ 変更点：メッセージエリアを右カラムの一番上に移動 ▼ -->
+            <div class="module">
+                <div class="module-header">システム通知</div>
+                <div class="module-content" style="max-height: 120px; overflow-y: auto; background-color: #f8fafc; padding: 0;">
+                    <span id="message-body"></span>
+                </div>
+            </div>
+
             <div class="module" id="msg-area">
                 <div class="module-header red-accent">カードとアクション</div>
                 <div class="module-content">
@@ -192,10 +201,6 @@
             </div>
 
         </div>
-    </div>
-
-    <div style="max-width: 1200px; margin: 0 auto;">
-        <span id="message-body"></span>
     </div>
 
     <script>
