@@ -88,7 +88,6 @@
             transition: all 0.2s ease;
         }
         
-        /* ▼ 変更点：有効なボタン(押せる状態)は、目立つ「ブルー」にする ▼ */
         button:not(:disabled) {
             background: #2563eb; 
             color: #ffffff;
@@ -100,7 +99,6 @@
             transform: scale(0.98);
         }
 
-        /* ▼ 変更点：無効なボタン(押せない状態)は、目立たない「グレー」にする ▼ */
         button:disabled { 
             background: #f1f5f9; 
             color: #94a3b8; 
@@ -109,7 +107,6 @@
             cursor: not-allowed;
         }
         
-        /* ▼ 強調ボタン(Oから始まるもの)は、これまで通り「レッド」にする ▼ */
         button.active-red-button {
             background: #e11d48 !important;
             color: #ffffff !important;
@@ -279,8 +276,8 @@
 
                     <div class="flex-row">
                         <input type="number" id="num-process-self" placeholder="数量(任意)" style="flex: 0.5;">
-                        <button id="btn-process-self" disabled>処理する</button>
-                        <button id="btn-pass-card" disabled>パスする</button>
+                        <button id="btn-process-self" disabled>X 処理する</button>
+                        <button id="btn-pass-card" disabled>X パスする</button>
                     </div>
 
                     <hr style="border:0; border-top:1px dashed #ccc; margin:12px 0;">
@@ -288,13 +285,13 @@
                     <div class="flex-row">
                         <select id="sell-target"><option value="">権利を売る相手</option></select>
                         <input type="number" id="sell-price" placeholder="金額(円)">
-                        <button id="btn-sell-card" disabled>交渉持掛</button>
+                        <button id="btn-sell-card" disabled>X 交渉持掛</button>
                     </div>
 
                     <div class="flex-row" style="background:#f1f5f9; padding:8px; border-radius:4px;">
                         <span id="trade-message" style="font-size:12px; font-weight:bold; flex: 2;">受信M (交渉無)</span> 
-                        <button id="btn-trade-accept" disabled>承諾</button>
-                        <button id="btn-trade-reject" disabled>拒否</button>
+                        <button id="btn-trade-accept" disabled>X 承諾</button>
+                        <button id="btn-trade-reject" disabled>X 拒否</button>
                     </div>
                 </div>
             </div>
@@ -330,7 +327,7 @@
                     <div class="flex-row" style="background:#f8fafc; padding:8px; border:1px solid #e2e8f0; border-radius:4px;">
                         <span id="ncashflow" style="font-weight:bold; font-size:13px; color:#0f172a;">CF： xxx</span>
                         <input type="number" id="icashflow" placeholder="CF金額を入力">
-                        <button id="bcashflow" style="flex:0.5;" disabled>計算</button>
+                        <button id="bcashflow" style="flex:0.5;" disabled>X 計算</button>
                     </div>
 
                     <div class="flex-row" style="margin-top:12px;">
@@ -340,7 +337,7 @@
                             <option value="sell">売却 (現金増)</option>
                             <option value="payoff">返済 (現金減)</option>
                         </select>
-                        <button id="b-operate" style="flex: 0.8;" disabled>X 処理</button>
+                        <button id="b-operate" style="flex: 0.8;" disabled>X 実際に処理する</button>
                     </div>
                 </div>
             </div>
@@ -359,9 +356,6 @@
                 const text = btn.textContent.trim();
                 if (text.startsWith('O') || text.startsWith('◯')) {
                     btn.classList.add('active-red-button');
-                    if(btn.innerHTML.indexOf('O ') === 0) {
-                        btn.innerHTML = btn.innerHTML.substring(2);
-                    }
                 } else {
                     btn.classList.remove('active-red-button');
                 }
