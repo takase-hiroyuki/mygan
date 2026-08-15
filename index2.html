@@ -7,7 +7,7 @@
     <link rel="icon" href="data:,">
     
     <style>
-        /* 1. 全体リセットとベース設定 (Yahoo!のようなカチッとしたフォントと背景) */
+        /* 1. 全体リセットとベース設定 */
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
             font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
@@ -75,30 +75,50 @@
         .highlight-cash { color: #0040a1; font-size: 18px; font-weight: bold; }
         #hit { color: #e11d48; font-weight: bold; }
 
-        /* 6. ボタン */
+        /* 6. ボタン設定 */
         .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
         button {
             -webkit-appearance: none; appearance: none;
-            background: #ffffff;
-            border: 1px solid #babbbc;
-            color: #333;
             border-radius: 4px;
             padding: 10px 8px;
             font-size: 13px;
             font-weight: bold;
             cursor: pointer;
             touch-action: manipulation;
+            transition: all 0.2s ease;
         }
-        button:active:not(:disabled) { background: #e2e8f0; }
-        button:disabled { background: #f1f5f9; color: #94a3b8; border-color: #e2e8f0; }
         
+        /* ▼ 変更点：有効なボタン(押せる状態)は、目立つ「ブルー」にする ▼ */
+        button:not(:disabled) {
+            background: #2563eb; 
+            color: #ffffff;
+            border: 1px solid #1d4ed8;
+            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+        }
+        button:not(:disabled):active { 
+            background: #1d4ed8; 
+            transform: scale(0.98);
+        }
+
+        /* ▼ 変更点：無効なボタン(押せない状態)は、目立たない「グレー」にする ▼ */
+        button:disabled { 
+            background: #f1f5f9; 
+            color: #94a3b8; 
+            border: 1px solid #e2e8f0; 
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+        
+        /* ▼ 強調ボタン(Oから始まるもの)は、これまで通り「レッド」にする ▼ */
         button.active-red-button {
             background: #e11d48 !important;
             color: #ffffff !important;
             border: 1px solid #be123c !important;
-            box-shadow: 0 2px 4px rgba(225, 29, 72, 0.2);
+            box-shadow: 0 2px 4px rgba(225, 29, 72, 0.2) !important;
         }
-        button.active-red-button:active { background: #be123c !important; }
+        button.active-red-button:active { 
+            background: #be123c !important; 
+        }
 
         /* 7. すごろく盤面 */
         .board-table { width: 100%; table-layout: fixed; border-collapse: collapse; }
@@ -111,7 +131,6 @@
             background: #f8fafc;
         }
         
-        /* ▼ 追加：マスの背景色 ▼ */
         .board-table td.cell-payday {
             background: #dcfce7 !important; /* 薄いグリーン（入金） */
         }
@@ -156,7 +175,7 @@
         <div class="flex-row">
             <input type="text" id="input-username" placeholder="あなたの名前を入力">
         </div>
-        <button id="btn-login" style="width:100%; background:#0040a1; color:#fff; border:none; padding:12px;">入室する</button>
+        <button id="btn-login" style="width:100%;">入室する</button>
     </div>
 
     <div id="section-guest" class="dashboard-container" hidden>
@@ -199,7 +218,6 @@
             <div class="module">
                 <div class="module-header">盤面モニター</div>
                 <div class="module-content" style="padding: 8px;">
-                    <!-- ▼ クラス付与によりマス目の色を変更 ▼ -->
                     <table class="board-table">
                         <tbody>
                             <tr>
@@ -261,8 +279,8 @@
 
                     <div class="flex-row">
                         <input type="number" id="num-process-self" placeholder="数量(任意)" style="flex: 0.5;">
-                        <button id="btn-process-self">処理する</button>
-                        <button id="btn-pass-card">パスする</button>
+                        <button id="btn-process-self" disabled>処理する</button>
+                        <button id="btn-pass-card" disabled>パスする</button>
                     </div>
 
                     <hr style="border:0; border-top:1px dashed #ccc; margin:12px 0;">
@@ -270,13 +288,13 @@
                     <div class="flex-row">
                         <select id="sell-target"><option value="">権利を売る相手</option></select>
                         <input type="number" id="sell-price" placeholder="金額(円)">
-                        <button id="btn-sell-card">交渉持掛</button>
+                        <button id="btn-sell-card" disabled>交渉持掛</button>
                     </div>
 
                     <div class="flex-row" style="background:#f1f5f9; padding:8px; border-radius:4px;">
                         <span id="trade-message" style="font-size:12px; font-weight:bold; flex: 2;">受信M (交渉無)</span> 
-                        <button id="btn-trade-accept">承諾</button>
-                        <button id="btn-trade-reject">拒否</button>
+                        <button id="btn-trade-accept" disabled>承諾</button>
+                        <button id="btn-trade-reject" disabled>拒否</button>
                     </div>
                 </div>
             </div>
@@ -312,7 +330,7 @@
                     <div class="flex-row" style="background:#f8fafc; padding:8px; border:1px solid #e2e8f0; border-radius:4px;">
                         <span id="ncashflow" style="font-weight:bold; font-size:13px; color:#0f172a;">CF： xxx</span>
                         <input type="number" id="icashflow" placeholder="CF金額を入力">
-                        <button id="bcashflow" style="flex:0.5;">計算</button>
+                        <button id="bcashflow" style="flex:0.5;" disabled>計算</button>
                     </div>
 
                     <div class="flex-row" style="margin-top:12px;">
@@ -322,7 +340,7 @@
                             <option value="sell">売却 (現金増)</option>
                             <option value="payoff">返済 (現金減)</option>
                         </select>
-                        <button id="b-operate" style="flex: 0.8;">X 処理</button>
+                        <button id="b-operate" style="flex: 0.8;" disabled>X 処理</button>
                     </div>
                 </div>
             </div>
@@ -335,6 +353,7 @@
     </div>
 
     <script>
+        // ボタンの文字が 'O' または '◯' の場合に、赤色の強調スタイルを付与
         const observer = new MutationObserver(() => {
             document.querySelectorAll('button').forEach(btn => {
                 const text = btn.textContent.trim();
