@@ -1,3 +1,8 @@
+/* ▼ 追加：hidden属性がついている要素は強制的に非表示にする ▼ */
+[hidden] {
+    display: none !important;
+}
+
 /* 1. 全体リセットとベース設定 */
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 body {
@@ -145,7 +150,7 @@ table.finance-table th { background: #f1f5f9; color: #475569; padding: 6px; bord
 table.finance-table td { padding: 6px; border-bottom: 1px solid #e2e8f0; }
 
 /* 10. システムログエリア */
-#message-body { display: block; font-size: 11px; color: #666; padding: 10px 15px; }
-.game-progress-message { border-bottom: 1px dashed #ccc; padding: 4px 0; }
+#message-body { display: block; font-size: 14px; color: #333333; padding: 10px 15px; line-height: 1.5; }
+.game-progress-message { border-bottom: 1px dashed #ccc; padding: 8px 0; }
 
 #section-login { max-width: 400px; margin: 40px auto; background: #fff; padding: 20px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
