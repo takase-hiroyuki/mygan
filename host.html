@@ -5,14 +5,19 @@
     <meta charset="UTF-8">
     <title>mygan host</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- 極力CSSを使わない方針のもと、最低限のテーブル枠線を引くための数行のみ記述 -->
+    <style>
+        table { border-collapse: collapse; }
+        th, td { border: 1px solid #666; padding: 4px; }
+    </style>
 </head>
-<body>
+<body style="font-family: sans-serif; font-size: 14px; background-color: #f0f2f5; padding: 10px;">
 
     <div id="section-host">
         
-        <!-- ▼ デバッグ・検証用機能（積み込み） ▼ -->
-        <fieldset>
-            <legend>デバッグ・検証用（積み込み）</legend>
+        <!-- 1. デバッグ・検証用機能（積み込み） -->
+        <fieldset style="border: 2px dashed #f87171; padding: 10px; margin-bottom: 15px; background-color: #fef2f2; border-radius: 6px;">
+            <legend style="color: #b91c1c; font-weight: bold; font-size: 14px;">🛠 デバッグ・検証用（積み込み）</legend>
                 <select id="debug-deck-type" style="padding: 5px;">
                     <option value="small_deal">普通の商売 (small_deal)</option>
                     <option value="big_deal">大きい商売 (big_deal)</option>
@@ -26,7 +31,7 @@
                 <span id="debug-msg" style="color: #0369a1; font-weight: bold; font-size: 13px;"></span>
             
             <!-- 次に引かれるカードのプレビュー表示エリア -->
-                <table border="1" cellpadding="0" cellspacing="0">
+                <table style="width: 100%; text-align: center; font-size: 11px; margin-top: 8px;">
                     <thead>
                         <tr style="background-color: #f8fafc;">
                             <th>Small Deal</th>
@@ -40,17 +45,16 @@
                     </tbody>
                 </table>
         </fieldset>
-        <!-- ▲ デバッグ・検証用機能 ここまで ▲ -->
 
 
-            <div id="host-current-card-info">
-                現在、場に出ているカードはありません。
-            </div>
-        <br>
+        <!-- 2. 現在のカード情報 -->
+        <div id="host-current-card-info" style="margin-bottom: 15px;">
+            現在、場に出ているカードはありません。
+        </div>
 
         <!-- 3. 保有資産一覧テーブル -->
-        <div class="table-responsive">
-            <table border="1" cellpadding="0" cellspacing="0">
+        <div class="table-responsive" style="margin-bottom: 15px;">
+            <table style="width: 100%;">
                 <thead>
                     <tr>
                         <th>名前</th><th>カード</th><th>資産一覧</th>
@@ -59,11 +63,10 @@
                 <tbody id="host-asset-list"></tbody>
             </table>
         </div>
-        <br>
 
         <!-- 4. 財務サマリー（キャッシュフロー）テーブル -->
-        <div class="table-responsive">
-            <table border="1" cellpadding="0" cellspacing="0">
+        <div class="table-responsive" style="margin-bottom: 15px;">
+            <table style="width: 100%;">
                 <thead>
                     <tr>
                         <th>名前</th>
@@ -77,24 +80,23 @@
                 <tbody id="host-financial-summary"></tbody>
             </table>
         </div>
-        <br>
         
-        <!-- 2. フラグ・進行状態テーブル -->
-        <div class="table-responsive">
-            <table border="1" cellpadding="0" cellspacing="0">
+        <!-- 5. フラグ・進行状態テーブル -->
+        <div class="table-responsive" style="margin-bottom: 15px;">
+            <table style="width: 100%;">
                 <thead>
                     <tr>
-                        <th>名前</th><th>手番</th><th>給料</th><th>カード</th><th>の処理</th><th>要計算</th><th>寄付残</th><th>休み残</th><th>▲CF</th>
+                        <!-- 「の処理」を「処理状態」に修正 -->
+                        <th>名前</th><th>手番</th><th>給料</th><th>カード</th><th>処理状態</th><th>要計算</th><th>寄付残</th><th>休み残</th><th>▲CF</th>
                     </tr>
                 </thead>
                 <tbody id="host-flags-list"></tbody>
             </table>
         </div>
-        <br>
 
-        <!-- 5.参加者基本リスト -->
-        <div class="table-responsive">
-            <table border="1" cellpadding="0" cellspacing="0">
+        <!-- 6. 参加者基本リスト -->
+        <div class="table-responsive" style="margin-bottom: 15px;">
+            <table style="width: 100%;">
                 <thead>
                     <tr>
                         <th>順</th>
@@ -109,113 +111,114 @@
             </table>
         </div>
 
-        <!-- 6.個別の財務諸表プレビューエリア -->
-        <fieldset>
+        <!-- 7. 個別の財務諸表プレビューエリア -->
+        <fieldset style="margin-bottom: 15px;">
             <legend>参加者の財務諸表プレビュー</legend>
-            <select id="player-select"></select>
+            <select id="player-select" style="margin-bottom: 8px;"></select>
             
-            <div class="financial-summary">
-                <p><span id="l-profession">◯◯の職業：★★★</span></p>
-                <p class="highlight-cash"><span id="l-cash">◯◯の所持金：★★★</span></p>
-                <button id="fast_track" class="full-width-btn" disabled>ファーストトラックまで、あと◯◯◯円</button>
+            <div class="financial-summary" style="margin-bottom: 8px;">
+                <p style="margin: 4px 0;"><span id="l-profession">◯◯の職業：★★★</span></p>
+                <p style="margin: 4px 0; color: #0040a1; font-weight: bold;"><span id="l-cash">◯◯の所持金：★★★</span></p>
+                <button id="fast_track" disabled style="width: 100%; padding: 6px;">ファーストトラックまで、あと◯◯◯円</button>
             </div>
             
-            <div class="table-responsive">
-                <span id="l-profit">資産 table</span>
+            <!-- 文法エラー回避：spanをdivに変更 -->
+            <div class="table-responsive" style="margin-bottom: 8px;">
+                <div id="l-profit">資産 table</div>
             </div>
             <div class="table-responsive">
-                <span id="l-loss">負債 table</span>
+                <div id="l-loss">負債 table</div>
             </div>
         </fieldset>
 
-        <!-- 7.部屋とゲームの制御エリア -->
-        <fieldset>
+        <!-- 8. 部屋とゲームの制御エリア -->
+        <fieldset style="margin-bottom: 15px;">
             <legend>ゲーム制御</legend>
             <p>現在の部屋ステータス: <span id="host-room-status">waiting (準備中)</span></p>
-            <button id="btn-initial-shuffle-start">O 初期シャッフル＆ゲーム開始</button>
-            <button id="btn-force-game-end">O 全員強制退室＆ゲーム終了</button>
+            <button id="btn-initial-shuffle-start" style="padding: 6px;">O 初期シャッフル＆ゲーム開始</button>
+            <button id="btn-force-game-end" style="padding: 6px;">O 全員強制退室＆ゲーム終了</button>
             <hr>
             <label for="input-kick-order">退室者の番号: </label>
-            <input type="number" id="input-kick-order" min="1" placeholder="例: 4">
-            <button id="btn-kick-participant">O 退室させる</button><br>
+            <input type="number" id="input-kick-order" min="1" placeholder="例: 4" style="padding: 4px; width: 60px;">
+            <button id="btn-kick-participant" style="padding: 6px;">O 退室させる</button><br><br>
             <label for="input-next-turn-order">手番の番号: </label>
-            <input type="number" id="input-next-turn-order" placeholder="例: 1" min="1">
-            <button id="btn-set-turn">O を手番にする</button>
+            <input type="number" id="input-next-turn-order" placeholder="例: 1" min="1" style="padding: 4px; width: 60px;">
+            <!-- 日本語の誤りを修正 -->
+            <button id="btn-set-turn" style="padding: 6px;">O 指定番号を手番にする</button>
             
-            <!-- ▼ 救済措置：強制ターンエンド ▼ -->
+            <!-- 救済措置：強制ターンエンド -->
             <hr>
             <p style="color: #d97706; font-size: 13px; margin-bottom: 5px;">⚠ プレイヤーが操作不能になった場合の救済</p>
             <button id="btn-force-end-current-turn" style="background-color: #f59e0b; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">
                 O 現在の手番を強制終了し、次の人へ進める
             </button>
         </fieldset>
-        <br>
 
-        <!-- 8.盤面モニター -->
-        <div class="table-responsive">
-            <table class="board-table" border="1" cellpadding="0" cellspacing="0">
+        <!-- 9. 盤面モニター -->
+        <!-- alignやvalignを廃止し、style属性での指定に変更 -->
+        <div class="table-responsive" style="margin-bottom: 15px;">
+            <table class="board-table" style="width: 100%; text-align: center; vertical-align: middle;">
                 <tbody>
                     <tr>
-                        <td align="center" valign="middle" data-position="0">
+                        <td data-position="0">
                             00入金<div id="rat-cell-0" class="player-occupants"></div>
-                        </td><td align="center" valign="middle" data-position="1">
+                        </td><td data-position="1">
                             01娯楽<div id="rat-cell-1" class="player-occupants"></div>
-                        </td><td align="center" valign="middle" data-position="2">
+                        </td><td data-position="2">
                             02好機<div id="rat-cell-2" class="player-occupants"></div>
-                        </td><td align="center" valign="middle" data-position="3">
+                        </td><td data-position="3">
                             03寄付<div id="rat-cell-3" class="player-occupants"></div>
-                        </td><td align="center" valign="middle" data-position="4">
+                        </td><td data-position="4">
                             04好機<div id="rat-cell-4" class="player-occupants"></div>
-                        </td><td align="center" valign="middle" data-position="5">
+                        </td><td data-position="5">
                             05入金<div id="rat-cell-5" class="player-occupants"></div>
-                        </td><td align="center" valign="middle" data-position="6">
+                        </td><td data-position="6">
                             06好機<div id="rat-cell-6" class="player-occupants"></div>
-                        </td><td align="center" valign="middle" data-position="7">
+                        </td><td data-position="7">
                             07娯楽<div id="rat-cell-7" class="player-occupants"></div>
-                        </td><td align="center" valign="middle" data-position="8">
+                        </td><td data-position="8">
                             08好機<div id="rat-cell-8" class="player-occupants"></div>
-                        </td><td align="center" valign="middle" data-position="9">
+                        </td><td data-position="9">
                             09子供<div id="rat-cell-9" class="player-occupants"></div>
-                        </td><td align="center" valign="middle" data-position="10">
+                        </td><td data-position="10">
                             10好機<div id="rat-cell-10" class="player-occupants"></div>
-                        </td><td align="center" valign="middle" data-position="11">
+                        </td><td data-position="11">
                             11入金<div id="rat-cell-11" class="player-occupants"></div>
                         </td>
                     </tr><tr>
-                        <td align="center" valign="middle" data-position="12">
+                        <td data-position="12">
                             12市場<div id="rat-cell-12" class="player-occupants"></div>
-                        </td><td align="center" valign="middle" data-position="13">
+                        </td><td data-position="13">
                             13好機<div id="rat-cell-13" class="player-occupants"></div>
-                        </td><td align="center" valign="middle" data-position="14">
+                        </td><td data-position="14">
                             14娯楽<div id="rat-cell-14" class="player-occupants"></div>
-                        </td><td align="center" valign="middle" data-position="15">
+                        </td><td data-position="15">
                             15好機<div id="rat-cell-15" class="player-occupants"></div>
-                        </td><td align="center" valign="middle" data-position="16">
+                        </td><td data-position="16">
                             16寄付<div id="rat-cell-16" class="player-occupants"></div>
-                        </td><td align="center" valign="middle" data-position="17">
+                        </td><td data-position="17">
                             17好機<div id="rat-cell-17" class="player-occupants"></div>
-                        </td><td align="center" valign="middle" data-position="18">
+                        </td><td data-position="18">
                             18入金<div id="rat-cell-18" class="player-occupants"></div>
-                        </td><td align="center" valign="middle" data-position="19">
+                        </td><td data-position="19">
                             19好機<div id="rat-cell-19" class="player-occupants"></div>
-                        </td><td align="center" valign="middle" data-position="20">
+                        </td><td data-position="20">
                             20解雇<div id="rat-cell-20" class="player-occupants"></div>
-                        </td><td align="center" valign="middle" data-position="21">
+                        </td><td data-position="21">
                             21好機<div id="rat-cell-21" class="player-occupants"></div>
-                        </td><td align="center" valign="middle" data-position="22">
+                        </td><td data-position="22">
                             22市場<div id="rat-cell-22" class="player-occupants"></div>
-                        </td><td align="center" valign="middle" data-position="23">
+                        </td><td data-position="23">
                             23好機<div id="rat-cell-23" class="player-occupants"></div>
                         </td>
                     </tr>
                 </tbody>
             </table>
         </div>
-        <br>
 
-        <!-- 9.山札モニター -->
-        <div class="table-responsive">
-            <table cellpadding="0" cellspacing="0">
+        <!-- 10. 山札モニター -->
+        <div class="table-responsive" style="margin-bottom: 15px;">
+            <table style="width: 100%;">
                 <thead>
                     <tr>
                         <th>Small Deal</th>
@@ -224,30 +227,30 @@
                         <th>Doodad</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody style="text-align: center;">
                     <tr>
-                        <td align="center"><span id="deck-count-small-deal">0</span> 枚</td>
-                        <td align="center"><span id="deck-count-big-deal">0</span> 枚</td>
-                        <td align="center"><span id="deck-count-market">0</span> 枚</td>
-                        <td align="center"><span id="deck-count-doodad">0</span> 枚</td>
+                        <td><span id="deck-count-small-deal">0</span> 枚</td>
+                        <td><span id="deck-count-big-deal">0</span> 枚</td>
+                        <td><span id="deck-count-market">0</span> 枚</td>
+                        <td><span id="deck-count-doodad">0</span> 枚</td>
                     </tr>
                     <tr>
-                        <td align="center"><button id="btn-reshuffle-small-deal" class="full-width-btn">O シャッフル</button></td>
-                        <td align="center"><button id="btn-reshuffle-big-deal" class="full-width-btn">O シャッフル</button></td>
-                        <td align="center"><button id="btn-reshuffle-market" class="full-width-btn">O シャッフル</button></td>
-                        <td align="center"><button id="btn-reshuffle-doodad" class="full-width-btn">O シャッフル</button></td>
+                        <td><button id="btn-reshuffle-small-deal" style="width: 100%; padding: 4px;">O シャッフル</button></td>
+                        <td><button id="btn-reshuffle-big-deal" style="width: 100%; padding: 4px;">O シャッフル</button></td>
+                        <td><button id="btn-reshuffle-market" style="width: 100%; padding: 4px;">O シャッフル</button></td>
+                        <td><button id="btn-reshuffle-doodad" style="width: 100%; padding: 4px;">O シャッフル</button></td>
                     </tr>
                 </tbody>
             </table>
         </div>
 
-        <!-- 10.システムログ管理 -->
+        <!-- 11. システムログ管理 -->
         <fieldset>
             <legend>システムログ管理</legend>
-            <button id="btn-fetch-current-game-logs">O 今回のゲームログのみ取得</button>
-            <button id="btn-fetch-logs">O 直近1000件を強制取得</button>
-            <button id="btn-copy-logs">O ログをコピー</button><br>
-            <textarea id="host-log-textarea" rows="15" readonly></textarea>
+            <button id="btn-fetch-current-game-logs" style="padding: 4px;">O 今回のゲームログのみ取得</button>
+            <button id="btn-fetch-logs" style="padding: 4px;">O 直近1000件を強制取得</button>
+            <button id="btn-copy-logs" style="padding: 4px;">O ログをコピー</button><br><br>
+            <textarea id="host-log-textarea" rows="15" readonly style="width: 100%; box-sizing: border-box;"></textarea>
         </fieldset>
 
     </div>
