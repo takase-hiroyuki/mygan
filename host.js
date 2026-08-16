@@ -115,9 +115,9 @@ function drawHostScreen() {
                 const deck = decks[dtKey] || [];
                 const c = deck[i];
                 if (c) {
-                    html += `<td>ID: ${c.id}<br>${c.asset_type || '-'}</td>`;
+                    html += `<td aline="center">ID: ${c.id} ${c.asset_type || '-'}</td>`;
                 } else {
-                    html += `<td style="color:#94a3b8;">(なし)</td>`;
+                    html += `<td aline="center" style="color:#94a3b8;">(なし)</td>`;
                 }
             });
             html += '</tr>';
@@ -125,7 +125,6 @@ function drawHostScreen() {
         
         debugPreviewEl.innerHTML = html;
     }
-    // ▲ 変更ここまで ▲
 
     const itemSEL = DOM_SELECTORS.HOST.PARTICIPANT_ITEM;
     const boardSEL = DOM_SELECTORS.HOST.BOARD;
