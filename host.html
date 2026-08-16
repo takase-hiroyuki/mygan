@@ -111,6 +111,25 @@
         </fieldset>
         <br>
 
+        <!-- ▼ デバッグ・検証用機能（積み込み） ▼ -->
+        <fieldset style="border: 2px dashed #f87171; padding: 10px; margin-bottom: 15px; background-color: #fef2f2; border-radius: 6px;">
+            <legend style="color: #b91c1c; font-weight: bold; font-size: 14px;">🛠 デバッグ・検証用（積み込み）</legend>
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <select id="debug-deck-type" style="padding: 5px;">
+                    <option value="small_deal">普通の商売 (small_deal)</option>
+                    <option value="big_deal">大きい商売 (big_deal)</option>
+                    <option value="market">市場 (market)</option>
+                    <option value="doodad">娯楽 (doodad)</option>
+                </select>
+                <input type="number" id="debug-card-id" placeholder="カードID" style="padding: 5px; width: 100px;">
+                <button id="btn-debug-set-top" style="background-color: #b91c1c; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">
+                    山札の1番上にセット
+                </button>
+                <span id="debug-msg" style="color: #0369a1; font-weight: bold; font-size: 13px;"></span>
+            </div>
+        </fieldset>
+        <!-- ▲ デバッグ・検証用機能 ここまで ▲ -->
+
         <!-- 8.盤面モニター -->
         <div class="table-responsive">
             <table class="board-table" border="1" cellpadding="0" cellspacing="0">
