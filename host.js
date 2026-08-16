@@ -598,4 +598,69 @@ btnCopyLogs?.addEventListener('click', () => {
     }
 });
 
+// =========================================================================
+// デバッグ・テスト用：指定したカードを山札の一番上に仕込む処理
+// =========================================================================
+const btnDebugSetTop = document.getElementById('btn-debug-set-top');
+if (btnDebugSetTop) {
+    btnDebugSetTop.addEventListener('click', async () => {
+        if (!supabase) return;
+        const deckType = document.getElementById('debug-deck-type').value;
+        const cardId = parseInt(document.getElementById('debug-card-id').value, 10);
+        const msgEl = document.getElementById('debug-msg');
+        
+        if (isNaN(cardId)) {
+            msgEl.textContent = "カードID（数字）を入力してください。";
+            return;
+        }
+
+        try {
+            msgEl.textContent = "仕込み中...";
+            
+            // 1. 現在の部屋の状態（山札）を取得
+            const { data: roomData, error: roomError } = await supabase.from('rooms').select('game_state').eq('id', roomId).single();
+            if (roomError) throw roomError;
+
+            const state = roomData.game_state || {};
+            const decks = state.decks || {};
+            const targetDeck = decks[deckType];
+
+            if (!targetDeck) {
+                msgEl.textContent = "デッキデータが存在しません。先にゲームを開始してください。";
+                return;
+            }
+
+            // 2. 指定されたカードIDをデッキの中から探す
+            const cardIndex = targetDeck.findIndex(c => Number(c.id) === cardId);
+            
+            if (cardIndex === -1) {
+                msgEl.textContent = `デッキの中にID [${cardId}] が見つかりません。既に出たか、デッキが間違っています。`;
+                return;
+            }
+
+            // 3. カードを配列から抜き出し、先頭（0番目）に挿入する
+            const cardObj = targetDeck.splice(cardIndex, 1)[0];
+            targetDeck.unshift(cardObj); 
+            // （※Supabase側のRPCが pop() ではなく先頭からカードを引く想定として unshift を使用しています。
+            //  もし後ろから引く仕様であれば、ここを push(cardObj) にしてください）
+
+            // 4. データベースを上書き保存
+            const { error: updateError } = await supabase.from('rooms').update({ game_state: state }).eq('id', roomId);
+            if (updateError) throw updateError;
+
+            msgEl.textContent = `成功：カードID [${cardId}] を次に引くように仕込みました！`;
+            writeLog(supabase, "Host", "System", `[デバッグ] カードID ${cardId} を ${deckType} の一番上に仕込みました`);
+            
+            // 3秒後にメッセージを消す
+            setTimeout(() => { msgEl.textContent = ""; }, 3000);
+            
+            // 画面の残数などを再描画
+            syncAndFetchRoom();
+
+        } catch (err) {
+            msgEl.textContent = "エラー: " + err.message;
+        }
+    });
+}
+
 console.log("【残す】host.js が読み込まれました。");
