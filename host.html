@@ -19,16 +19,16 @@
         table { 
             border-collapse: collapse; 
             width: 100%;
-            table-layout: fixed; /* テーブルの幅を画面内に固定し、はみ出しを防ぐ */
+            /* 削除: table-layout: fixed;（ブラウザの自動幅調整に任せる） */
         }
         th, td { 
             border: 1px solid #666; 
             padding: 6px; 
-            word-break: break-all; /* 長い単語やIDでも強制的に折り返す */
+            word-break: break-word; /* 長い単語でも適度に折り返す */
         }
         fieldset, .table-responsive {
             max-width: 100%;
-            overflow-x: hidden;
+            overflow-x: auto; /* 画面に収まらない場合は横スクロールを許可 */
         }
         input, select, button, textarea {
             max-width: 100%;
@@ -55,7 +55,7 @@
                 <span id="debug-msg" style="color: #0369a1; font-weight: bold; display: block; margin-top: 5px;"></span>
             
             <!-- 次に引かれるカードのプレビュー表示エリア -->
-                <table style="width: 100%; text-align: center; margin-top: 8px;">
+                <table style="width: 100%; text-align: center; margin-top: 8px; table-layout: fixed;">
                     <thead>
                         <tr style="background-color: #f8fafc;">
                             <th>Small Deal</th>
@@ -177,7 +177,7 @@
 
         <!-- 9. 盤面モニター -->
         <div class="table-responsive" style="margin-bottom: 15px;">
-            <table class="board-table" style="width: 100%; text-align: center; vertical-align: middle;">
+            <table class="board-table" style="width: 100%; text-align: center; vertical-align: middle; table-layout: fixed;">
                 <tbody>
                     <tr>
                         <td data-position="0">
@@ -238,7 +238,7 @@
 
         <!-- 10. 山札モニター -->
         <div class="table-responsive" style="margin-bottom: 15px;">
-            <table style="width: 100%;">
+            <table style="width: 100%; table-layout: fixed;">
                 <thead>
                     <tr>
                         <th>Small Deal</th>
