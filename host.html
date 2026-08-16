@@ -5,19 +5,43 @@
     <meta charset="UTF-8">
     <title>mygan host</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- 極力CSSを使わない方針のもと、最低限のテーブル枠線を引くための数行のみ記述 -->
     <style>
-        table { border-collapse: collapse; }
-        th, td { border: 1px solid #666; padding: 4px; }
+        /* ▼ 全ての要素に18ptを強制し、枠内で必ず折り返す設定 ▼ */
+        * { 
+            box-sizing: border-box; 
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        body, button, input, select, textarea, th, td, p, span, legend, div, strong {
+            font-size: 18pt !important; /* すべての文字を18ptに強制 */
+            white-space: normal !important; /* 折り返しを許可 */
+        }
+        table { 
+            border-collapse: collapse; 
+            width: 100%;
+            table-layout: fixed; /* テーブルの幅を画面内に固定し、はみ出しを防ぐ */
+        }
+        th, td { 
+            border: 1px solid #666; 
+            padding: 6px; 
+            word-break: break-all; /* 長い単語やIDでも強制的に折り返す */
+        }
+        fieldset, .table-responsive {
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+        input, select, button, textarea {
+            max-width: 100%;
+        }
     </style>
 </head>
-<body style="font-family: sans-serif; font-size: 14px; background-color: #f0f2f5; padding: 10px;">
+<body style="font-family: sans-serif; background-color: #f0f2f5; padding: 10px;">
 
     <div id="section-host">
         
         <!-- 1. デバッグ・検証用機能（積み込み） -->
         <fieldset style="border: 2px dashed #f87171; padding: 10px; margin-bottom: 15px; background-color: #fef2f2; border-radius: 6px;">
-            <legend style="color: #b91c1c; font-weight: bold; font-size: 14px;">🛠 デバッグ・検証用（積み込み）</legend>
+            <legend style="color: #b91c1c; font-weight: bold;">🛠 デバッグ・検証用（積み込み）</legend>
                 <select id="debug-deck-type" style="padding: 5px;">
                     <option value="small_deal">普通の商売 (small_deal)</option>
                     <option value="big_deal">大きい商売 (big_deal)</option>
@@ -28,10 +52,10 @@
                 <button id="btn-debug-set-top" style="background-color: #b91c1c; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">
                     山札の1番上にセット
                 </button>
-                <span id="debug-msg" style="color: #0369a1; font-weight: bold; font-size: 13px;"></span>
+                <span id="debug-msg" style="color: #0369a1; font-weight: bold; display: block; margin-top: 5px;"></span>
             
             <!-- 次に引かれるカードのプレビュー表示エリア -->
-                <table style="width: 100%; text-align: center; font-size: 11px; margin-top: 8px;">
+                <table style="width: 100%; text-align: center; margin-top: 8px;">
                     <thead>
                         <tr style="background-color: #f8fafc;">
                             <th>Small Deal</th>
@@ -86,7 +110,6 @@
             <table style="width: 100%;">
                 <thead>
                     <tr>
-                        <!-- 「の処理」を「処理状態」に修正 -->
                         <th>名前</th><th>手番</th><th>給料</th><th>カード</th><th>処理状態</th><th>要計算</th><th>寄付残</th><th>休み残</th><th>▲CF</th>
                     </tr>
                 </thead>
@@ -114,7 +137,7 @@
         <!-- 7. 個別の財務諸表プレビューエリア -->
         <fieldset style="margin-bottom: 15px;">
             <legend>参加者の財務諸表プレビュー</legend>
-            <select id="player-select" style="margin-bottom: 8px;"></select>
+            <select id="player-select" style="margin-bottom: 8px; width: 100%;"></select>
             
             <div class="financial-summary" style="margin-bottom: 8px;">
                 <p style="margin: 4px 0;"><span id="l-profession">◯◯の職業：★★★</span></p>
@@ -122,7 +145,6 @@
                 <button id="fast_track" disabled style="width: 100%; padding: 6px;">ファーストトラックまで、あと◯◯◯円</button>
             </div>
             
-            <!-- 文法エラー回避：spanをdivに変更 -->
             <div class="table-responsive" style="margin-bottom: 8px;">
                 <div id="l-profit">資産 table</div>
             </div>
@@ -135,27 +157,25 @@
         <fieldset style="margin-bottom: 15px;">
             <legend>ゲーム制御</legend>
             <p>現在の部屋ステータス: <span id="host-room-status">waiting (準備中)</span></p>
-            <button id="btn-initial-shuffle-start" style="padding: 6px;">O 初期シャッフル＆ゲーム開始</button>
-            <button id="btn-force-game-end" style="padding: 6px;">O 全員強制退室＆ゲーム終了</button>
+            <button id="btn-initial-shuffle-start" style="padding: 6px; width: 100%; margin-bottom: 5px;">O 初期シャッフル＆ゲーム開始</button>
+            <button id="btn-force-game-end" style="padding: 6px; width: 100%;">O 全員強制退室＆ゲーム終了</button>
             <hr>
             <label for="input-kick-order">退室者の番号: </label>
-            <input type="number" id="input-kick-order" min="1" placeholder="例: 4" style="padding: 4px; width: 60px;">
+            <input type="number" id="input-kick-order" min="1" placeholder="例: 4" style="padding: 4px; width: 80px;">
             <button id="btn-kick-participant" style="padding: 6px;">O 退室させる</button><br><br>
             <label for="input-next-turn-order">手番の番号: </label>
-            <input type="number" id="input-next-turn-order" placeholder="例: 1" min="1" style="padding: 4px; width: 60px;">
-            <!-- 日本語の誤りを修正 -->
+            <input type="number" id="input-next-turn-order" placeholder="例: 1" min="1" style="padding: 4px; width: 80px;">
             <button id="btn-set-turn" style="padding: 6px;">O 指定番号を手番にする</button>
             
             <!-- 救済措置：強制ターンエンド -->
             <hr>
-            <p style="color: #d97706; font-size: 13px; margin-bottom: 5px;">⚠ プレイヤーが操作不能になった場合の救済</p>
-            <button id="btn-force-end-current-turn" style="background-color: #f59e0b; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">
+            <p style="color: #d97706; margin-bottom: 5px;">⚠ プレイヤーが操作不能になった場合の救済</p>
+            <button id="btn-force-end-current-turn" style="background-color: #f59e0b; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; width: 100%;">
                 O 現在の手番を強制終了し、次の人へ進める
             </button>
         </fieldset>
 
         <!-- 9. 盤面モニター -->
-        <!-- alignやvalignを廃止し、style属性での指定に変更 -->
         <div class="table-responsive" style="margin-bottom: 15px;">
             <table class="board-table" style="width: 100%; text-align: center; vertical-align: middle;">
                 <tbody>
