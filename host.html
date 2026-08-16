@@ -11,9 +11,8 @@
     <div id="section-host">
         
         <!-- ▼ デバッグ・検証用機能（積み込み） ▼ -->
-        <fieldset style="border: 2px dashed #f87171; padding: 10px; margin-bottom: 15px; background-color: #fef2f2; border-radius: 6px;">
-            <legend style="color: #b91c1c; font-weight: bold; font-size: 14px;">🛠 デバッグ・検証用（積み込み）</legend>
-            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 10px;">
+        <fieldset>
+            <legend>デバッグ・検証用（積み込み）</legend>
                 <select id="debug-deck-type" style="padding: 5px;">
                     <option value="small_deal">普通の商売 (small_deal)</option>
                     <option value="big_deal">大きい商売 (big_deal)</option>
@@ -25,10 +24,8 @@
                     山札の1番上にセット
                 </button>
                 <span id="debug-msg" style="color: #0369a1; font-weight: bold; font-size: 13px;"></span>
-            </div>
             
-            <!-- 次に引かれるカードのプレビュー表示エリア（テーブルに変更） -->
-                各デッキで次に引かれる予定のカード (上から2枚)
+            <!-- 次に引かれるカードのプレビュー表示エリア -->
                 <table border="1" cellpadding="0" cellspacing="0">
                     <thead>
                         <tr style="background-color: #f8fafc;">
@@ -42,7 +39,6 @@
                         <!-- JSでここに2行分のプレビューを挿入 -->
                     </tbody>
                 </table>
-            </div>
         </fieldset>
         <!-- ▲ デバッグ・検証用機能 ここまで ▲ -->
 
