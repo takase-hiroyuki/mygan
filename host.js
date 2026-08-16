@@ -101,6 +101,32 @@ function drawHostScreen() {
         }
     }
 
+    // ▼ 変更：デバッグ用パネルのプレビューをテーブル行として描画 ▼
+    const debugPreviewEl = document.getElementById('debug-next-cards-preview');
+    if (debugPreviewEl) {
+        debugPreviewEl.innerHTML = '';
+        
+        const deckTypes = ['small_deal', 'big_deal', 'market', 'doodad'];
+        let html = '';
+
+        for (let i = 0; i < 2; i++) {
+            html += '<tr>';
+            deckTypes.forEach(dtKey => {
+                const deck = decks[dtKey] || [];
+                const c = deck[i];
+                if (c) {
+                    html += `<td>ID: ${c.id}<br>${c.asset_type || '-'}</td>`;
+                } else {
+                    html += `<td style="color:#94a3b8;">(なし)</td>`;
+                }
+            });
+            html += '</tr>';
+        }
+        
+        debugPreviewEl.innerHTML = html;
+    }
+    // ▲ 変更ここまで ▲
+
     const itemSEL = DOM_SELECTORS.HOST.PARTICIPANT_ITEM;
     const boardSEL = DOM_SELECTORS.HOST.BOARD;
     
@@ -513,6 +539,37 @@ btnForceGameEnd?.addEventListener('click', async () => {
     }
 });
 
+// ▼ 追加：ホスト権限で現在のプレイヤーの手番を強制終了する機能
+const btnForceEndCurrentTurn = document.getElementById('btn-force-end-current-turn');
+btnForceEndCurrentTurn?.addEventListener('click', async () => {
+    if (!supabase) return;
+    writeLog(supabase, "Host", "Action", "「現在の手番を強制終了」ボタンが押下されました");
+    
+    if (!activeRoomRecord || !activeRoomRecord.current_turn_user_id) {
+        alert("現在、手番のプレイヤーがいません。");
+        return;
+    }
+    
+    const targetUserId = activeRoomRecord.current_turn_user_id;
+    if (!confirm(`プレイヤー ${targetUserId} の手番を強制的に終了して次へ進めますか？`)) {
+        return;
+    }
+
+    try {
+        await callRpcWithDebug(supabase, 'pass_and_end_turn_v2', { 
+            p_room_id: roomId, 
+            p_user_id: targetUserId 
+        });
+        await syncAndFetchRoom();
+        writeLog(supabase, "Host", "Action", `プレイヤー ${targetUserId} の手番を強制終了しました`);
+        alert("手番を強制終了し、次の人へ進めました。");
+    } catch (error) {
+        sendGameProgressMessage(supabase, roomId, "ホスト", `強制ターン終了失敗: ${error.message}`, "btnForceEndCurrentTurn");
+        alert(`エラー: ${error.message}`);
+    }
+});
+// ▲ 追加ここまで
+
 btnFetchCurrentGameLogs?.addEventListener('click', async () => {
     if (!supabase) return;
     writeLog(supabase, "Host", "Action", "「今回のゲームログを取得」ボタンが押下されました");
@@ -617,7 +674,6 @@ if (btnDebugSetTop) {
         try {
             msgEl.textContent = "仕込み中...";
             
-            // 1. 現在の部屋の状態（山札）を取得
             const { data: roomData, error: roomError } = await supabase.from('rooms').select('game_state').eq('id', roomId).single();
             if (roomError) throw roomError;
 
@@ -630,7 +686,6 @@ if (btnDebugSetTop) {
                 return;
             }
 
-            // 2. 指定されたカードIDをデッキの中から探す
             const cardIndex = targetDeck.findIndex(c => Number(c.id) === cardId);
             
             if (cardIndex === -1) {
@@ -638,23 +693,16 @@ if (btnDebugSetTop) {
                 return;
             }
 
-            // 3. カードを配列から抜き出し、先頭（0番目）に挿入する
             const cardObj = targetDeck.splice(cardIndex, 1)[0];
             targetDeck.unshift(cardObj); 
-            // （※Supabase側のRPCが pop() ではなく先頭からカードを引く想定として unshift を使用しています。
-            //  もし後ろから引く仕様であれば、ここを push(cardObj) にしてください）
 
-            // 4. データベースを上書き保存
             const { error: updateError } = await supabase.from('rooms').update({ game_state: state }).eq('id', roomId);
             if (updateError) throw updateError;
 
             msgEl.textContent = `成功：カードID [${cardId}] を次に引くように仕込みました！`;
             writeLog(supabase, "Host", "System", `[デバッグ] カードID ${cardId} を ${deckType} の一番上に仕込みました`);
             
-            // 3秒後にメッセージを消す
             setTimeout(() => { msgEl.textContent = ""; }, 3000);
-            
-            // 画面の残数などを再描画
             syncAndFetchRoom();
 
         } catch (err) {
