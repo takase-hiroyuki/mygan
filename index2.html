@@ -46,13 +46,13 @@
         .module-header {
             background: #f8f9fa;
             border-bottom: 1px solid #dcdcdc;
-            border-top: 3px solid #0040a1; 
+            border-top: 3px solid #0040a1; /* 基本は青 */
             padding: 8px 12px;
             font-size: 13px;
             font-weight: bold;
             color: #1a202c;
         }
-        .module-header.red-accent { border-top-color: #e11d48; }
+        .module-header.red-accent { border-top-color: #e11d48; } /* 赤アクセント */
         .module-header.green-accent { border-top-color: #059669; }
         .module-content { padding: 12px; }
 
@@ -160,7 +160,7 @@
 
     <div id="section-guest" class="dashboard-container" hidden>
         
-        <!-- ▼ システム通知を一番上に移動（全幅設定） ▼ -->
+        <!-- ▼ システム通知 (青) ▼ -->
         <div class="module" style="width: 100%; flex: 0 0 100%;">
             <div class="module-header">システム通知</div>
             <div class="module-content" style="max-height: 160px; overflow-y: auto; background-color: #f8fafc; padding: 0;">
@@ -170,8 +170,9 @@
         <!-- ▲ システム通知 ここまで ▲ -->
         
         <div class="col-left">
+            <!-- 現在のステータス (赤) -->
             <div class="module">
-                <div class="module-header">現在のステータス</div>
+                <div class="module-header red-accent">現在のステータス</div>
                 <div class="module-content">
                     <span id="hit"></span>
                     <div class="status-row">
@@ -189,8 +190,9 @@
                 </div>
             </div>
 
+            <!-- サイコロ・手番操作 (青) -->
             <div class="module">
-                <div class="module-header red-accent">サイコロ・手番操作</div>
+                <div class="module-header">サイコロ・手番操作</div>
                 <div class="module-content">
                     <div style="margin-bottom: 10px; font-size: 13px; font-weight: bold; color:#475569;">
                         現在地: <span id="dice-result" style="color:#0f172a;">--</span><br>
@@ -205,8 +207,9 @@
                 </div>
             </div>
 
+            <!-- 盤面モニター (赤) -->
             <div class="module">
-                <div class="module-header">盤面モニター</div>
+                <div class="module-header red-accent">盤面モニター</div>
                 <div class="module-content" style="padding: 8px;">
                     <table class="board-table">
                         <tbody>
@@ -253,9 +256,9 @@
         </div>
 
         <div class="col-right">
-
+            <!-- カードとアクション (青) -->
             <div class="module" id="msg-area">
-                <div class="module-header red-accent">カードとアクション</div>
+                <div class="module-header">カードとアクション</div>
                 <div class="module-content">
                     <div class="btn-grid">
                         <button id="btn-small-deal" disabled>X 普通の商売</button>
@@ -290,8 +293,9 @@
                 </div>
             </div>
 
+            <!-- 財務諸表 (赤) -->
             <div class="module">
-                <div class="module-header green-accent">財務諸表</div>
+                <div class="module-header red-accent">財務諸表</div>
                 <div class="module-content">
                     <select id="player-select" style="margin-bottom: 12px; font-weight:bold;"></select>
 
