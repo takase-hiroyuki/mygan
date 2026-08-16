@@ -11,9 +11,9 @@
     <div id="section-host">
         
         <!-- ▼ デバッグ・検証用機能（積み込み） ▼ -->
-        <fieldset>
-            <legend>🛠 デバッグ・検証用（積み込み）</legend>
-            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        <fieldset style="border: 2px dashed #f87171; padding: 10px; margin-bottom: 15px; background-color: #fef2f2; border-radius: 6px;">
+            <legend style="color: #b91c1c; font-weight: bold; font-size: 14px;">🛠 デバッグ・検証用（積み込み）</legend>
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 10px;">
                 <select id="debug-deck-type" style="padding: 5px;">
                     <option value="small_deal">普通の商売 (small_deal)</option>
                     <option value="big_deal">大きい商売 (big_deal)</option>
@@ -25,6 +25,23 @@
                     山札の1番上にセット
                 </button>
                 <span id="debug-msg" style="color: #0369a1; font-weight: bold; font-size: 13px;"></span>
+            </div>
+            
+            <!-- 次に引かれるカードのプレビュー表示エリア（テーブルに変更） -->
+                各デッキで次に引かれる予定のカード (上から2枚)
+                <table border="1" cellpadding="0" cellspacing="0">
+                    <thead>
+                        <tr style="background-color: #f8fafc;">
+                            <th>Small Deal</th>
+                            <th>Big Deal</th>
+                            <th>Market</th>
+                            <th>Doodad</th>
+                        </tr>
+                    </thead>
+                    <tbody id="debug-next-cards-preview">
+                        <!-- JSでここに2行分のプレビューを挿入 -->
+                    </tbody>
+                </table>
             </div>
         </fieldset>
         <!-- ▲ デバッグ・検証用機能 ここまで ▲ -->
@@ -128,6 +145,13 @@
             <label for="input-next-turn-order">手番の番号: </label>
             <input type="number" id="input-next-turn-order" placeholder="例: 1" min="1">
             <button id="btn-set-turn">O を手番にする</button>
+            
+            <!-- ▼ 救済措置：強制ターンエンド ▼ -->
+            <hr>
+            <p style="color: #d97706; font-size: 13px; margin-bottom: 5px;">⚠ プレイヤーが操作不能になった場合の救済</p>
+            <button id="btn-force-end-current-turn" style="background-color: #f59e0b; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">
+                O 現在の手番を強制終了し、次の人へ進める
+            </button>
         </fieldset>
         <br>
 
