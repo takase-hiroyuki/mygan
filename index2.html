@@ -5,190 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>MYGAN Dashboard</title>
     <link rel="icon" href="data:,">
-    
-    <link rel="stylesheet" href="./index2.css?v=2">
-    <style>
-        /* ▼ 追加：hidden属性がついている要素は強制的に非表示にする ▼ */
-        [hidden] {
-            display: none !important;
-        }
-
-        /* 1. 全体リセットとベース設定 */
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body {
-            font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
-            margin: 0;
-            background-color: #f0f2f5; 
-            color: #333333;
-            font-size: 14px;
-            -webkit-text-size-adjust: 100%;
-        }
-
-        /* 2. アプリ風のトップヘッダー */
-        .app-header {
-            background-color: #1a202c;
-            color: #ffffff;
-            padding: 10px 20px;
-            font-size: 16px;
-            font-weight: bold;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        /* 3. レイアウト (iPad向け 2カラムダッシュボード) */
-        .dashboard-container {
-            padding: 15px;
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        @media (min-width: 768px) {
-            .dashboard-container { flex-direction: row; align-items: flex-start; flex-wrap: wrap; }
-            .col-left { flex: 0 0 45%; position: sticky; top: 15px; }
-            .col-right { flex: 0 0 55%; }
-        }
-
-        /* 4. モジュール (四角い枠組み) */
-        .module {
-            background: #ffffff;
-            border: 1px solid #dcdcdc;
-            border-radius: 4px;
-            margin-bottom: 15px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-            overflow: hidden;
-        }
-        .module-header {
-            background: #f8f9fa;
-            border-bottom: 1px solid #dcdcdc;
-            border-top: 3px solid #0040a1; /* 基本は青 */
-            padding: 8px 12px;
-            font-size: 13px;
-            font-weight: bold;
-            color: #1a202c;
-        }
-        .module-header.red-accent { border-top-color: #e11d48; } /* 赤アクセント */
-        .module-header.green-accent { border-top-color: #059669; }
-        .module-content { padding: 12px; }
-
-        /* 5. ステータスとテキストの装飾 */
-        .status-row { display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px dashed #eee; padding-bottom: 4px; }
-        .status-label { color: #666; font-size: 12px; }
-        .status-value { font-weight: bold; }
-        .highlight-cash { color: #0040a1; font-size: 18px; font-weight: bold; }
-        #hit { color: #e11d48; font-weight: bold; display: block; margin-bottom: 8px; }
-
-        /* 6. ボタン設定 */
-        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
-        button {
-            -webkit-appearance: none; appearance: none;
-            border-radius: 4px;
-            padding: 10px 8px;
-            font-size: 13px;
-            font-weight: bold;
-            cursor: pointer;
-            touch-action: manipulation;
-            transition: all 0.2s ease;
-        }
-        
-        button:not(:disabled) {
-            background: #2563eb; 
-            color: #ffffff;
-            border: 1px solid #1d4ed8;
-            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
-        }
-        button:not(:disabled):active { 
-            background: #1d4ed8; 
-            transform: scale(0.98);
-        }
-
-        button:disabled { 
-            background: #f1f5f9; 
-            color: #94a3b8; 
-            border: 1px solid #e2e8f0; 
-            box-shadow: none;
-            cursor: not-allowed;
-        }
-        
-        button.active-red-button {
-            background: #e11d48 !important;
-            color: #ffffff !important;
-            border: 1px solid #be123c !important;
-            box-shadow: 0 2px 4px rgba(225, 29, 72, 0.2) !important;
-        }
-        button.active-red-button:active { 
-            background: #be123c !important; 
-        }
-
-        /* 7. すごろく盤面 */
-        .board-table { width: 100%; table-layout: fixed; border-collapse: collapse; }
-        .board-table td {
-            border: 1px solid #cbd5e1;
-            padding: 4px;
-            text-align: center;
-            vertical-align: top;
-            height: 65px;
-            background: #f8fafc;
-        }
-        
-        .board-table td.cell-payday {
-            background: #dcfce7 !important; /* 薄いグリーン（入金） */
-        }
-        .board-table td.cell-special {
-            background: #fee2e2 !important; /* 薄いレッド（支出・休み） */
-        }
-
-        .cell-num { font-size: 10px; color: #64748b; display: block; text-align: left; margin-bottom: 2px; }
-        .cell-name { font-size: 12px; font-weight: bold; color: #0f172a; }
-        .occupants { display: block; font-size: 11px; color: #e11d48; font-weight: bold; margin-top: 4px; line-height: 1.2; }
-
-        /* 8. フォーム要素 */
-        input[type="text"], input[type="number"], select {
-            -webkit-appearance: none; appearance: none;
-            width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 14px; background: #fff;
-        }
-        .flex-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
-        .flex-row > * { flex: 1; }
-
-        /* 9. 財務諸表のテーブル */
-        .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid #e2e8f0; margin-bottom: 12px; border-radius: 4px; }
-        table.finance-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        table.finance-table th { background: #f1f5f9; color: #475569; padding: 6px; border-bottom: 1px solid #cbd5e1; text-align: left; }
-        table.finance-table td { padding: 6px; border-bottom: 1px solid #e2e8f0; }
-
-        /* 10. システムログエリア (文字サイズ変更) */
-        #message-body { display: block; font-size: 14px; color: #333333; padding: 10px 15px; line-height: 1.5; }
-        .game-progress-message { border-bottom: 1px dashed #ccc; padding: 8px 0; }
-        
-        #section-login { max-width: 400px; margin: 40px auto; background: #fff; padding: 20px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    </style>
 </head>
 <body>
 
     <div id="section-login">
-        <h3 style="margin-top:0;">プレイヤー登録</h3>
+        <h3>プレイヤー登録</h3>
         <div class="flex-row">
             <input type="text" id="input-username" placeholder="あなたの名前を入力">
         </div>
-        <button id="btn-login" style="width:100%;">入室する</button>
+        <button id="btn-login">入室する</button>
     </div>
 
     <div id="section-guest" class="dashboard-container" hidden>
         
-        <div class="col-left">
-            <!-- ▼ システム通知 (青) ▼ -->
-            <div class="module">
-                <div class="module-header">システム通知</div>
-                <div class="module-content" style="max-height: 160px; overflow-y: auto; background-color: #f8fafc; padding: 0;">
-                    <span id="message-body"></span>
-                </div>
+        <div class="module">
+            <div class="module-header">システム通知</div>
+            <div class="module-content">
+                <span id="message-body"></span>
             </div>
-            <!-- ▲ システム通知 ここまで ▲ -->
-            
-            <!-- 現在のステータス (赤) -->
+        </div>
+        
+        <div class="col-left">
             <div class="module">
                 <div class="module-header red-accent">現在のステータス</div>
                 <div class="module-content">
@@ -201,20 +38,19 @@
                         <span class="status-label">子供 / 養育費</span>
                         <span class="status-value"><span id="g-child-count">0</span>人 / <span id="g-child-expense">0</span></span>
                     </div>
-                    <div class="status-row" style="border:none; align-items:center;">
+                    <div class="status-row">
                         <span class="status-label">現金</span>
                         <span class="highlight-cash" id="current-cash">0</span>
                     </div>
                 </div>
             </div>
 
-            <!-- サイコロ・手番操作 (青) -->
             <div class="module">
                 <div class="module-header">サイコロ・手番操作</div>
                 <div class="module-content">
-                    <div style="margin-bottom: 10px; font-size: 13px; font-weight: bold; color:#475569;">
-                        現在地: <span id="dice-result" style="color:#0f172a;">--</span><br>
-                        手番: <span id="dice-user" style="color:#e11d48;">--</span>
+                    <div>
+                        現在地: <span id="dice-result">--</span><br>
+                        手番: <span id="dice-user">--</span>
                     </div>
                     <div class="btn-grid">
                         <button id="btn-dice1" disabled>X サイコロ1個</button>
@@ -225,10 +61,9 @@
                 </div>
             </div>
 
-            <!-- 盤面モニター (赤) -->
             <div class="module">
                 <div class="module-header red-accent">盤面モニター</div>
-                <div class="module-content" style="padding: 8px;">
+                <div class="module-content">
                     <table class="board-table">
                         <tbody>
                             <tr>
@@ -240,141 +75,4 @@
                             <tr>
                                 <td><span class="cell-num">04</span><span class="cell-name">商売</span><span id="cell-4" class="occupants"></span></td>
                                 <td class="cell-payday"><span class="cell-num">05</span><span class="cell-name">入金</span><span id="cell-5" class="occupants"></span></td>
-                                <td><span class="cell-num">06</span><span class="cell-name">商売</span><span id="cell-6" class="occupants"></span></td>
-                                <td><span class="cell-num">07</span><span class="cell-name">娯楽</span><span id="cell-7" class="occupants"></span></td>
-                            </tr>
-                            <tr>
-                                <td><span class="cell-num">08</span><span class="cell-name">商売</span><span id="cell-8" class="occupants"></span></td>
-                                <td class="cell-special"><span class="cell-num">09</span><span class="cell-name">子供</span><span id="cell-9" class="occupants"></span></td>
-                                <td><span class="cell-num">10</span><span class="cell-name">商売</span><span id="cell-10" class="occupants"></span></td>
-                                <td class="cell-payday"><span class="cell-num">11</span><span class="cell-name">入金</span><span id="cell-11" class="occupants"></span></td>
-                            </tr>
-                            <tr>
-                                <td><span class="cell-num">12</span><span class="cell-name">市場</span><span id="cell-12" class="occupants"></span></td>
-                                <td><span class="cell-num">13</span><span class="cell-name">商売</span><span id="cell-13" class="occupants"></span></td>
-                                <td><span class="cell-num">14</span><span class="cell-name">娯楽</span><span id="cell-14" class="occupants"></span></td>
-                                <td><span class="cell-num">15</span><span class="cell-name">商売</span><span id="cell-15" class="occupants"></span></td>
-                            </tr>
-                            <tr>
-                                <td class="cell-special"><span class="cell-num">16</span><span class="cell-name">寄付</span><span id="cell-16" class="occupants"></span></td>
-                                <td><span class="cell-num">17</span><span class="cell-name">商売</span><span id="cell-17" class="occupants"></span></td>
-                                <td class="cell-payday"><span class="cell-num">18</span><span class="cell-name">入金</span><span id="cell-18" class="occupants"></span></td>
-                                <td><span class="cell-num">19</span><span class="cell-name">商売</span><span id="cell-19" class="occupants"></span></td>
-                            </tr>
-                            <tr>
-                                <td class="cell-special"><span class="cell-num">20</span><span class="cell-name">解雇</span><span id="cell-20" class="occupants"></span></td>
-                                <td><span class="cell-num">21</span><span class="cell-name">商売</span><span id="cell-21" class="occupants"></span></td>
-                                <td><span class="cell-num">22</span><span class="cell-name">市場</span><span id="cell-22" class="occupants"></span></td>
-                                <td><span class="cell-num">23</span><span class="cell-name">商売</span><span id="cell-23" class="occupants"></span></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-right">
-            <!-- カードとアクション (青) -->
-            <div class="module" id="msg-area">
-                <div class="module-header">カードとアクション</div>
-                <div class="module-content">
-                    <div class="btn-grid">
-                        <button id="btn-small-deal" disabled>X 普通の商売</button>
-                        <button id="btn-big-deal" disabled>X 大きい商売</button>
-                        <button id="btn-borrow-loan" disabled>X 銀行借入</button>
-                        <button id="btn-payback-loan" disabled>X 銀行返済</button>
-                    </div>
-                    
-                    <div style="background:#fefce8; border:1px solid #fef08a; padding:12px; border-radius:4px; margin-bottom:12px; font-size:14px; line-height:1.5;">
-                        <span id="main-msg">あなたの手番を待つか、サイコロを振ってください。</span>
-                    </div>
-
-                    <div class="flex-row">
-                        <input type="number" id="num-process-self" placeholder="数量(任意)" style="flex: 0.5;">
-                        <button id="btn-process-self" disabled>X 処理する</button>
-                        <button id="btn-pass-card" disabled>X パスする</button>
-                    </div>
-
-                    <hr style="border:0; border-top:1px dashed #ccc; margin:12px 0;">
-                    
-                    <div class="flex-row">
-                        <select id="sell-target"><option value="">権利を売る相手</option></select>
-                        <input type="number" id="sell-price" placeholder="金額(円)">
-                        <button id="btn-sell-card" disabled>X 交渉持掛</button>
-                    </div>
-
-                    <div class="flex-row" style="background:#f1f5f9; padding:8px; border-radius:4px;">
-                        <span id="trade-message" style="font-size:12px; font-weight:bold; flex: 2;">受信M (交渉無)</span> 
-                        <button id="btn-trade-accept" disabled>X 承諾</button>
-                        <button id="btn-trade-reject" disabled>X 拒否</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 財務諸表 (赤) -->
-            <div class="module">
-                <div class="module-header red-accent">財務諸表</div>
-                <div class="module-content">
-                    <select id="player-select" style="margin-bottom: 12px; font-weight:bold;"></select>
-
-                    <div style="background:#eff6ff; border:1px solid #bfdbfe; padding:10px; border-radius:4px; margin-bottom:12px;">
-                        <div class="status-row">
-                            <span class="status-label">職業</span>
-                            <span class="status-value" id="l-profession">★★★</span>
-                        </div>
-                        <div class="status-row" style="border:none;">
-                            <span class="status-label">所持金</span>
-                            <span class="highlight-cash" id="l-cash">★★★</span>
-                        </div>
-                        <button id="fast_track" style="width:100%; margin-top:8px;">ファーストトラックまで、あと◯◯円</button>
-                    </div>
-
-                    <div class="table-responsive">
-                        <table class="finance-table" id="l-profit-table">
-                            <span id="l-profit">資産 table</span>
-                        </table>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="finance-table" id="l-loss-table">
-                            <span id="l-loss">負債 table</span>
-                        </table>
-                    </div>
-
-                    <div class="flex-row" style="background:#f8fafc; padding:8px; border:1px solid #e2e8f0; border-radius:4px;">
-                        <span id="ncashflow" style="font-weight:bold; font-size:13px; color:#0f172a;">CF： xxx</span>
-                        <input type="number" id="icashflow" placeholder="CF金額を入力">
-                        <button id="bcashflow" style="flex:0.5;" disabled>X 計算</button>
-                    </div>
-
-                    <div class="flex-row" style="margin-top:12px;">
-                        <select id="profit_loss"><option value="">対象の資産・負債を選択</option></select>
-                        <select id="pl-operate">
-                            <option value="">処理内容</option>
-                            <option value="sell">売却 (現金増)</option>
-                            <option value="payoff">返済 (現金減)</option>
-                        </select>
-                        <button id="b-operate" style="flex: 0.8;" disabled>X 実際に処理する</button>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </div>
-
-    <script>
-        const observer = new MutationObserver(() => {
-            document.querySelectorAll('button').forEach(btn => {
-                const text = btn.textContent.trim();
-                if (text.startsWith('O') || text.startsWith('◯')) {
-                    btn.classList.add('active-red-button');
-                } else {
-                    btn.classList.remove('active-red-button');
-                }
-            });
-        });
-        observer.observe(document.body, { childList: true, subtree: true, characterData: true });
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script type="module" src="./index.js"></script>
-</body>
-</html>
+                                <td><span class="
