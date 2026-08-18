@@ -130,21 +130,25 @@ export function getLocalPlayerName() {
 export function sendGameProgressMessage(supabaseClient, currentRoomId, targetName, message, funcName = "") {
     if (!supabaseClient) return;
     
-    const channel = supabaseClient.channel(`room_broadcast_${currentRoomId}`);
+    const channelName = `room_broadcast_${currentRoomId}`;
+    
+    // 既存の接続済みチャンネル（WebSockets）があれば再利用する（無駄な警告を減らすため）
+    let channel = supabaseClient.getChannels().find(c => c.topic.includes(channelName));
+    if (!channel) {
+        channel = supabaseClient.channel(channelName);
+    }
+
     const payload = {
         type: 'broadcast',
         event: 'progress_update',
         payload: { target: targetName, body: message, funcName: funcName }
     };
 
-    // 他のプレイヤーへ配信 (将来の非推奨警告を回避するため httpSend を優先)
-    if (typeof channel.httpSend === 'function') {
-        channel.httpSend(payload).catch(e => console.warn(e));
-    } else {
-        channel.send(payload);
-    }
+    // エラーの原因となった httpSend() ではなく、安定した標準の send() に戻します。
+    // （環境によって「REST API にフォールバックします」という警告が出る場合がありますが、ゲームの動作には全く問題ありません）
+    channel.send(payload);
 
-// 送信した本人自身の画面にも即座に表示する
+    // 送信した本人自身の画面にも即座に表示する
     displayGameProgressMessage(targetName, message, funcName);
     const logMessage = funcName ? `[${funcName}] ${message}` : message;
     writeLog(supabaseClient, targetName, "Message", logMessage);
