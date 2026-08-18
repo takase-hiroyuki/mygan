@@ -8,6 +8,11 @@
     
     <link rel="stylesheet" href="./index2.css?v=2">
     <style>
+        /* ▼ 追加：hidden属性がついている要素は強制的に非表示にする ▼ */
+        [hidden] {
+            display: none !important;
+        }
+
         /* 1. 全体リセットとベース設定 */
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
@@ -19,7 +24,20 @@
             -webkit-text-size-adjust: 100%;
         }
 
-        /* 2. レイアウト (iPad向け 2カラムダッシュボード) */
+        /* 2. アプリ風のトップヘッダー */
+        .app-header {
+            background-color: #1a202c;
+            color: #ffffff;
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* 3. レイアウト (iPad向け 2カラムダッシュボード) */
         .dashboard-container {
             padding: 15px;
             max-width: 1200px;
@@ -34,7 +52,7 @@
             .col-right { flex: 0 0 55%; }
         }
 
-        /* 3. モジュール (四角い枠組み) */
+        /* 4. モジュール (四角い枠組み) */
         .module {
             background: #ffffff;
             border: 1px solid #dcdcdc;
@@ -56,14 +74,14 @@
         .module-header.green-accent { border-top-color: #059669; }
         .module-content { padding: 12px; }
 
-        /* 4. ステータスとテキストの装飾 */
+        /* 5. ステータスとテキストの装飾 */
         .status-row { display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px dashed #eee; padding-bottom: 4px; }
         .status-label { color: #666; font-size: 12px; }
         .status-value { font-weight: bold; }
         .highlight-cash { color: #0040a1; font-size: 18px; font-weight: bold; }
         #hit { color: #e11d48; font-weight: bold; display: block; margin-bottom: 8px; }
 
-        /* 5. ボタン設定 */
+        /* 6. ボタン設定 */
         .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
         button {
             -webkit-appearance: none; appearance: none;
@@ -105,7 +123,7 @@
             background: #be123c !important; 
         }
 
-        /* 6. すごろく盤面 */
+        /* 7. すごろく盤面 */
         .board-table { width: 100%; table-layout: fixed; border-collapse: collapse; }
         .board-table td {
             border: 1px solid #cbd5e1;
@@ -127,7 +145,7 @@
         .cell-name { font-size: 12px; font-weight: bold; color: #0f172a; }
         .occupants { display: block; font-size: 11px; color: #e11d48; font-weight: bold; margin-top: 4px; line-height: 1.2; }
 
-        /* 7. フォーム要素 */
+        /* 8. フォーム要素 */
         input[type="text"], input[type="number"], select {
             -webkit-appearance: none; appearance: none;
             width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 14px; background: #fff;
@@ -135,13 +153,13 @@
         .flex-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
         .flex-row > * { flex: 1; }
 
-        /* 8. 財務諸表のテーブル */
+        /* 9. 財務諸表のテーブル */
         .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid #e2e8f0; margin-bottom: 12px; border-radius: 4px; }
         table.finance-table { width: 100%; border-collapse: collapse; font-size: 13px; }
         table.finance-table th { background: #f1f5f9; color: #475569; padding: 6px; border-bottom: 1px solid #cbd5e1; text-align: left; }
         table.finance-table td { padding: 6px; border-bottom: 1px solid #e2e8f0; }
 
-        /* 9. システムログエリア (文字サイズ変更) */
+        /* 10. システムログエリア (文字サイズ変更) */
         #message-body { display: block; font-size: 14px; color: #333333; padding: 10px 15px; line-height: 1.5; }
         .game-progress-message { border-bottom: 1px dashed #ccc; padding: 8px 0; }
         
@@ -160,16 +178,16 @@
 
     <div id="section-guest" class="dashboard-container" hidden>
         
-        <!-- ▼ システム通知 (青) ▼ -->
-        <div class="module" style="width: 100%; flex: 0 0 100%;">
-            <div class="module-header">システム通知</div>
-            <div class="module-content" style="max-height: 160px; overflow-y: auto; background-color: #f8fafc; padding: 0;">
-                <span id="message-body"></span>
-            </div>
-        </div>
-        <!-- ▲ システム通知 ここまで ▲ -->
-        
         <div class="col-left">
+            <!-- ▼ システム通知 (青) ▼ -->
+            <div class="module">
+                <div class="module-header">システム通知</div>
+                <div class="module-content" style="max-height: 160px; overflow-y: auto; background-color: #f8fafc; padding: 0;">
+                    <span id="message-body"></span>
+                </div>
+            </div>
+            <!-- ▲ システム通知 ここまで ▲ -->
+            
             <!-- 現在のステータス (赤) -->
             <div class="module">
                 <div class="module-header red-accent">現在のステータス</div>
