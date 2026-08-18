@@ -130,16 +130,22 @@ export function getLocalPlayerName() {
 export function sendGameProgressMessage(supabaseClient, currentRoomId, targetName, message, funcName = "") {
     if (!supabaseClient) return;
     
-    // 他のプレイヤーへ配信
-    supabaseClient.channel(`room_broadcast_${currentRoomId}`).send({
+    const channel = supabaseClient.channel(`room_broadcast_${currentRoomId}`);
+    const payload = {
         type: 'broadcast',
         event: 'progress_update',
         payload: { target: targetName, body: message, funcName: funcName }
-    });
+    };
 
-    // 送信した本人自身の画面にも即座に表示する
+    // 他のプレイヤーへ配信 (将来の非推奨警告を回避するため httpSend を優先)
+    if (typeof channel.httpSend === 'function') {
+        channel.httpSend(payload).catch(e => console.warn(e));
+    } else {
+        channel.send(payload);
+    }
+
+// 送信した本人自身の画面にも即座に表示する
     displayGameProgressMessage(targetName, message, funcName);
-
     const logMessage = funcName ? `[${funcName}] ${message}` : message;
     writeLog(supabaseClient, targetName, "Message", logMessage);
 }
