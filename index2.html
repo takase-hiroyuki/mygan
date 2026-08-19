@@ -1,4 +1,6 @@
-<!DOCTYPE html><!-- index2.html -->
+<!-- index2.html -->
+
+<!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
@@ -48,17 +50,8 @@
         }
         @media (min-width: 768px) {
             .dashboard-container { flex-direction: row; align-items: flex-start; }
-            .col-left { 
-                flex: 45; 
-                position: sticky; 
-                top: 15px; 
-                max-height: calc(100vh - 30px); 
-                overflow-y: auto; 
-            }
-            .col-right { 
-                flex: 55; 
-                min-width: 0; 
-            }
+            .col-left { flex: 45; position: sticky; top: 15px; max-height: calc(100vh - 30px); overflow-y: auto; }
+            .col-right { flex: 55; min-width: 0; }
         }
 
         /* 4. モジュール (四角い枠組み) */
@@ -194,6 +187,7 @@
                     <span id="message-body"></span>
                 </div>
             </div>
+            
             <div class="module">
                 <div class="module-header red-accent">現在のステータス</div>
                 <div class="module-content">
@@ -378,4 +372,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="module" src="./index.js"></script>
 </body>
-</html><!-- index2.html ここまで -->
+</html>
+
+<!-- index2.html ここまで -->
