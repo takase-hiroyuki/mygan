@@ -90,20 +90,16 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
         let canPass = false;
         let canProcess = false;
 
-        if (activeCard.deck_type === 'doodad') {
+        // ★修正箇所：asset_type === 'other'（特殊イベント）を最優先で「処理する」アクティブ化
+        if (activeCard.asset_type === 'other' || activeCard.deck_type === 'doodad') {
             canProcess = true;
             canPass = false; 
         } else if (activeCard.deck_type === 'market') {
             canProcess = false; 
             canPass = true;
         } else {
-            if (activeCard.asset_type === 'other') {
-                canProcess = true;
-                canPass = false; 
-            } else {
-                canProcess = true;
-                canPass = true; 
-            }
+            canProcess = true;
+            canPass = true; 
         }
         
         if (iAmCardHolder) {
