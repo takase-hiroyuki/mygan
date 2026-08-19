@@ -1,4 +1,5 @@
-/* ▼ 追加：hidden属性がついている要素は強制的に非表示にする ▼ */
+/* index2.css */
+
 [hidden] {
     display: none !important;
 }
@@ -154,3 +155,5 @@ table.finance-table td { padding: 6px; border-bottom: 1px solid #e2e8f0; }
 .game-progress-message { border-bottom: 1px dashed #ccc; padding: 8px 0; }
 
 #section-login { max-width: 400px; margin: 40px auto; background: #fff; padding: 20px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+
+/* index2.css ここまで */
