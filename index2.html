@@ -177,17 +177,8 @@
     </style>
 </head>
 <body>
-
-    <div id="section-login">
-        <h3 style="margin-top:0;">プレイヤー登録</h3>
-        <div class="flex-row">
-            <input type="text" id="input-username" placeholder="あなたの名前を入力">
-        </div>
-        <button id="btn-login" style="width:100%;">入室する</button>
-        <br>
-        <img src="./1.jpg" class="responsive-img" alt="ゲームのやり方">
-        <br>
-        <div style="line-height: 1.6;">
+    <script>
+        const gameInstructions = `
             <strong>ゲームのやり方</strong><br><br>
             皆さんの目的は、「支出総額よりも不労所得の方が多い」という状態をつくることです。<br><br>
             ＱＲコードを読んでページを開いて下さい。<br>
@@ -212,7 +203,20 @@
             「子供」のマスに止まると、子供が最大３人まで増えます。<br>
             子供ひとりあたりの養育費は、職業によって決まっています。<br><br>
             「解雇」のマスにとまるとリストラされ、３回休みになります。当面の生活費は必要なので「総支出」と同額の現金を銀行に支払う必要があります。<br><br>
-            「支出総額よりも不労所得の方が多い」という状態になると、バラ色の世界が待っているのですが、現在は、そこまで作り込んでいません。
+            「支出総額よりも不労所得の方が多い」という状態になると、バラ色の世界が待っているのですが、現在は、そこまで作り込んでいません。`;
+    </script>
+
+    <div id="section-login">
+        <h3 style="margin-top:0;">プレイヤー登録</h3>
+        <div class="flex-row">
+            <input type="text" id="input-username" placeholder="あなたの名前を入力">
+        </div>
+        <button id="btn-login" style="width:100%;">入室する</button>
+        <br>
+        <img src="./1.jpg" class="responsive-img" alt="ゲームのやり方">
+        <br>
+        <div id="instructions-container-login" style="line-height: 1.6;">
+            <!-- JSで文字列定数を挿入 -->
         </div>
     </div>
 
@@ -392,9 +396,23 @@
             </div>
 
         </div>
+        
+        <div class="col-right" style="margin-top: 15px;">
+             <div class="module">
+                <div class="module-header">ゲームルール</div>
+                <div class="module-content" id="instructions-container-guest" style="line-height: 1.6;">
+                    <!-- JSで文字列定数を挿入 -->
+                </div>
+             </div>
+        </div>
+        
     </div>
 
     <script>
+        // 文字列定数を2箇所に挿入
+        document.getElementById('instructions-container-login').innerHTML = gameInstructions;
+        document.getElementById('instructions-container-guest').innerHTML = gameInstructions;
+
         const observer = new MutationObserver(() => {
             document.querySelectorAll('button').forEach(btn => {
                 const text = btn.textContent.trim();
@@ -411,5 +429,3 @@
     <script type="module" src="./index.js"></script>
 </body>
 </html>
-
-<!-- index2.html ここまで -->
