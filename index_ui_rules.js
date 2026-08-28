@@ -77,6 +77,11 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
             cardHTML += `<br>キャッシュフロー: ${piStr}`;
         }
         
+        // ★修正箇所: 市場カード(market)かつ特殊処理(other)でない場合、売却操作の誘導メッセージを追加
+        if (activeCard.deck_type === 'market' && activeCard.asset_type !== 'other') {
+            cardHTML += `<br><br><span style='color:#e11d48; font-weight:bold;'>⚠️ 資産を売却する場合は、画面下部の「対象の資産・負債を選択」から【売却】を選んでください。</span>`;
+        }
+
         updateCardDisplay(cardHTML);
         
         if (elNumProcess) {
