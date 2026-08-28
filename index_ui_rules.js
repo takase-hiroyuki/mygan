@@ -12,6 +12,7 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
     const items = state.items || []; 
     
     let hasBankLoan = items.some(item => item.asset_type === 'BankLoan'); 
+    let hasInstantDebt = items.some(item => item.asset_type === 'InstantDebt'); 
     
     // --- デバッグコード追加開始 ---
     let rawCash = financials.cash;
@@ -161,7 +162,13 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
         if (elSellTarget) elSellTarget.disabled = true;
         if (elSellPrice) elSellPrice.disabled = true;
     } else {
-        updateCardDisplay("あなたの手番を待つか、サイコロを振ってください。");
+        // ★修正箇所：未払いの費用（InstantDebt）がある場合、プレイヤーに精算を促す警告メッセージを表示
+        if (isMyTurn && hasInstantDebt) {
+            updateCardDisplay("<span style='color:#e11d48; font-weight:bold;'>⚠️ 未払いの費用（解雇ペナルティや娯楽費など）があります。</span><br>画面下部の「対象の資産・負債を選択」から【返済】を選び、「実際に処理する」を押して精算してください。<br><span style='font-size:12px; color:#666;'>※現金が不足している場合は、先に「銀行借入」を行ってください。</span>");
+        } else {
+            updateCardDisplay("あなたの手番を待つか、サイコロを振ってください。");
+        }
+        
         setButtonActive(SEL_G.TRADE.BTN_SELL, false);
         setButtonActive(SEL_G.TRADE.BTN_PROCESS_SELF, false);
         setButtonActive(SEL_G.TRADE.BTN_PASS_CARD, false);
@@ -199,8 +206,6 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
                 const isTrading = !!cachedRoom?.game_state?.trade_offer;
                 const anyCardHolderExists = cachedParticipants.some(p => p.state && p.state.drawn_card);
                 
-                const hasInstantDebt = items.some(item => item.asset_type === 'InstantDebt');
-                
                 const posNum = parseInt(state.position, 10);
                 const isMyCharity = [3, 16].includes(posNum);
                 const isCardCell = CELLS_OPPORTUNITY.includes(posNum) || CELLS_MARKET.includes(posNum) || CELLS_DOODAD.includes(posNum);
@@ -227,8 +232,6 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
                     if (diceStatusArea) diceStatusArea.textContent = `休み（残り ${downsizedTurnsLeft} ターン）`;
                     setButtonActive(SEL_G.CONTROLS.BTN_DICE1, false);
                     setButtonActive(SEL_G.CONTROLS.BTN_DICE_2, false);
-                    
-                    const hasInstantDebt = items.some(item => item.asset_type === 'InstantDebt');
                     
                     setButtonActive(SEL_G.CONTROLS.BTN_END_TURN, !hasInstantDebt);
                 } else {
