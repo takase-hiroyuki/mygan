@@ -77,7 +77,6 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
             cardHTML += `<br>キャッシュフロー: ${piStr}`;
         }
         
-        // ★修正箇所: 市場カード(market)かつ特殊処理(other)でない場合、売却操作の誘導メッセージを追加
         if (activeCard.deck_type === 'market' && activeCard.asset_type !== 'other') {
             cardHTML += `<br><br><span style='color:#e11d48; font-weight:bold;'>⚠️ 資産を売却する場合は、画面下部の「対象の資産・負債を選択」から【売却】を選んでください。</span>`;
         }
@@ -96,7 +95,6 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
         let canPass = false;
         let canProcess = false;
 
-        // ★修正箇所：asset_type === 'other'（特殊イベント）を最優先で「処理する」アクティブ化
         if (activeCard.asset_type === 'other' || activeCard.deck_type === 'doodad') {
             canProcess = true;
             canPass = false; 
@@ -167,7 +165,6 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
         if (elSellTarget) elSellTarget.disabled = true;
         if (elSellPrice) elSellPrice.disabled = true;
     } else {
-        // ★修正箇所：未払いの費用（InstantDebt）がある場合、プレイヤーに精算を促す警告メッセージを表示
         if (isMyTurn && hasInstantDebt) {
             updateCardDisplay("<span style='color:#e11d48; font-weight:bold;'>⚠️ 未払いの費用（解雇ペナルティや娯楽費など）があります。</span><br>画面下部の「対象の資産・負債を選択」から【返済】を選び、「実際に処理する」を押して精算してください。<br><span style='font-size:12px; color:#666;'>※現金が不足している場合は、先に「銀行借入」を行ってください。</span>");
         } else {
@@ -194,8 +191,12 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
         const turnUserName = turnUserRecord ? turnUserRecord.state.name : "他のプレイヤー";        
 
         if (isMyTurn) {
+            const posNum = parseInt(state.position, 10);
             const pendingPaydays = parseInt(flags.pending_paydays || 0, 10);
-            setButtonActive(SEL_G.CONTROLS.BTN_PAYCHECK, pendingPaydays > 0);
+
+            // ★修正箇所: pendingPaydaysが1以上、または「現在地が00入金」かつ「サイコロを振っていない」場合に入金ボタンをアクティブ化
+            const canClaimPaycheck = pendingPaydays > 0 || (posNum === 0 && !flags.has_rolled_dice);
+            setButtonActive(SEL_G.CONTROLS.BTN_PAYCHECK, canClaimPaycheck);
 
             if (flags.has_rolled_dice) {
                 if (diceStatusArea) {
@@ -211,7 +212,6 @@ export function applyUIRules(currentUserId, cachedParticipants, cachedRoom) {
                 const isTrading = !!cachedRoom?.game_state?.trade_offer;
                 const anyCardHolderExists = cachedParticipants.some(p => p.state && p.state.drawn_card);
                 
-                const posNum = parseInt(state.position, 10);
                 const isMyCharity = [3, 16].includes(posNum);
                 const isCardCell = CELLS_OPPORTUNITY.includes(posNum) || CELLS_MARKET.includes(posNum) || CELLS_DOODAD.includes(posNum);
                 
