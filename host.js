@@ -146,8 +146,11 @@ function drawHostScreen() {
     const currentCard = state.current_card;
     if (elCardInfo) {
         if (currentCard) {
+            // ★修正箇所: description_jp2 などを表示に追加
+            const desc = currentCard.description_jp2 || currentCard.description_jp || currentCard.description || '';
             elCardInfo.innerHTML = `タイトル: <b>${currentCard.title}</b> &nbsp;&nbsp;&nbsp; asset_type: ${currentCard.asset_type}<br>
-            cost: $${toCurrency(currentCard.cost)} &nbsp;&nbsp;&nbsp; down_payment: $${toCurrency(currentCard.down_payment)} &nbsp;&nbsp;&nbsp; mortgage: $${toCurrency(currentCard.mortgage)} &nbsp;&nbsp;&nbsp; passive_income: $${toCurrency(currentCard.passive_income)}`;
+            cost: $${toCurrency(currentCard.cost)} &nbsp;&nbsp;&nbsp; down_payment: $${toCurrency(currentCard.down_payment)} &nbsp;&nbsp;&nbsp; mortgage: $${toCurrency(currentCard.mortgage)} &nbsp;&nbsp;&nbsp; passive_income: $${toCurrency(currentCard.passive_income)}<br>
+            説明: <span style="font-size: 0.9em; color: #4b5563;">${desc}</span>`;
         } else {
             elCardInfo.innerHTML = `現在、場に出ているカードはありません。`;
         }
