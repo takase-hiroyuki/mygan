@@ -19,7 +19,6 @@
         table { 
             border-collapse: collapse; 
             width: 100%;
-            /* 削除: table-layout: fixed;（ブラウザの自動幅調整に任せる） */
         }
         th, td { 
             border: 1px solid #666; 
@@ -42,6 +41,9 @@
         <!-- 1. デバッグ・検証用機能（積み込み） -->
         <fieldset style="border: 2px dashed #f87171; padding: 10px; margin-bottom: 15px; background-color: #fef2f2; border-radius: 6px;">
             <legend style="color: #b91c1c; font-weight: bold;">🛠 デバッグ・検証用（積み込み）</legend>
+            
+            <!-- カードの仕込み -->
+            <div style="margin-bottom: 10px;">
                 <select id="debug-deck-type" style="padding: 5px;">
                     <option value="small_deal">普通の商売 (small_deal)</option>
                     <option value="big_deal">大きい商売 (big_deal)</option>
@@ -53,21 +55,31 @@
                     山札の1番上にセット
                 </button>
                 <span id="debug-msg" style="color: #0369a1; font-weight: bold; display: block; margin-top: 5px;"></span>
+            </div>
+
+            <!-- ★追加：サイコロの出目の仕込み -->
+            <div style="margin-top: 15px; padding: 10px; border: 1px solid #fca5a5; background-color: #fff1f2; border-radius: 4px;">
+                <strong style="color: #991b1b; display: block; margin-bottom: 5px;">次に出るサイコロの目を仕込む</strong>
+                <input type="number" id="input-force-dice" placeholder="例: 4" min="1" max="24" style="padding: 5px; width: 100px;">
+                <button id="btn-force-dice" style="background-color: #e11d48; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">
+                    サイコロを仕込む
+                </button>
+            </div>
             
             <!-- 次に引かれるカードのプレビュー表示エリア -->
-                <table style="width: 100%; text-align: center; margin-top: 8px; table-layout: fixed;">
-                    <thead>
-                        <tr style="background-color: #f8fafc;">
-                            <th>Small Deal</th>
-                            <th>Big Deal</th>
-                            <th>Market</th>
-                            <th>Doodad</th>
-                        </tr>
-                    </thead>
-                    <tbody id="debug-next-cards-preview">
-                        <!-- JSでここに2行分のプレビューを挿入 -->
-                    </tbody>
-                </table>
+            <table style="width: 100%; text-align: center; margin-top: 15px; table-layout: fixed;">
+                <thead>
+                    <tr style="background-color: #f8fafc;">
+                        <th>Small Deal</th>
+                        <th>Big Deal</th>
+                        <th>Market</th>
+                        <th>Doodad</th>
+                    </tr>
+                </thead>
+                <tbody id="debug-next-cards-preview">
+                    <!-- JSでここに2行分のプレビューを挿入 -->
+                </tbody>
+            </table>
         </fieldset>
 
 
