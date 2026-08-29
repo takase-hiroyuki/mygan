@@ -1,5 +1,5 @@
 // index_actions_turn.js
-import { roomId } from './common_config.js';
+import { roomId, TERM_DOODAD } from './common_config.js';
 import { callRpcWithDebug,
          CELLS_OPPORTUNITY,
          CELLS_DOODAD,
@@ -33,7 +33,8 @@ export async function actionDrawCard(supabase, currentUserId, deckType) {
             p_deck_type: deckType
         });
         
-        const deckName = deckType === 'small_deal' ? '普通の商売' : deckType === 'big_deal' ? '大きな商売' : deckType === 'market' ? '市場' : '娯楽';
+        // ★修正: ログ出力の文字を変数で置換
+        const deckName = deckType === 'small_deal' ? '普通の商売' : deckType === 'big_deal' ? '大きな商売' : deckType === 'market' ? '市場' : TERM_DOODAD;
         sendGameProgressMessage(supabase, roomId, playerName, `${playerName} は、${deckName} のカードをひきました`, "actionDrawCard");
         return true;
     } catch (error) {
@@ -206,7 +207,6 @@ export async function actionEndTurn(supabase, currentUserId) {
             p_room_id: roomId, 
             p_user_id: currentUserId 
         });
-        // EndTurn成功時は fetchAndRender が手番変更メッセージを出すためここは省略
         return true;
     } catch (error) {
         writeLog(supabase, playerName, "Error", `エラー: ${error.message}`);
