@@ -1,6 +1,6 @@
 // common_utils.js
 
-import { roomId, EXCHANGE_RATE, SHOW_FUNCTION_NAME_IN_MESSAGE } from './common_config.js';
+import { roomId, EXCHANGE_RATE, SHOW_FUNCTION_NAME_IN_MESSAGE, TERM_DOODAD } from './common_config.js';
 import { SEL_G } from './common_dom_selectors.js';
 
 let localSeqCounter = 0;
@@ -61,9 +61,10 @@ export function setMultipleButtonsActive(ids, isActive) {
     ids.forEach(id => setButtonActive(id, isActive));
 }
 
+// ★修正：盤面の名前の一部を変数(TERM_DOODAD)で置き換え
 export const BOARD_CELL_NAMES = [
-    "入金", "娯楽", "商売", "寄付", "商売", "入金", "商売", "娯楽",
-    "商売", "子供", "商売", "入金", "市場", "商売", "娯楽", "商売",
+    "入金", TERM_DOODAD, "商売", "寄付", "商売", "入金", "商売", TERM_DOODAD,
+    "商売", "子供", "商売", "入金", "市場", "商売", TERM_DOODAD, "商売",
     "寄付", "商売", "入金", "商売", "解雇", "商売", "市場", "商売"
 ];
 
@@ -132,7 +133,6 @@ export function sendGameProgressMessage(supabaseClient, currentRoomId, targetNam
     
     const channelName = `room_broadcast_${currentRoomId}`;
     
-    // 既存の接続済みチャンネル（WebSockets）があれば再利用する（無駄な警告を減らすため）
     let channel = supabaseClient.getChannels().find(c => c.topic.includes(channelName));
     if (!channel) {
         channel = supabaseClient.channel(channelName);
@@ -144,11 +144,8 @@ export function sendGameProgressMessage(supabaseClient, currentRoomId, targetNam
         payload: { target: targetName, body: message, funcName: funcName }
     };
 
-    // エラーの原因となった httpSend() ではなく、安定した標準の send() に戻します。
-    // （環境によって「REST API にフォールバックします」という警告が出る場合がありますが、ゲームの動作には全く問題ありません）
     channel.send(payload);
 
-    // 送信した本人自身の画面にも即座に表示する
     displayGameProgressMessage(targetName, message, funcName);
     const logMessage = funcName ? `[${funcName}] ${message}` : message;
     writeLog(supabaseClient, targetName, "Message", logMessage);
@@ -211,4 +208,4 @@ export function toYenFormat(dollarValue) {
     return isNegative ? `▲${result}` : result;
 }
 
-console.log("【残す】common_utils.js が読み込まれました。[cite: 1]");
+console.log("【残す】common_utils.js が読み込まれました。");
