@@ -12,7 +12,9 @@ export const EXCHANGE_RATE = 160;
 
 // 4. デバッグ・開発用設定
 // true: 画面Messageに関数名を表示する / false: 表示しない
-// export const SHOW_FUNCTION_NAME_IN_MESSAGE = true;
 export const SHOW_FUNCTION_NAME_IN_MESSAGE = false;
+
+// 5. ゲーム内用語の変数管理
+export const TERM_DOODAD = "出費"; // 「娯楽」から「出費」へ変更。今後もここで一括管理可能
 
 console.log("【残す】config.js が読み込まれました。");
