@@ -48,7 +48,8 @@
                     <option value="small_deal">普通の商売 (small_deal)</option>
                     <option value="big_deal">大きい商売 (big_deal)</option>
                     <option value="market">市場 (market)</option>
-                    <option value="doodad">娯楽 (doodad)</option>
+                    <!-- ★プレースホルダー -->
+                    <option value="doodad" id="lbl-doodad-select">娯楽 (doodad)</option>
                 </select>
                 <input type="number" id="debug-card-id" placeholder="カードID" style="padding: 5px; width: 100px;">
                 <button id="btn-debug-set-top" style="background-color: #b91c1c; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">
@@ -73,7 +74,8 @@
                         <th>Small Deal</th>
                         <th>Big Deal</th>
                         <th>Market</th>
-                        <th>Doodad</th>
+                        <!-- ★プレースホルダー -->
+                        <th id="lbl-doodad-th">Doodad</th>
                     </tr>
                 </thead>
                 <tbody id="debug-next-cards-preview">
@@ -81,7 +83,6 @@
                 </tbody>
             </table>
         </fieldset>
-
 
         <!-- 2. 現在のカード情報 -->
         <div id="host-current-card-info" style="margin-bottom: 15px;">
@@ -179,7 +180,6 @@
             <input type="number" id="input-next-turn-order" placeholder="例: 1" min="1" style="padding: 4px; width: 80px;">
             <button id="btn-set-turn" style="padding: 6px;">O 指定番号を手番にする</button>
             
-            <!-- 救済措置：強制ターンエンド -->
             <hr>
             <p style="color: #d97706; margin-bottom: 5px;">⚠ プレイヤーが操作不能になった場合の救済</p>
             <button id="btn-force-end-current-turn" style="background-color: #f59e0b; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; width: 100%;">
@@ -190,60 +190,8 @@
         <!-- 9. 盤面モニター -->
         <div class="table-responsive" style="margin-bottom: 15px;">
             <table class="board-table" style="width: 100%; text-align: center; vertical-align: middle; table-layout: fixed;">
-                <tbody>
-                    <tr>
-                        <td data-position="0">
-                            00入金<div id="rat-cell-0" class="player-occupants"></div>
-                        </td><td data-position="1">
-                            01娯楽<div id="rat-cell-1" class="player-occupants"></div>
-                        </td><td data-position="2">
-                            02好機<div id="rat-cell-2" class="player-occupants"></div>
-                        </td><td data-position="3">
-                            03寄付<div id="rat-cell-3" class="player-occupants"></div>
-                        </td><td data-position="4">
-                            04好機<div id="rat-cell-4" class="player-occupants"></div>
-                        </td><td data-position="5">
-                            05入金<div id="rat-cell-5" class="player-occupants"></div>
-                        </td><td data-position="6">
-                            06好機<div id="rat-cell-6" class="player-occupants"></div>
-                        </td><td data-position="7">
-                            07娯楽<div id="rat-cell-7" class="player-occupants"></div>
-                        </td><td data-position="8">
-                            08好機<div id="rat-cell-8" class="player-occupants"></div>
-                        </td><td data-position="9">
-                            09子供<div id="rat-cell-9" class="player-occupants"></div>
-                        </td><td data-position="10">
-                            10好機<div id="rat-cell-10" class="player-occupants"></div>
-                        </td><td data-position="11">
-                            11入金<div id="rat-cell-11" class="player-occupants"></div>
-                        </td>
-                    </tr><tr>
-                        <td data-position="12">
-                            12市場<div id="rat-cell-12" class="player-occupants"></div>
-                        </td><td data-position="13">
-                            13好機<div id="rat-cell-13" class="player-occupants"></div>
-                        </td><td data-position="14">
-                            14娯楽<div id="rat-cell-14" class="player-occupants"></div>
-                        </td><td data-position="15">
-                            15好機<div id="rat-cell-15" class="player-occupants"></div>
-                        </td><td data-position="16">
-                            16寄付<div id="rat-cell-16" class="player-occupants"></div>
-                        </td><td data-position="17">
-                            17好機<div id="rat-cell-17" class="player-occupants"></div>
-                        </td><td data-position="18">
-                            18入金<div id="rat-cell-18" class="player-occupants"></div>
-                        </td><td data-position="19">
-                            19好機<div id="rat-cell-19" class="player-occupants"></div>
-                        </td><td data-position="20">
-                            20解雇<div id="rat-cell-20" class="player-occupants"></div>
-                        </td><td data-position="21">
-                            21好機<div id="rat-cell-21" class="player-occupants"></div>
-                        </td><td data-position="22">
-                            22市場<div id="rat-cell-22" class="player-occupants"></div>
-                        </td><td data-position="23">
-                            23好機<div id="rat-cell-23" class="player-occupants"></div>
-                        </td>
-                    </tr>
+                <tbody id="host-board-tbody">
+                    <!-- JSで初期化 -->
                 </tbody>
             </table>
         </div>
@@ -256,7 +204,8 @@
                         <th>Small Deal</th>
                         <th>Big Deal</th>
                         <th>Market</th>
-                        <th>Doodad</th>
+                        <!-- ★プレースホルダー -->
+                        <th id="lbl-deck-doodad">Doodad</th>
                     </tr>
                 </thead>
                 <tbody style="text-align: center;">
@@ -287,6 +236,27 @@
 
     </div>
 
+    <!-- ★追加: common_configの変数をHTMLに反映させるスクリプト -->
+    <script type="module">
+        import { TERM_DOODAD } from './common_config.js';
+        import { BOARD_CELL_NAMES } from './common_utils.js';
+        
+        document.getElementById('lbl-doodad-select').textContent = `${TERM_DOODAD} (doodad)`;
+        document.getElementById('lbl-doodad-th').textContent = TERM_DOODAD;
+        document.getElementById('lbl-deck-doodad').textContent = TERM_DOODAD;
+
+        const tbody = document.getElementById('host-board-tbody');
+        let html = '';
+        for (let r = 0; r < 2; r++) {
+            html += '<tr>';
+            for (let c = 0; c < 12; c++) {
+                const idx = r * 12 + c;
+                html += `<td data-position="${idx}">${String(idx).padStart(2, '0')}${BOARD_CELL_NAMES[idx]}<div id="rat-cell-${idx}" class="player-occupants"></div></td>`;
+            }
+            html += '</tr>';
+        }
+        tbody.innerHTML = html;
+    </script>
     <script type="module" src="host.js"></script>
 </body>
 </html>
