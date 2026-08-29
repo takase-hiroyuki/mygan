@@ -710,4 +710,56 @@ if (btnDebugSetTop) {
     });
 }
 
+// =========================================================================
+// ★追加: デバッグ・テスト用：次に出るサイコロの目を仕込む処理
+// =========================================================================
+const btnForceDice = document.getElementById('btn-force-dice');
+if (btnForceDice) {
+    btnForceDice.addEventListener('click', async () => {
+        if (!supabase) return;
+        const inputEl = document.getElementById('input-force-dice');
+        const diceValue = parseInt(inputEl.value, 10);
+        const msgEl = document.getElementById('debug-msg');
+
+        if (isNaN(diceValue) || diceValue < 1 || diceValue > 24) {
+            alert("1〜24の有効な数字を入力してください");
+            return;
+        }
+
+        try {
+            msgEl.textContent = "サイコロ仕込み中...";
+            
+            // 現在の rooms.game_state を取得
+            const { data: roomData, error: roomError } = await supabase
+                .from('rooms')
+                .select('game_state')
+                .eq('id', roomId)
+                .single();
+
+            if (roomError) throw roomError;
+
+            let gameState = roomData.game_state || {};
+            // 次に出る目を記録
+            gameState.debug_next_dice = diceValue;
+
+            // データベースを更新
+            const { error: updateError } = await supabase
+                .from('rooms')
+                .update({ game_state: gameState })
+                .eq('id', roomId);
+
+            if (updateError) throw updateError;
+
+            alert(`次のサイコロの目を【 ${diceValue} 】に仕込みました`);
+            inputEl.value = "";
+            msgEl.textContent = "";
+            writeLog(supabase, "Host", "System", `[デバッグ] 次のサイコロの目を ${diceValue} に仕込みました`);
+
+        } catch (err) {
+            console.error("サイコロの仕込みに失敗しました", err);
+            msgEl.textContent = "エラー: " + err.message;
+        }
+    });
+}
+
 console.log("【残す】host.js が読み込まれました。");
