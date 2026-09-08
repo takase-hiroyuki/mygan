@@ -1,0 +1,27 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "description": "windows で cat する方法 - Get-Content *.js, *.html -Encoding UTF8 | Set-Content all_files.txt -Encoding UTF8",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/takase-hiroyuki/mygan.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/takase-hiroyuki/mygan/issues"
+  },
+  "homepage": "https://github.com/takase-hiroyuki/mygan#readme",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.116.0",
+    "dotenv": "^17.4.2",
+    "node-fetch": "^2.7.0",
+    "openai": "^7.10.0"
+  }
+}
