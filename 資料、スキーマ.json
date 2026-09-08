@@ -68,6 +68,7 @@
           "mortgage": { "type": ["number", "null"] },
           "passive_income": { "type": ["number", "null"] },
           "is_resellable": { "type": "boolean" },
+          "image_url": { "type": ["string", "null"] },
           "action_rule": {
             "type": ["object", "null"],
             "properties": {
